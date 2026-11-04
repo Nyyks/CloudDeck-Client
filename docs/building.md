@@ -62,21 +62,28 @@ make -j$(nproc)
 AppImage: CI runs `client-desktop/scripts/build-appimage.sh` after building the
 pinned dependency stack with `.github/scripts/build-linux-deps.sh` (cached).
 
-## Desktop: Windows
+## Desktop: Windows (local)
 
-Requires Visual Studio 2022+, Qt 6.12 (msvc2022_64), 7-Zip and the WiX toolset
-(restored by msbuild).
+One-time setup (what this machine has):
 
-```bat
-cd client-desktop
-powershell .\setup-deps.ps1
-set PATH=C:\Qt\6.12.0\msvc2022_64\bin;%PATH%
-scripts\build-arch.bat Release x64
+| Tool | How |
+|---|---|
+| Visual Studio 2022 Build Tools, C++ workload + VC++ redist | `winget install Microsoft.VisualStudio.2022.BuildTools` (with `--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended`) |
+| Qt 6.12.0 `win64_msvc2022_64` in `C:\Qt` | `aqtinstall`, pinned to the same commit as CI (in a venv under `%LOCALAPPDATA%\clouddeck-build\venv`) |
+| jom | `C:\Qt\Tools\jom\jom.exe` from download.qt.io (otherwise the build falls back to nmake) |
+| 7-Zip | `C:\Program Files\7-Zip` |
+| WiX | restored by msbuild automatically |
+
+Build:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build-windows.ps1     # -Clean for a full rebuild
 ```
 
-Outputs: `build\build-x64-release\*.msi` and
-`build\installer-x64-release\MoonlightPortable-x64-*.zip`. CI renames them to
-`CloudDeckClient-<version>-windows-x64*` (ADR-0005).
+The script fetches the prebuilt dependencies once (`setup-deps.ps1`), runs
+upstream's `scripts\build-arch.bat Release x64`, and copies
+`CloudDeckClient-<version>-dev.<sha>-windows-x64.msi` and `-portable.zip`
+into `out\windows\`.
 
 ## Android
 
