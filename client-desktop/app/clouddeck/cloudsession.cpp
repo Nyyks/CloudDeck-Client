@@ -507,9 +507,29 @@ void CloudSession::launchStream()
     setStage(Stage::Idle);
     setProgress(QString());
     m_StreamActive = true;
+
+    // Use the configured app if the host has it; otherwise the host's first app
+    // (e.g. a host whose app list isn't CloudDeck's default).
+    QString app = appName();
+    if (m_ComputerManager) {
+        for (NvComputer* c : m_ComputerManager->getComputers()) {
+            if (c->uuid.compare(m_HostUuid, Qt::CaseInsensitive) != 0) continue;
+            QReadLocker lock(&c->lock);
+            bool found = false;
+            for (const NvApp& a : c->appList) {
+                if (a.name.compare(app, Qt::CaseInsensitive) == 0) { app = a.name; found = true; break; }
+            }
+            if (!found && !c->appList.isEmpty()) {
+                qWarning() << "CloudDeck: host has no app named" << app << "- launching" << c->appList.first().name;
+                app = c->appList.first().name;
+            }
+            break;
+        }
+    }
+
     // Seek by unique ID, not hostname: the stored host may only know the VM by IP.
-    auto* launcher = new CliStartStream::Launcher(m_HostUuid, appName(), StreamingPreferences::get(), this);
-    emit streamReady(launcher, appName());
+    auto* launcher = new CliStartStream::Launcher(m_HostUuid, app, StreamingPreferences::get(), this);
+    emit streamReady(launcher, app);
 }
 
 void CloudSession::streamEnded()

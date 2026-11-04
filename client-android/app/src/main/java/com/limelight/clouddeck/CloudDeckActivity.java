@@ -477,6 +477,11 @@ public class CloudDeckActivity extends Activity {
         for (NvApp a : apps) {
             if (a.getAppName().equalsIgnoreCase(appName)) { app = a; break; }
         }
+        if (app == null && !apps.isEmpty()) {
+            // Host doesn't have the configured app (e.g. a non-CloudDeck app list): use its first app.
+            app = apps.get(0);
+            LimeLog.warning("CloudDeck: host has no app named " + appName + "; launching " + app.getAppName());
+        }
         if (app == null) throw new ConnectException(getString(R.string.cd_err_no_app, appName));
 
         // Wait until the manager has a fresh, online view of the host for doStart().

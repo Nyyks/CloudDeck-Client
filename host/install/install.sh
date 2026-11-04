@@ -104,6 +104,35 @@ fi
 setcap cap_sys_admin,cap_sys_nice=p "$REL/bin/sunshine"
 getcap "$REL/bin/sunshine" | grep -q cap_sys_admin || die "setcap failed"
 
+# Use CloudDeck's defaults, not upstream's. Sunshine copies <assets>/apps.json into
+# ~/.config/sunshine when that file is missing (CloudDeck recreates it at boot), and
+# CloudDeck's image ships its own defaults there (the "CloudDeck" app). Symlink every
+# top-level default file our build shares with the stock assets, so the patched build
+# always uses the stock version, including after CloudDeck image updates.
+STOCK_ASSETS=/usr/share/sunshine
+if [ -d "$STOCK_ASSETS" ]; then
+    for f in "$REL/share/sunshine"/*; do
+        name="$(basename "$f")"
+        [ -f "$STOCK_ASSETS/$name" ] || continue
+        [ -L "$f" ] && continue
+        [ -f "$f" ] || continue
+        mv "$f" "$f.upstream"
+        ln -s "$STOCK_ASSETS/$name" "$f"
+        info "defaults: $name -> $STOCK_ASSETS/$name"
+    done
+fi
+
+# Repair: if the user's apps.json is exactly upstream's default (written by an earlier
+# install of ours), put CloudDeck's default back. A customized file is never touched.
+USER_APPS="$TARGET_HOME/.config/sunshine/apps.json"
+if [ -f "$USER_APPS" ] && [ -f "$REL/share/sunshine/apps.json.upstream" ] && [ -f "$STOCK_ASSETS/apps.json" ] &&
+   cmp -s "$USER_APPS" "$REL/share/sunshine/apps.json.upstream"; then
+    mkdir -p "$BACKUP"; cp -a "$USER_APPS" "$BACKUP/apps.json.user"
+    install -m 0644 -o "$TARGET_USER" -g "$(id -gn "$TARGET_USER")" "$STOCK_ASSETS/apps.json" "$USER_APPS"
+    changed=1
+    info "restored CloudDeck's apps.json (upstream default backed up to $BACKUP/)"
+fi
+
 # Activate release (atomic symlink swap).
 if [ "$(readlink "$BASE/sunshine" 2>/dev/null)" != "$REL" ]; then
     ln -sfn "$REL" "$BASE/.sunshine.new" && mv -Tf "$BASE/.sunshine.new" "$BASE/sunshine"
