@@ -42,6 +42,7 @@ static QString replyError(QNetworkReply* reply, const QJsonDocument& doc)
 void CloudDeckProvider::cognito(const QString& target, const QJsonObject& body, JsonCb cb)
 {
     QNetworkRequest req{QUrl(QString::fromLatin1(kCognitoEndpoint))};
+    req.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
     req.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-amz-json-1.1"));
     req.setRawHeader("X-Amz-Target", ("AWSCognitoIdentityProviderService." + target).toLatin1());
     QNetworkReply* reply = m_Nam->post(req, QJsonDocument(body).toJson(QJsonDocument::Compact));
@@ -68,6 +69,9 @@ void CloudDeckProvider::api(const QString& method, const QString& path, const QJ
             return;
         }
         QNetworkRequest req{QUrl(QString::fromLatin1(kApiBase) + path)};
+        // CloudFront resets idle HTTP/2 connections and Qt reports that as
+        // "HTTP/2 protocol error" instead of retrying; HTTP/1.1 is plenty here.
+        req.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
         req.setRawHeader("Authorization", "Bearer " + m_AccessToken.toLatin1());
         QNetworkReply* reply;
         if (method == QLatin1String("GET")) {
@@ -84,6 +88,12 @@ void CloudDeckProvider::api(const QString& method, const QString& path, const QJ
             if (status == 401 && !retried) {
                 // Access token rejected early (revoked/clock skew): refresh once and retry.
                 m_AccessToken.clear();
+                api(method, path, body, cb, true);
+                return;
+            }
+            if (status == 0 && !retried && method == QLatin1String("GET")) {
+                // Connection dropped (e.g. reused keep-alive closed by the server).
+                // Only idempotent reads are retried; start/stop are never sent twice.
                 api(method, path, body, cb, true);
                 return;
             }

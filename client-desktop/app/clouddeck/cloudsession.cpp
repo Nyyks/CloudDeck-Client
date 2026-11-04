@@ -13,6 +13,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QSettings>
+#include <QXmlStreamReader>
 
 using namespace CloudDeckApi;
 
@@ -92,6 +93,7 @@ void CloudSession::failConnect(const QString& e)
 {
     qWarning() << "CloudDeck: start-and-connect failed:" << e;
     m_StepTimer.stop();
+    releasePolling();
     setStage(Stage::Idle);
     setProgress(QString());
     setError(e);
@@ -254,6 +256,7 @@ void CloudSession::cancelConnect()
         return;
     }
     m_StepTimer.stop();
+    releasePolling();
     setStage(Stage::Idle);
     setProgress(QString());
 }
@@ -366,6 +369,20 @@ void CloudSession::probeSunshine()
         if (m_Stage != Stage::WaitingSunshine) return;
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (status == 200) {
+            // Identify the host by its unique ID, fetched over fresh DNS. Names and IPs
+            // can't be trusted: CloudDeck recycles public IPs between customers' VMs.
+            QXmlStreamReader xml(reply->readAll());
+            m_HostUuid.clear();
+            while (!xml.atEnd()) {
+                if (xml.readNextStartElement() && xml.name() == QLatin1String("uniqueid")) {
+                    m_HostUuid = xml.readElementText().trimmed();
+                    break;
+                }
+            }
+            if (m_HostUuid.isEmpty()) {
+                failConnect(tr("The streaming host answered without an ID; is it running Sunshine?"));
+                return;
+            }
             beginPairing();
             return;
         }
@@ -386,18 +403,52 @@ void CloudSession::beginPairing()
         failConnect(tr("Internal error: no computer manager"));
         return;
     }
-    auto* seeker = new ComputerSeeker(m_ComputerManager, hostAddress(), this);
-    connect(seeker, &ComputerSeeker::computerFound, this, [this, seeker](NvComputer* c) {
-        seeker->deleteLater();
-        onComputerFound(c);
-    });
-    connect(seeker, &ComputerSeeker::errorTimeout, this, [this, seeker]() {
-        seeker->deleteLater();
-        if (m_Stage == Stage::Pairing) {
-            failConnect(tr("Timed out connecting to %1.").arg(hostAddress()));
+    // Always (re-)add by the current hostname: for a known host this refreshes its
+    // stored addresses (the VM's IP changes between starts); for a new one it adds it.
+    // Then wait for the add to complete and look the host up by its unique ID. We don't
+    // wait for computerStateChanged: it only fires on a change, which never comes for a
+    // host that is already known and online.
+    auto conn = std::make_shared<QMetaObject::Connection>();
+    *conn = connect(m_ComputerManager, &ComputerManager::computerAddCompleted, this,
+                    [this, conn](QVariant success, QVariant) {
+        disconnect(*conn);
+        if (m_Stage != Stage::Pairing) return;
+        if (!success.toBool()) {
+            failConnect(tr("Could not connect to %1.").arg(hostAddress()));
+            return;
         }
+        waitForOnlineComputer();
     });
-    seeker->start(kPairTimeoutMs);
+    if (!m_ManagerPolling) {
+        m_ComputerManager->startPolling();
+        m_ManagerPolling = true;
+    }
+    m_ComputerManager->addNewHostManually(hostAddress());
+}
+
+void CloudSession::releasePolling()
+{
+    if (m_ManagerPolling && m_ComputerManager) {
+        m_ComputerManager->stopPollingAsync();
+    }
+    m_ManagerPolling = false;
+}
+
+void CloudSession::waitForOnlineComputer()
+{
+    if (m_Stage != Stage::Pairing || !m_ComputerManager) return;
+    for (NvComputer* c : m_ComputerManager->getComputers()) {
+        if (c->uuid.compare(m_HostUuid, Qt::CaseInsensitive) == 0 && c->state == NvComputer::CS_ONLINE) {
+            releasePolling();
+            onComputerFound(c);
+            return;
+        }
+    }
+    if (m_StageClock.elapsed() > kPairTimeoutMs) {
+        failConnect(tr("Timed out connecting to %1.").arg(hostAddress()));
+        return;
+    }
+    QTimer::singleShot(500, this, &CloudSession::waitForOnlineComputer);
 }
 
 void CloudSession::onComputerFound(NvComputer* computer)
@@ -456,7 +507,8 @@ void CloudSession::launchStream()
     setStage(Stage::Idle);
     setProgress(QString());
     m_StreamActive = true;
-    auto* launcher = new CliStartStream::Launcher(hostAddress(), appName(), StreamingPreferences::get(), this);
+    // Seek by unique ID, not hostname: the stored host may only know the VM by IP.
+    auto* launcher = new CliStartStream::Launcher(m_HostUuid, appName(), StreamingPreferences::get(), this);
     emit streamReady(launcher, appName());
 }
 

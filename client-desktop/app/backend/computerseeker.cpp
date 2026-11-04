@@ -28,11 +28,21 @@ void ComputerSeeker::start(int timeout)
     //
     // NB: We don't do this unconditionally because it will wipe out the user's
     // manual address if they pass another reachable hostname/address.
-    if (!findMatchingComputer()) {
+    NvComputer* known = findMatchingComputer();
+    if (!known) {
         m_ComputerManager->addNewHostManually(m_ComputerName);
     }
 
     m_ComputerManager->startPolling();
+
+    // CloudDeck-Client fix: computerStateChanged only fires on a *change*, so a host
+    // that is already known and online would never be reported and the seek would
+    // time out. Report it right away (asynchronously, like a normal update).
+    if (known && isOnline(known)) {
+        QTimer::singleShot(0, this, [this, known]() {
+            onComputerUpdated(known);
+        });
+    }
 }
 
 void ComputerSeeker::onComputerUpdated(NvComputer *computer)

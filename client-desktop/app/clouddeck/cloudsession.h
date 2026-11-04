@@ -98,6 +98,8 @@ private:
     void probeDns();
     void probeSunshine();
     void beginPairing();
+    void waitForOnlineComputer();
+    void releasePolling();
     void onComputerFound(NvComputer* computer);
     void submitPinWithRetry(const QString& pin, int attempt);
     void launchStream();
@@ -115,6 +117,8 @@ private:
     Stage m_Stage = Stage::Idle;
     QElapsedTimer m_StageClock;
     QPointer<ComputerManager> m_ComputerManager;
+    QString m_HostUuid;          // Sunshine uniqueid from serverinfo (fresh DNS)
+    bool m_ManagerPolling = false;
     QString m_PendingPin;
     bool m_PinAccepted = false;
     bool m_RestartPending = false;
