@@ -20,6 +20,8 @@
     <string name="cd_cancel">Cancel</string>
     <string name="cd_manage_pcs">Manage PCs</string>
     <string name="cd_auto_stop">Stop my CloudDeck when the stream ends</string>
+    <string name="cd_mic">Send my microphone to the CloudDeck</string>
+    <string name="cd_mic_denied">Microphone permission denied; microphone passthrough stays off.</string>
     <string name="cd_status_running">Running</string>
     <string name="cd_status_off">Stopped</string>
     <string name="cd_status_starting">Starting</string>

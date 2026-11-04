@@ -6,6 +6,8 @@
 #include <Limelight.h>
 
 #include <opus_multistream.h>
+
+extern bool CdcMicRequested; // CloudDeck-Client: clouddeck_mic_jni.c
 #include <android/log.h>
 
 #include <cpu-features.h>
@@ -481,7 +483,8 @@ Java_com_limelight_nvstream_jni_MoonBridge_startConnection(JNIEnv *env, jclass c
             .clientRefreshRateX100 = clientRefreshRateX100,
             .encryptionFlags = ENCFLG_AUDIO,
             .colorSpace = colorSpace,
-            .colorRange = colorRange
+            .colorRange = colorRange,
+            .enableMicrophone = CdcMicRequested // CloudDeck-Client (clouddeck_mic_jni.c)
     };
 
     jbyte* riAesKeyBuf = (*env)->GetByteArrayElements(env, riAesKey, NULL);

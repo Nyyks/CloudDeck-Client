@@ -69,7 +69,8 @@ public class CloudDeckActivity extends Activity {
     private TextView statusView, hostView, progressView, errorView, noteView;
     private EditText emailField, passwordField, mfaField;
     private Button signInButton, connectButton, startButton, stopButton, restartButton;
-    private CheckBox autoStop;
+    private CheckBox autoStop, micBox;
+    private static final int REQ_MIC = 7;
 
     private final Runnable pollTask = this::refreshStatus;
 
@@ -103,6 +104,15 @@ public class CloudDeckActivity extends Activity {
         emailField.setText(provider.getEmail());
         autoStop.setChecked(prefs.getBoolean("autoStopOnSessionEnd", false));
         autoStop.setOnCheckedChangeListener((v, c) -> prefs.edit().putBoolean("autoStopOnSessionEnd", c).apply());
+
+        micBox = findViewById(R.id.cd_mic);
+        micBox.setChecked(MicCapture.isEnabled(this));
+        micBox.setOnCheckedChangeListener((v, c) -> {
+            prefs.edit().putBoolean(MicCapture.PREF_ENABLED, c).apply();
+            if (c && !MicCapture.hasPermission(this) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, REQ_MIC);
+            }
+        });
 
         signInButton.setOnClickListener(v -> onSignInClicked());
         connectButton.setOnClickListener(v -> startAndConnect());
@@ -148,6 +158,15 @@ public class CloudDeckActivity extends Activity {
             }
         }
         refreshStatus();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_MIC && (grantResults.length == 0 || grantResults[0] != android.content.pm.PackageManager.PERMISSION_GRANTED)) {
+            micBox.setChecked(false);
+            showError(getString(R.string.cd_mic_denied));
+        }
     }
 
     @Override

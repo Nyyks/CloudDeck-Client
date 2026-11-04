@@ -395,6 +395,14 @@ public class MoonBridge {
 
     public static native String findExternalAddressIP4(String stunHostName, int stunPort);
 
+    // CloudDeck-Client microphone stream (clouddeck_mic_jni.c, docs/protocol-extensions.md §1)
+    public static native void setMicrophoneRequested(boolean requested);
+    public static native boolean isMicrophoneSupportedByHost();
+    public static native boolean isMicrophoneStreamActive();
+    public static native long micEncoderCreate();
+    public static native int micEncodeAndSend(long encoder, short[] pcm960);
+    public static native void micEncoderDestroy(long encoder);
+
     public static native int getPendingAudioDuration();
 
     public static native int getPendingVideoFrames();

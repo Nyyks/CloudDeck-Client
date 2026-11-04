@@ -150,6 +150,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/cd_auto_stop" />
+            <CheckBox
+                android:id="@+id/cd_mic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cd_mic" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

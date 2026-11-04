@@ -14,6 +14,23 @@ The script builds a `fedora:43` builder image once. The Sunshine checkout,
 build tree and ccache live in Docker volumes, so after a patch change only the
 touched files recompile. The first build takes about 10 minutes.
 
+## Android (WSL / Linux, no root needed)
+
+A user-level toolchain lives in `~/android-toolchain`: Temurin JDK 25 and
+Android SDK with `platforms;android-37.0`, `ndk;29.0.14206865` and
+platform-tools. The Android Gradle plugin downloads the matching build-tools
+itself.
+
+```sh
+export JAVA_HOME=~/android-toolchain/jdk ANDROID_HOME=~/android-toolchain/sdk PATH=$JAVA_HOME/bin:$PATH
+cd client-android
+./gradlew --max-workers=6 testNonRootDebugUnitTest assembleNonRootDebug
+```
+
+**Memory:** Docker Desktop and WSL distros share one VM. Run the Docker host
+build and the Gradle/qmake builds one at a time (the scripts cap themselves at
+8 jobs, and the container at 10 GB).
+
 ## Protocol tests (WSL / Linux)
 
 ```sh

@@ -46,6 +46,7 @@ LOCAL_SRC_FILES := $(MLC)/src/AudioStream.c \
                    $(MLC)/enet/win32.c \
                    simplejni.c \
                    callbacks.c \
+                   clouddeck_mic_jni.c \
                    minisdl.c \
 
 

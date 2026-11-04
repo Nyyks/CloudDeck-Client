@@ -2230,6 +2230,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             connecting = connected = false;
             updatePipAutoEnter();
 
+            com.limelight.clouddeck.MicCapture.stopActive(); // CloudDeck-Client: before conn.stop()
             controllerHandler.stop();
 
             // Update GameManager state to indicate we're no longer in game
@@ -2414,6 +2415,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 connected = true;
                 connecting = false;
                 updatePipAutoEnter();
+                com.limelight.clouddeck.MicCapture.startIfNegotiated(Game.this); // CloudDeck-Client
 
                 // Hide the mouse cursor now after a short delay.
                 // Doing it before dismissing the spinner seems to be undone
@@ -2515,6 +2517,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             UiHelper.notifyStreamConnecting(Game.this);
 
             decoderRenderer.setRenderTarget(holder);
+            com.limelight.clouddeck.MicCapture.prepare(Game.this); // CloudDeck-Client
             conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
                     decoderRenderer, Game.this);
         }

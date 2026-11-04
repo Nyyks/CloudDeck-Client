@@ -7,3 +7,4 @@ host/sunshine-patches/series text eol=lf
 *.patch -text
 *.png binary
 *.ico binary
+gradlew text eol=lf
