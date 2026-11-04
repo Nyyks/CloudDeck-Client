@@ -1,8 +1,10 @@
 #include "usbforwarder.h"
 #include "usbtunnel.h"
 
+#include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QTimer>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -20,10 +22,96 @@
 
 // ---------------------------------------------------------------- worker (own thread)
 
-void UsbWorker::startTunnel(QString host, quint16 port, QSslCertificate cert, QString busid)
+#ifdef Q_OS_LINUX
+// Root (via pkexec) can't read files inside a FUSE-mounted AppImage, so run a copy
+// from the user's cache directory.
+static QString prepareHelper(QString* error)
+{
+    QString src = qEnvironmentVariable("CLOUDDECK_USB_HELPER");
+    if (src.isEmpty()) src = QCoreApplication::applicationDirPath() + "/clouddeck-usb-helper";
+    if (!QFileInfo::exists(src)) {
+        *error = UsbForwarder::tr("clouddeck-usb-helper is missing from this build");
+        return QString();
+    }
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir().mkpath(dir);
+    const QString dst = dir + "/clouddeck-usb-helper";
+    QFile::remove(dst);
+    if (!QFile::copy(src, dst)) {
+        *error = UsbForwarder::tr("could not prepare clouddeck-usb-helper in %1").arg(dir);
+        return QString();
+    }
+    QFile::setPermissions(dst, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
+                                   QFileDevice::ReadGroup | QFileDevice::ExeGroup |
+                                   QFileDevice::ReadOther | QFileDevice::ExeOther);
+    return dst;
+}
+#endif
+
+void UsbWorker::startForwarding(QString host, quint16 port, QSslCertificate cert, QStringList busids)
+{
+    m_Host = host;
+    m_Port = port;
+    m_Cert = cert;
+#ifdef Q_OS_LINUX
+    QString error;
+    const QString helper = prepareHelper(&error);
+    if (helper.isEmpty()) {
+        for (const QString& b : busids) emit tunnelState(b, false, error);
+        return;
+    }
+    if (!m_Helper) {
+        m_Helper = new QProcess(this);
+        m_Helper->setProcessChannelMode(QProcess::SeparateChannels);
+        connect(m_Helper, &QProcess::readyReadStandardOutput, this, &UsbWorker::onHelperOutput);
+        connect(m_Helper, &QProcess::readyReadStandardError, this, [this]() {
+            qInfo().noquote() << "USB helper:" << QString::fromLocal8Bit(m_Helper->readAllStandardError()).trimmed();
+        });
+        connect(m_Helper, &QProcess::finished, this, [this](int code, QProcess::ExitStatus) {
+            if (code == 126 || code == 127) {  // pkexec: authorization dismissed / failed
+                for (const QString& b : m_Pending) emit tunnelState(b, false, UsbForwarder::tr("authorization was refused"));
+            }
+            m_Pending.clear();
+            m_Helper->deleteLater();
+            m_Helper = nullptr;
+        });
+        // pkexec shows the password prompt (polkit agent of the desktop session).
+        m_Helper->start("pkexec", {helper});
+        if (!m_Helper->waitForStarted(5000)) {
+            for (const QString& b : busids) emit tunnelState(b, false, UsbForwarder::tr("pkexec is not available"));
+            m_Helper->deleteLater();
+            m_Helper = nullptr;
+            return;
+        }
+    }
+    for (const QString& b : busids) {
+        m_Pending << b;
+        m_Helper->write(("export " + b + "\n").toUtf8());
+    }
+#else
+    for (const QString& b : busids) startTunnel(b, QString());
+#endif
+}
+
+void UsbWorker::onHelperOutput()
+{
+    while (m_Helper && m_Helper->canReadLine()) {
+        const QStringList f = QString::fromUtf8(m_Helper->readLine()).trimmed().split(' ');
+        if (f.value(0) == QLatin1String("ready") && f.size() >= 3) {
+            m_Pending.removeAll(f[1]);
+            startTunnel(f[1], f[2]);
+        }
+        else if (f.value(0) == QLatin1String("error") && f.size() >= 2) {
+            m_Pending.removeAll(f[1]);
+            emit tunnelState(f[1], false, f.mid(2).join(' '));
+        }
+    }
+}
+
+void UsbWorker::startTunnel(const QString& busid, const QString& localPath)
 {
     if (m_Tunnels.contains(busid)) return;
-    auto* t = new UsbTunnel(host, port, cert, QStringLiteral("usb/attach"), busid, this);
+    auto* t = new UsbTunnel(m_Host, m_Port, m_Cert, QStringLiteral("usb/attach"), busid, localPath, this);
     m_Tunnels.insert(busid, t);
     connect(t, &UsbTunnel::established, this, [this, busid]() { emit tunnelState(busid, true, QString()); });
     connect(t, &UsbTunnel::finished, this, [this, t, busid](QString error) {
@@ -38,6 +126,12 @@ void UsbWorker::stopAll()
 {
     const auto tunnels = m_Tunnels.values();
     for (UsbTunnel* t : tunnels) t->stop();  // finished() removes them
+    if (m_Helper) {
+        // EOF on stdin: the helper gives every device back to its driver and exits.
+        m_Helper->closeWriteChannel();
+        QProcess* p = m_Helper;
+        QTimer::singleShot(10000, p, [p]() { if (p->state() != QProcess::NotRunning) p->kill(); });
+    }
 }
 
 // ---------------------------------------------------------------- forwarder
@@ -61,10 +155,10 @@ UsbForwarder::UsbForwarder() : m_Worker(new UsbWorker())
 
 bool UsbForwarder::supported() const
 {
-#ifdef Q_OS_WIN32
+#if defined(Q_OS_WIN32) || defined(Q_OS_LINUX)
     return true;
 #else
-    return false;  // Linux/Android: Phase 3 steps 4/5
+    return false;
 #endif
 }
 
@@ -128,8 +222,44 @@ void UsbForwarder::refresh()
     }
     setStatus(m_Devices.isEmpty() ? tr("No USB devices found.")
                                   : tr("Checked devices are forwarded to your CloudDeck while a stream runs."));
+#elif defined(Q_OS_LINUX)
+    // The helper exports devices through the kernel's usbip-host (no usbipd daemon).
+    m_UsbipdPath = qEnvironmentVariable("CLOUDDECK_USB_HELPER");
+    if (m_UsbipdPath.isEmpty()) m_UsbipdPath = QCoreApplication::applicationDirPath() + "/clouddeck-usb-helper";
+    if (!QFileInfo::exists(m_UsbipdPath)) m_UsbipdPath.clear();
+    m_Devices.clear();
+    const QStringList fwd = forwardList();
+    static const QRegularExpression devName("^\\d+-[\\d.]+$");  // "1-2", "3-1.4" (not interfaces "1-2:1.0")
+    const QDir sys("/sys/bus/usb/devices");
+    const QStringList entries = sys.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::System);
+    auto attr = [&](const QString& dev, const char* name) {
+        QFile f(sys.filePath(dev + "/" + name));
+        return f.open(QIODevice::ReadOnly) ? QString::fromUtf8(f.readAll()).trimmed() : QString();
+    };
+    for (const QString& busid : entries) {
+        if (!devName.match(busid).hasMatch() || attr(busid, "bDeviceClass") == QLatin1String("09")) continue;  // skip hubs
+        const QString vid = attr(busid, "idVendor"), pid = attr(busid, "idProduct");
+        const QString serial = attr(busid, "serial");
+        QString desc = (attr(busid, "manufacturer") + " " + attr(busid, "product")).trimmed();
+        if (desc.isEmpty()) desc = tr("USB device %1:%2").arg(vid, pid);
+        const QString instance = vid + ":" + pid + ":" + (serial.isEmpty() ? "@" + busid : serial);
+        QVariantMap m;
+        m["busid"] = busid;
+        m["instanceId"] = instance;
+        m["description"] = desc;
+        m["shared"] = true;  // exported on demand by the helper during a stream
+        m["forward"] = fwd.contains(instance);
+        m["attached"] = m_Attached.value(busid, false);
+        m["warning"] = deviceWarning(desc);
+        m_Devices << m;
+    }
+    if (m_UsbipdPath.isEmpty())
+        setStatus(tr("This build has no clouddeck-usb-helper, so USB forwarding is unavailable."));
+    else
+        setStatus(m_Devices.isEmpty() ? tr("No USB devices found.")
+                                      : tr("Checked devices are forwarded while a stream runs; you'll be asked for your password once per stream."));
 #else
-    setStatus(tr("USB forwarding is available on Windows for now; Linux and Android follow."));
+    setStatus(tr("USB forwarding isn't available on this platform."));
 #endif
     emit devicesChanged();
 }
@@ -196,14 +326,15 @@ void UsbForwarder::onConnectionStarted(const QString& host, quint16 httpsPort, c
     // May run on the connection thread; hop to ours, then hand tunnels to the worker.
     QMetaObject::invokeMethod(this, [this, host, httpsPort, serverCert]() {
         refresh();
+        QStringList busids;
         for (const QVariant& v : m_Devices) {
             const QVariantMap d = v.toMap();
-            if (d["forward"].toBool() && d["shared"].toBool()) {
-                QMetaObject::invokeMethod(m_Worker, "startTunnel", Qt::QueuedConnection,
-                                          Q_ARG(QString, host), Q_ARG(quint16, httpsPort),
-                                          Q_ARG(QSslCertificate, serverCert), Q_ARG(QString, d["busid"].toString()));
-            }
+            if (d["forward"].toBool() && d["shared"].toBool()) busids << d["busid"].toString();
         }
+        if (busids.isEmpty()) return;  // nothing to forward: no helper, no password prompt
+        QMetaObject::invokeMethod(m_Worker, "startForwarding", Qt::QueuedConnection,
+                                  Q_ARG(QString, host), Q_ARG(quint16, httpsPort),
+                                  Q_ARG(QSslCertificate, serverCert), Q_ARG(QStringList, busids));
     }, Qt::QueuedConnection);
 }
 

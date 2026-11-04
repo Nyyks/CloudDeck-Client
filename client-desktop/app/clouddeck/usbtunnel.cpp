@@ -6,10 +6,20 @@
 
 static const quint16 kUsbIpPort = 3240;
 
-UsbTunnel::UsbTunnel(QString host, quint16 port, QSslCertificate serverCert, QString op, QString busid, QObject* parent)
+UsbTunnel::UsbTunnel(QString host, quint16 port, QSslCertificate serverCert, QString op, QString busid,
+                     QString localPath, QObject* parent)
     : QObject(parent), m_Host(std::move(host)), m_Port(port), m_ServerCert(std::move(serverCert)),
-      m_Op(std::move(op)), m_BusId(std::move(busid))
+      m_Op(std::move(op)), m_BusId(std::move(busid)), m_LocalPath(std::move(localPath))
 {
+    connect(&m_LocalUnix, &QLocalSocket::connected, this, &UsbTunnel::onLocalConnected);
+    connect(&m_LocalUnix, &QLocalSocket::readyRead, this, [this]() {
+        if (m_State == State::Relaying) m_Tls.write(m_LocalUnix.readAll());
+    });
+    connect(&m_LocalUnix, &QLocalSocket::disconnected, this, [this]() { fail(QString()); });
+    connect(&m_LocalUnix, &QLocalSocket::errorOccurred, this, [this](QLocalSocket::LocalSocketError) {
+        fail(tr("USB helper not reachable: %1").arg(m_LocalUnix.errorString()));
+    });
+
     connect(&m_Tls, &QSslSocket::encrypted, this, &UsbTunnel::onEncrypted);
     connect(&m_Tls, &QSslSocket::readyRead, this, &UsbTunnel::onTlsReadyRead);
     connect(&m_Tls, &QSslSocket::sslErrors, this, [this](const QList<QSslError>& errors) {
@@ -47,6 +57,13 @@ UsbTunnel::~UsbTunnel()
     m_State = State::Done;
     m_Tls.abort();
     m_Local.abort();
+    m_LocalUnix.abort();
+}
+
+void UsbTunnel::writeLocal(const QByteArray& data)
+{
+    if (m_LocalPath.isEmpty()) m_Local.write(data);
+    else m_LocalUnix.write(data);
 }
 
 void UsbTunnel::start()
@@ -82,7 +99,7 @@ void UsbTunnel::onEncrypted()
 void UsbTunnel::onTlsReadyRead()
 {
     if (m_State == State::Relaying) {
-        m_Local.write(m_Tls.readAll());
+        writeLocal(m_Tls.readAll());
         return;
     }
     m_Buffer += m_Tls.readAll();
@@ -102,7 +119,8 @@ void UsbTunnel::onTlsReadyRead()
         }
         if (m_ReplyStatus == 101 && m_Op == QLatin1String("usb/attach")) {
             m_State = State::ConnectingLocal;
-            m_Local.connectToHost(QStringLiteral("127.0.0.1"), kUsbIpPort);
+            if (m_LocalPath.isEmpty()) m_Local.connectToHost(QStringLiteral("127.0.0.1"), kUsbIpPort);
+            else m_LocalUnix.connectToServer(m_LocalPath);
             return;
         }
         if (m_ReplyStatus == 404) {
@@ -123,10 +141,10 @@ void UsbTunnel::onLocalConnected()
     m_State = State::Relaying;
     // Bytes the agent sent right after the 101 (the USB/IP import request) go first.
     if (!m_Buffer.isEmpty()) {
-        m_Local.write(m_Buffer);
+        writeLocal(m_Buffer);
         m_Buffer.clear();
     }
-    if (m_Tls.bytesAvailable()) m_Local.write(m_Tls.readAll());
+    if (m_Tls.bytesAvailable()) writeLocal(m_Tls.readAll());
     emit established();
 }
 
@@ -136,5 +154,6 @@ void UsbTunnel::fail(const QString& error)
     m_State = State::Done;
     m_Tls.disconnectFromHost();
     m_Local.disconnectFromHost();
+    m_LocalUnix.disconnectFromServer();
     emit finished(error);
 }

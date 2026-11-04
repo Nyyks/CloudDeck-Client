@@ -9,18 +9,29 @@
 #include <QThread>
 #include <QVariantList>
 
+class QProcess;
 class UsbTunnel;
 
 class UsbWorker : public QObject
 {
     Q_OBJECT
 public slots:
-    void startTunnel(QString host, quint16 port, QSslCertificate cert, QString busid);
+    // Windows: tunnels to usbipd-win. Linux: starts clouddeck-usb-helper via pkexec
+    // (one password prompt per stream), exports each busid, tunnels to its socket.
+    void startForwarding(QString host, quint16 port, QSslCertificate cert, QStringList busids);
     void stopAll();
 signals:
     void tunnelState(QString busid, bool attached, QString error);
 private:
+    void startTunnel(const QString& busid, const QString& localPath);
+    void onHelperOutput();
+
     QHash<QString, UsbTunnel*> m_Tunnels;
+    QProcess* m_Helper = nullptr;
+    QStringList m_Pending;  // exported but not yet "ready" (Linux helper)
+    QString m_Host;
+    quint16 m_Port = 0;
+    QSslCertificate m_Cert;
 };
 
 class UsbForwarder : public QObject

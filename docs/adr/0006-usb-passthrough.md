@@ -61,6 +61,26 @@ client USB/IP server              TLS 47984 (mTLS, paired cert)           VM
    they can only attach devices that a paired client offers through a tunnel.
    This is accepted for a single-user VM.
 
+### Amendment (2026-11-04): Linux and Android clients
+- **Linux no longer uses `usbipd` from usbip-utils.** It always listens on
+  TCP 3240 on all interfaces, so anyone on the LAN could take a shared device.
+  Instead, **`clouddeck-usb-helper`** (Go, in `host/agent/cmd/`, sharing the
+  tested USB/IP code with the agent) runs as root through **pkexec**, once per
+  stream with forwarded devices, so one password prompt:
+  - it binds the devices to the kernel's `usbip-host`;
+  - for each device it listens on a private Unix socket
+    (`/run/user/<uid>/clouddeck-usb/<busid>.sock`, owned by the user, 0600);
+  - it answers the agent's `OP_REQ_IMPORT` from sysfs and hands a socketpair end
+    to `usbip_sockfd`;
+  - on stdin EOF (stream end, app exit or crash) it rebinds every device to its
+    normal driver.
+
+  `PKEXEC_UID` (set by pkexec, not by the caller) decides who may connect. The
+  app copies the helper out of the AppImage first, because root can't read a
+  user's FUSE mount.
+- **Android: not planned.** The owner doesn't need it, and it would need a full
+  userspace USB/IP server.
+
 ## Consequences
 - No new ports, and no second login (pairing = authorization).
 - Isochronous devices (webcams, USB audio) will suffer over WAN. The UI warns

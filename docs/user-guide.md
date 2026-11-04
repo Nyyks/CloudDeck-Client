@@ -56,11 +56,14 @@ The audio is encrypted with the stream's session key. If the host doesn't
 have the update, the setting shows *Host does not support the microphone* and
 streaming works as usual.
 
-## USB devices (Windows client for now)
+## USB devices (Windows and Linux)
 
-Needs the CloudDeck host update on the VM, and
-[usbipd-win](https://github.com/dorssel/usbipd-win) on your PC (the app offers
-**Install usbipd-win**).
+Needs the CloudDeck host update on the VM, plus:
+- **Windows:** [usbipd-win](https://github.com/dorssel/usbipd-win) (the app offers
+  **Install usbipd-win**).
+- **Linux:** the kernel's `usbip-host` module (Fedora ships it; on Ubuntu it's in
+  `linux-modules-extra`) and `pkexec`. When a stream with forwarded devices
+  starts, you're asked for your password once.
 
 1. On the CloudDeck screen under **USB devices**, check each device you want on
    your CloudDeck. The first time, Windows asks for administrator approval to

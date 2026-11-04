@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QLocalSocket>
 #include <QObject>
 #include <QSslCertificate>
 #include <QSslSocket>
@@ -14,8 +15,10 @@ class UsbTunnel : public QObject
 {
     Q_OBJECT
 public:
-    // op: "usb/attach" (relay) or "hello" (single JSON reply)
-    UsbTunnel(QString host, quint16 port, QSslCertificate serverCert, QString op, QString busid, QObject* parent = nullptr);
+    // op: "usb/attach" (relay) or "hello" (single JSON reply).
+    // localPath: Unix socket of clouddeck-usb-helper (Linux); empty = usbipd on 127.0.0.1:3240.
+    UsbTunnel(QString host, quint16 port, QSslCertificate serverCert, QString op, QString busid,
+              QString localPath = QString(), QObject* parent = nullptr);
     ~UsbTunnel() override;
 
     void start();
@@ -31,6 +34,7 @@ private:
     void onEncrypted();
     void onTlsReadyRead();
     void onLocalConnected();
+    void writeLocal(const QByteArray& data);
     void fail(const QString& error);
 
     QString m_Host;
@@ -38,8 +42,10 @@ private:
     QSslCertificate m_ServerCert;
     QString m_Op;
     QString m_BusId;
+    QString m_LocalPath;
     QSslSocket m_Tls;
-    QTcpSocket m_Local;
+    QTcpSocket m_Local;       // usbipd-win (Windows)
+    QLocalSocket m_LocalUnix; // clouddeck-usb-helper (Linux)
     QByteArray m_Buffer;
     enum class State { Idle, Connecting, AwaitHeaders, AwaitBody, ConnectingLocal, Relaying, Done } m_State = State::Idle;
     int m_ReplyStatus = 0;

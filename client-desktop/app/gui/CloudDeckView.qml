@@ -323,7 +323,7 @@ Item {
                         text: CloudDeckUsb.status
                     }
                     Button {
-                        visible: CloudDeckUsb.supported && !CloudDeckUsb.serverInstalled
+                        visible: Qt.platform.os === "windows" && CloudDeckUsb.supported && !CloudDeckUsb.serverInstalled
                         text: qsTr("Install usbipd-win")
                         onClicked: CloudDeckUsb.installServer()
                     }

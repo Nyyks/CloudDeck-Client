@@ -120,6 +120,11 @@ exec "$APPDIR/usr/bin/moonlight" "$@"
 APPRUN_EOF
 chmod +x $APP_RUN
 
+# CloudDeck-Client: USB forwarding helper (static Go binary, docs/adr/0006)
+if [ -n "$CDC_USB_HELPER" ]; then
+  install -m 0755 "$CDC_USB_HELPER" $DEPLOY_FOLDER/usr/bin/clouddeck-usb-helper || fail "Unable to add clouddeck-usb-helper!"
+fi
+
 echo Creating AppImage
 pushd $INSTALLER_FOLDER
 # Don't bundle libva: the bundled build-environment version (jammy: VA-API 1.20/1.22)
