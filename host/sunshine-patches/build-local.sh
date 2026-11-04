@@ -21,13 +21,16 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1 || [ "${REBUILD_IMAGE:-0}" = 
 fi
 if [ "${CLEAN:-0}" = 1 ]; then docker volume rm -f cdc-sunshine-work >/dev/null; fi
 
-docker run --rm \
+# Memory/CPU caps: Docker Desktop and other WSL distros share one VM, so an
+# uncapped -j16 C++ build can exhaust the host's RAM.
+docker run --rm --memory "${DOCKER_MEMORY:-10g}" -e JOBS="${JOBS:-8}" \
   -v "$HOST_REPO:/src:ro" \
   -v "$HOST_OUT:/out" \
   -v cdc-sunshine-work:/work \
   -v cdc-sunshine-ccache:/root/.cache/ccache \
   -v cdc-sunshine-uv:/root/.cache/uv \
   -e WORK=/work/sunshine \
+  -e RUN_TESTS="${RUN_TESTS:-0}" \
   "$IMAGE" bash /src/host/sunshine-patches/build.sh /src /out
 
 # Assemble the bundle the VM installer expects (same layout as CI).

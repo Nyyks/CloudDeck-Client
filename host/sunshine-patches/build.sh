@@ -41,7 +41,7 @@ if [ -d "$WORK/.git" ] && [ "$(git -C "$WORK" rev-parse -q --verify "refs/tags/$
   git am --abort >/dev/null 2>&1 || true
   git checkout -q -f cdc-base
   git reset -q --hard cdc-base
-  git clean -fdq -e build -e .venv -e node_modules -e stage
+  git clean -fdq -e build -e build-tests -e .venv -e node_modules -e stage
 else
   rm -rf "$WORK"
   git clone --quiet --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules \
@@ -93,7 +93,17 @@ cmake -B build -G "Unix Makefiles" -S . \
   "${launcher[@]}"
 
 echo "== build"
-make -j"$(nproc)" -C build
+make -j"${JOBS:-$(nproc)}" -C build
+
+if [ "${RUN_TESTS:-0}" = 1 ]; then
+  echo "== unit tests (CloudDeck patches)"
+  cmake -B build-tests -G "Unix Makefiles" -S . \
+    -DBUILD_DOCS=OFF -DBUILD_TESTS=ON -DBUILD_WERROR=OFF -DCMAKE_BUILD_TYPE=Release \
+    -DSUNSHINE_ENABLE_CUDA=OFF -DGLAD_SKIP_PIP_INSTALL=ON -DPython_EXECUTABLE="$WORK/.venv/bin/python" \
+    "${launcher[@]}" > build-tests.cmake.log
+  make -j"${JOBS:-$(nproc)}" -C build-tests test_sunshine
+  (cd build-tests/tests && ./test_sunshine --gtest_filter='CloudDeck*')
+fi
 
 echo "== stage"
 STAGE="$WORK/stage"

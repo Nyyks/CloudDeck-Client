@@ -1,0 +1,715 @@
+From f2b0acbc307a8ab780e9ca1c0a44f6015ad79469 Mon Sep 17 00:00:00 2001
+From: nyyks <janik.wyder@gmail.com>
+Date: Wed, 4 Nov 2026 18:25:22 +0100
+Subject: [PATCH] feat: CloudDeck-Client encrypted microphone stream (protocol
+ v1)
+
+Client -> host Opus audio on the existing audio UDP port, AES-128-GCM with
+the session key (nonce domain 'CM'), negotiated via SDP x-ss-mic.version,
+RTSP SETUP streamid=mic and ANNOUNCE x-ss-mic.enabled. Decoded audio is
+played into a virtual source 'CloudDeck Microphone' (null sink + remap
+source via pactl). Stock clients are unaffected. Disable with CLOUDDECK_MIC=0.
+
+Spec: CloudDeck-Client docs/protocol-extensions.md section 1.
+---
+ cmake/compile_definitions/common.cmake |   2 +
+ src/clouddeck_mic.cpp                  | 367 +++++++++++++++++++++++++
+ src/clouddeck_mic.h                    |  71 +++++
+ src/rtsp.cpp                           |  11 +
+ src/stream.cpp                         |  18 ++
+ src/stream.h                           |   2 +
+ tests/unit/test_clouddeck_mic.cpp      |  90 ++++++
+ 7 files changed, 561 insertions(+)
+ create mode 100644 src/clouddeck_mic.cpp
+ create mode 100644 src/clouddeck_mic.h
+ create mode 100644 tests/unit/test_clouddeck_mic.cpp
+
+diff --git a/cmake/compile_definitions/common.cmake b/cmake/compile_definitions/common.cmake
+index 94fbb14..de373c3 100644
+--- a/cmake/compile_definitions/common.cmake
++++ b/cmake/compile_definitions/common.cmake
+@@ -169,6 +169,8 @@ set(SUNSHINE_TARGET_FILES
+         "${CMAKE_SOURCE_DIR}/src/rtsp.h"
+         "${CMAKE_SOURCE_DIR}/src/stream.cpp"
+         "${CMAKE_SOURCE_DIR}/src/stream.h"
++        "${CMAKE_SOURCE_DIR}/src/clouddeck_mic.cpp"
++        "${CMAKE_SOURCE_DIR}/src/clouddeck_mic.h"
+         "${CMAKE_SOURCE_DIR}/src/video.cpp"
+         "${CMAKE_SOURCE_DIR}/src/video.h"
+         "${CMAKE_SOURCE_DIR}/src/video_colorspace.cpp"
+diff --git a/src/clouddeck_mic.cpp b/src/clouddeck_mic.cpp
+new file mode 100644
+index 0000000..86b60e8
+--- /dev/null
++++ b/src/clouddeck_mic.cpp
+@@ -0,0 +1,367 @@
++/**
++ * @file src/clouddeck_mic.cpp
++ * @brief CloudDeck-Client microphone stream (see clouddeck_mic.h).
++ */
++#include "clouddeck_mic.h"
++
++#include <chrono>
++#include <condition_variable>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <deque>
++#include <map>
++#include <mutex>
++#include <thread>
++
++#include <opus/opus.h>
++
++#include "logging.h"
++
++#ifdef __linux__
++  #include <pulse/error.h>
++  #include <pulse/simple.h>
++#endif
++
++using namespace std::literals;
++
++namespace clouddeck_mic {
++  namespace {
++    constexpr auto SINK_NAME = "sink-clouddeck-mic";
++    constexpr auto SOURCE_NAME = "clouddeck-mic";
++    constexpr int FRAME_MAX = 5760;  // 120 ms at 48 kHz, Opus maximum
++    constexpr std::size_t QUEUE_MAX = 25;  // 500 ms of 20 ms frames
++    constexpr std::uint64_t MAX_LATENCY_US = 150000;
++
++    std::uint64_t be64(const std::uint8_t *p) {
++      std::uint64_t v = 0;
++      for (int i = 0; i < 8; i++) {
++        v = (v << 8) | p[i];
++      }
++      return v;
++    }
++
++#ifdef __linux__
++    /// Runs a pactl command and returns its stdout (trimmed), or nullopt on failure.
++    std::optional<std::string> pactl(const std::string &args) {
++      std::string cmd = "pactl " + args + " 2>/dev/null";
++      FILE *p = popen(cmd.c_str(), "r");
++      if (!p) {
++        return std::nullopt;
++      }
++      std::string out;
++      char buf[256];
++      while (fgets(buf, sizeof(buf), p)) {
++        out += buf;
++      }
++      if (pclose(p) != 0) {
++        return std::nullopt;
++      }
++      while (!out.empty() && (out.back() == '\n' || out.back() == ' ')) {
++        out.pop_back();
++      }
++      return out;
++    }
++
++    /// Creates the virtual microphone once; it then persists for the PipeWire session.
++    bool ensure_virtual_mic() {
++      static std::mutex m;
++      std::lock_guard lg {m};
++      auto sinks = pactl("list short sinks");
++      if (sinks && sinks->find(SINK_NAME) == std::string::npos) {
++        if (!pactl("load-module module-null-sink sink_name="s + SINK_NAME +
++                   " rate=48000 channels=1 channel_map=mono"
++                   " \"sink_properties=device.description='CloudDeck Mic (internal)'\"")) {
++          BOOST_LOG(error) << "clouddeck_mic: could not create "sv << SINK_NAME;
++          return false;
++        }
++      }
++      auto sources = pactl("list short sources");
++      if (sources && sources->find(std::string(SOURCE_NAME) + "\t") == std::string::npos) {
++        if (!pactl("load-module module-remap-source master="s + SINK_NAME + ".monitor source_name=" + SOURCE_NAME +
++                   " rate=48000 channels=1 channel_map=mono"
++                   " \"source_properties=device.description='CloudDeck Microphone'\"")) {
++          BOOST_LOG(error) << "clouddeck_mic: could not create "sv << SOURCE_NAME;
++          return false;
++        }
++        BOOST_LOG(info) << "clouddeck_mic: created virtual microphone \"CloudDeck Microphone\""sv;
++      }
++      return sinks.has_value() && sources.has_value();
++    }
++
++    class sink_t {
++    public:
++      ~sink_t() {
++        close();
++      }
++
++      bool open() {
++        if (pa) {
++          return true;
++        }
++        if (!ensure_virtual_mic()) {
++          return false;
++        }
++        pa_sample_spec spec {PA_SAMPLE_S16LE, SAMPLE_RATE, 1};
++        pa_buffer_attr attr {};
++        attr.maxlength = (std::uint32_t) -1;
++        attr.tlength = SAMPLE_RATE * 2 * 60 / 1000;  // 60 ms target
++        attr.prebuf = SAMPLE_RATE * 2 * 20 / 1000;  // start after one frame
++        attr.minreq = (std::uint32_t) -1;
++        attr.fragsize = (std::uint32_t) -1;
++        int err = 0;
++        pa = pa_simple_new(nullptr, "Sunshine", PA_STREAM_PLAYBACK, SINK_NAME, "CloudDeck microphone", &spec, nullptr, &attr, &err);
++        if (!pa) {
++          BOOST_LOG(error) << "clouddeck_mic: pa_simple_new failed: "sv << pa_strerror(err);
++          return false;
++        }
++        return true;
++      }
++
++      void write(const std::int16_t *pcm, int samples) {
++        if (!pa && !open()) {
++          return;
++        }
++        int err = 0;
++        // Bound latency against clock drift: drop the frame if we're too far behind.
++        pa_usec_t latency = pa_simple_get_latency(pa, &err);
++        if (latency != (pa_usec_t) -1 && latency > MAX_LATENCY_US) {
++          return;
++        }
++        if (pa_simple_write(pa, pcm, samples * sizeof(std::int16_t), &err) < 0) {
++          BOOST_LOG(warning) << "clouddeck_mic: write failed: "sv << pa_strerror(err) << ", reopening"sv;
++          close();
++        }
++      }
++
++      void close() {
++        if (pa) {
++          pa_simple_free(pa);
++          pa = nullptr;
++        }
++      }
++
++    private:
++      pa_simple *pa = nullptr;
++    };
++#else
++    class sink_t {
++    public:
++      bool open() {
++        return false;
++      }
++
++      void write(const std::int16_t *, int) {}
++
++      void close() {}
++    };
++#endif
++  }  // namespace
++
++  bool enabled() {
++#ifdef __linux__
++    const char *e = std::getenv("CLOUDDECK_MIC");
++    return !(e && std::string_view {e} == "0");
++#else
++    return false;
++#endif
++  }
++
++  bool is_mic_packet(const char *data, std::size_t len) {
++    return len >= MIN_PACKET_SIZE && (std::uint8_t) data[0] == PACKET_TYPE;
++  }
++
++  crypto::aes_t nonce_for(std::uint64_t seq) {
++    crypto::aes_t iv(12, 0);
++    for (int i = 0; i < 8; i++) {
++      iv[i] = (std::uint8_t) (seq >> (8 * i));
++    }
++    iv[10] = 'C';  // client originated
++    iv[11] = 'M';  // microphone
++    return iv;
++  }
++
++  std::optional<decoded_t> decode_packet(crypto::cipher::gcm_t &cipher, std::string_view packet) {
++    auto p = (const std::uint8_t *) packet.data();
++    if (packet.size() < MIN_PACKET_SIZE || packet.size() > HEADER_SIZE + TAG_SIZE + INNER_SIZE + MAX_OPUS_SIZE ||
++        p[0] != PACKET_TYPE || p[1] != PACKET_VERSION) {
++      return std::nullopt;
++    }
++    decoded_t d;
++    d.seq = be64(&p[20]);
++    auto iv = nonce_for(d.seq);
++    std::vector<std::uint8_t> plain;
++    // tagged_cipher = tag || ciphertext, exactly as gcm_t expects
++    if (cipher.decrypt(packet.substr(HEADER_SIZE), plain, &iv) != 0 || plain.size() < INNER_SIZE + 1) {
++      return std::nullopt;
++    }
++    d.flags = (std::uint16_t) ((plain[0] << 8) | plain[1]);
++    d.rtp_ts = ((std::uint32_t) plain[2] << 24) | ((std::uint32_t) plain[3] << 16) | ((std::uint32_t) plain[4] << 8) | plain[5];
++    d.opus.assign(plain.begin() + INNER_SIZE, plain.end());
++    return d;
++  }
++
++  bool replay_window_t::accept(std::uint64_t seq) {
++    if (!any_) {
++      any_ = true;
++      highest_ = seq;
++      bitmap_ = 1;
++      return true;
++    }
++    if (seq > highest_) {
++      auto shift = seq - highest_;
++      bitmap_ = shift >= 64 ? 1 : (bitmap_ << shift) | 1;
++      highest_ = seq;
++      return true;
++    }
++    auto age = highest_ - seq;
++    if (age >= 64) {
++      return false;  // too old
++    }
++    auto bit = std::uint64_t {1} << age;
++    if (bitmap_ & bit) {
++      return false;  // duplicate
++    }
++    bitmap_ |= bit;
++    return true;
++  }
++
++  struct receiver_t {
++    receiver_t(const crypto::aes_t &key, std::string tag):
++        cipher {key, false},
++        session_tag {std::move(tag)} {}
++
++    crypto::cipher::gcm_t cipher;  // only used from the UDP receive thread
++    std::string session_tag;
++    replay_window_t window;
++    std::uint64_t dropped = 0;
++
++    std::mutex lock;
++    std::condition_variable cv;
++    std::deque<decoded_t> queue;
++    bool running = false;
++    std::thread writer;
++
++    void handle(std::string_view packet) {
++      auto d = decode_packet(cipher, packet);
++      if (!d || !window.accept(d->seq)) {
++        if ((++dropped % 100) == 1) {
++          BOOST_LOG(debug) << "clouddeck_mic: dropped invalid/replayed packet(s): "sv << dropped;
++        }
++        return;
++      }
++      std::lock_guard lg {lock};
++      if (queue.size() >= QUEUE_MAX) {
++        queue.pop_front();  // writer is behind; keep the freshest audio
++      }
++      queue.push_back(std::move(*d));
++      cv.notify_one();
++    }
++
++    void run() {
++      int err = 0;
++      OpusDecoder *dec = opus_decoder_create(SAMPLE_RATE, 1, &err);
++      if (!dec) {
++        BOOST_LOG(error) << "clouddeck_mic: opus_decoder_create failed: "sv << err;
++        return;
++      }
++      sink_t sink;
++      sink.open();
++      std::vector<std::int16_t> pcm(FRAME_MAX);
++      std::optional<std::uint64_t> last_seq;
++
++      std::unique_lock ul {lock};
++      while (running) {
++        cv.wait_for(ul, 100ms, [this]() { return !queue.empty() || !running; });
++        while (!queue.empty() && running) {
++          auto d = std::move(queue.front());
++          queue.pop_front();
++          ul.unlock();
++
++          // One packet lost: let Opus rebuild it from the FEC data in this packet.
++          if (last_seq && d.seq == *last_seq + 2) {
++            int n = opus_decode(dec, d.opus.data(), (opus_int32) d.opus.size(), pcm.data(), 960, 1);
++            if (n > 0) {
++              sink.write(pcm.data(), n);
++            }
++          }
++          if (!last_seq || d.seq > *last_seq) {
++            int n = opus_decode(dec, d.opus.data(), (opus_int32) d.opus.size(), pcm.data(), FRAME_MAX, 0);
++            if (n > 0) {
++              sink.write(pcm.data(), n);
++            }
++            last_seq = d.seq;
++          }
++          ul.lock();
++        }
++      }
++      ul.unlock();
++      sink.close();
++      opus_decoder_destroy(dec);
++    }
++  };
++
++  namespace {
++    std::mutex registry_lock;
++    std::map<std::string, std::shared_ptr<receiver_t>> registry;
++  }  // namespace
++
++  std::shared_ptr<receiver_t> make_receiver(const crypto::aes_t &key, const std::string &session_tag) {
++    return std::make_shared<receiver_t>(key, session_tag);
++  }
++
++  void activate(const std::shared_ptr<receiver_t> &r) {
++    if (!r) {
++      return;
++    }
++    {
++      std::lock_guard lg {r->lock};
++      if (r->running) {
++        return;
++      }
++      r->running = true;
++    }
++    r->writer = std::thread {[r]() {
++      r->run();
++    }};
++    std::lock_guard lg {registry_lock};
++    registry[r->session_tag] = r;
++    BOOST_LOG(info) << "clouddeck_mic: microphone stream active for session"sv;
++  }
++
++  void deactivate(const std::shared_ptr<receiver_t> &r) {
++    if (!r) {
++      return;
++    }
++    {
++      std::lock_guard lg {registry_lock};
++      auto it = registry.find(r->session_tag);
++      if (it != registry.end() && it->second == r) {
++        registry.erase(it);
++      }
++    }
++    {
++      std::lock_guard lg {r->lock};
++      r->running = false;
++      r->cv.notify_all();
++    }
++    if (r->writer.joinable()) {
++      r->writer.join();
++    }
++    BOOST_LOG(info) << "clouddeck_mic: microphone stream stopped ("sv << r->dropped << " packets dropped)"sv;
++  }
++
++  void dispatch(const char *data, std::size_t len) {
++    std::string tag {data + 4, 16};
++    std::shared_ptr<receiver_t> r;
++    {
++      std::lock_guard lg {registry_lock};
++      auto it = registry.find(tag);
++      if (it == registry.end()) {
++        return;  // no session with the mic enabled for this tag
++      }
++      r = it->second;
++    }
++    r->handle(std::string_view {data, len});
++  }
++}  // namespace clouddeck_mic
+diff --git a/src/clouddeck_mic.h b/src/clouddeck_mic.h
+new file mode 100644
+index 0000000..f031748
+--- /dev/null
++++ b/src/clouddeck_mic.h
+@@ -0,0 +1,71 @@
++/**
++ * @file src/clouddeck_mic.h
++ * @brief CloudDeck-Client microphone stream (client -> host), protocol v1.
++ *
++ * Opus audio from the client, AES-GCM encrypted with the session key, arriving on
++ * the existing audio UDP port. Decoded audio goes into a virtual PulseAudio/PipeWire
++ * source "clouddeck-mic" ("CloudDeck Microphone").
++ * Wire format: CloudDeck-Client docs/protocol-extensions.md, section 1.
++ */
++#pragma once
++
++#include <cstdint>
++#include <memory>
++#include <optional>
++#include <string>
++#include <string_view>
++#include <vector>
++
++#include "crypto.h"
++
++namespace clouddeck_mic {
++  constexpr std::uint8_t PACKET_TYPE = 0x8D;
++  constexpr std::uint8_t PACKET_VERSION = 1;
++  constexpr std::size_t HEADER_SIZE = 28;  ///< type, version, reserved[2], sessionTag[16], seq[8]
++  constexpr std::size_t TAG_SIZE = 16;
++  constexpr std::size_t INNER_SIZE = 6;  ///< encrypted flags (u16) + rtpTs (u32)
++  constexpr std::size_t MAX_OPUS_SIZE = 1200;
++  constexpr std::size_t MIN_PACKET_SIZE = HEADER_SIZE + TAG_SIZE + INNER_SIZE + 1;
++  constexpr int SAMPLE_RATE = 48000;
++
++  /// True if this host advertises the mic extension (disable with CLOUDDECK_MIC=0).
++  bool enabled();
++
++  /// Cheap check used by the UDP receive loop on the audio socket.
++  bool is_mic_packet(const char *data, std::size_t len);
++
++  struct decoded_t {
++    std::uint64_t seq;
++    std::uint32_t rtp_ts;
++    std::uint16_t flags;
++    std::vector<std::uint8_t> opus;
++  };
++
++  /// 12-byte nonce: LE64(seq) || 00 00 || 'C' 'M'.
++  crypto::aes_t nonce_for(std::uint64_t seq);
++
++  /// Verifies and decrypts one packet (no replay check). Empty on any failure.
++  std::optional<decoded_t> decode_packet(crypto::cipher::gcm_t &cipher, std::string_view packet);
++
++  /// 64-entry sliding replay window. accept() returns false for duplicates/too old.
++  class replay_window_t {
++  public:
++    bool accept(std::uint64_t seq);
++
++  private:
++    bool any_ = false;
++    std::uint64_t highest_ = 0;
++    std::uint64_t bitmap_ = 0;
++  };
++
++  struct receiver_t;
++
++  /// Created for a session whose ANNOUNCE requested the mic.
++  std::shared_ptr<receiver_t> make_receiver(const crypto::aes_t &key, const std::string &session_tag);
++  /// Starts accepting packets for the receiver's session tag.
++  void activate(const std::shared_ptr<receiver_t> &receiver);
++  /// Stops accepting packets and joins the writer thread.
++  void deactivate(const std::shared_ptr<receiver_t> &receiver);
++  /// Routes a mic packet (already checked with is_mic_packet) to its session.
++  void dispatch(const char *data, std::size_t len);
++}  // namespace clouddeck_mic
+diff --git a/src/rtsp.cpp b/src/rtsp.cpp
+index c7135dd..ee53189 100644
+--- a/src/rtsp.cpp
++++ b/src/rtsp.cpp
+@@ -22,6 +22,7 @@ extern "C" {
+ #include <boost/bind.hpp>
+ 
+ // local includes
++#include "clouddeck_mic.h"
+ #include "config.h"
+ #include "globals.h"
+ #include "input.h"
+@@ -948,6 +949,11 @@ namespace rtsp_stream {
+     ss << "a=x-ss-general.encryptionSupported:" << encryption_flags_supported << std::endl;
+     ss << "a=x-ss-general.encryptionRequested:" << encryption_flags_requested << std::endl;
+ 
++    // CloudDeck-Client: advertise the encrypted microphone stream (protocol v1)
++    if (clouddeck_mic::enabled()) {
++      ss << "a=x-ss-mic.version:1"sv << std::endl;
++    }
++
+     if (video::last_encoder_probe_supported_ref_frames_invalidation) {
+       ss << "a=x-nv-video[0].refPicInvalidation:1"sv << std::endl;
+     }
+@@ -1029,6 +1035,9 @@ namespace rtsp_stream {
+       port = net::map_port(stream::VIDEO_STREAM_PORT);
+     } else if (type == "control"sv) {
+       port = net::map_port(stream::CONTROL_PORT);
++    } else if (type == "mic"sv && clouddeck_mic::enabled()) {
++      // CloudDeck-Client: mic packets share the audio port; the ping payload is the session tag
++      port = net::map_port(stream::AUDIO_STREAM_PORT);
+     } else {
+       cmd_not_found(sock, session, std::move(req));
+ 
+@@ -1139,6 +1148,7 @@ namespace rtsp_stream {
+     args.try_emplace("x-ss-video[0].chromaSamplingType"sv, "0"sv);
+     args.try_emplace("x-ss-video[0].intraRefresh"sv, "0"sv);
+     args.try_emplace("x-nv-video[0].clientRefreshRateX100"sv, "0"sv);
++    args.try_emplace("x-ss-mic.enabled"sv, "0"sv);
+ 
+     stream::config_t config;
+ 
+@@ -1159,6 +1169,7 @@ namespace rtsp_stream {
+       config.audioQosType = (int) util::from_view(args.at("x-nv-aqos.qosTrafficType"sv));
+       config.videoQosType = (int) util::from_view(args.at("x-nv-vqos[0].qosTrafficType"sv));
+       config.encryptionFlagsEnabled = (uint32_t) util::from_view(args.at("x-ss-general.encryptionEnabled"sv));
++      config.micEnabled = clouddeck_mic::enabled() && util::from_view(args.at("x-ss-mic.enabled"sv)) == 1;
+ 
+       // Legacy clients use nvFeatureFlags to indicate support for audio encryption
+       if (util::from_view(args.at("x-nv-general.featureFlags"sv)) & 0x20) {
+diff --git a/src/stream.cpp b/src/stream.cpp
+index 1291c9c..0531681 100644
+--- a/src/stream.cpp
++++ b/src/stream.cpp
+@@ -23,6 +23,7 @@ extern "C" {
+ }
+ 
+ // local includes
++#include "clouddeck_mic.h"
+ #include "config.h"
+ #include "display_device.h"
+ #include "globals.h"
+@@ -493,6 +494,8 @@ namespace stream {
+ 
+     std::shared_ptr<input::input_t> input;  ///< Platform input device state for this stream.
+ 
++    std::shared_ptr<clouddeck_mic::receiver_t> mic;  ///< CloudDeck-Client: microphone receiver, if negotiated.
++
+     std::jthread audioThread;  ///< Audio thread.
+     std::jthread videoThread;  ///< Video thread.
+ 
+@@ -1484,6 +1487,13 @@ namespace stream {
+           return;
+         }
+ 
++        // CloudDeck-Client: microphone packets arrive on the audio socket (type byte 0x8D
++        // can never start a hex ping payload, so this never shadows a ping).
++        if (buf_elem == 1 && clouddeck_mic::is_mic_packet(buf[buf_elem].data(), bytes)) {
++          clouddeck_mic::dispatch(buf[buf_elem].data(), bytes);
++          return;
++        }
++
+         if (bytes == 4) {
+           // For legacy PING packets, find the matching session by address.
+           auto it = peer_to_session.find(peer.address());
+@@ -2230,6 +2240,7 @@ namespace stream {
+       session.videoThread.join();
+       BOOST_LOG(debug) << "Waiting for audio to end..."sv;
+       session.audioThread.join();
++      clouddeck_mic::deactivate(session.mic);  // CloudDeck-Client
+       BOOST_LOG(debug) << "Waiting for control to end..."sv;
+       session.controlEnd.view();
+       // Reset input on session stop to avoid stuck repeated keys
+@@ -2290,6 +2301,7 @@ namespace stream {
+ 
+       session.audioThread = std::jthread {audioThread, &session};
+       session.videoThread = std::jthread {videoThread, &session};
++      clouddeck_mic::activate(session.mic);  // CloudDeck-Client: no-op without a mic
+ 
+       session.state.store(state_e::RUNNING, std::memory_order_relaxed);
+ 
+@@ -2370,6 +2382,12 @@ namespace stream {
+ 
+       session->audio.ping_payload = launch_session.av_ping_payload;
+       session->audio.avRiKeyId = util::endian::big(*(std::uint32_t *) launch_session.iv.data());
++
++      // CloudDeck-Client: microphone receiver keyed with the session's GCM key
++      if (config.micEnabled && launch_session.av_ping_payload.size() == 16) {
++        BOOST_LOG(info) << "Microphone stream requested by client"sv;
++        session->mic = clouddeck_mic::make_receiver(launch_session.gcm_key, launch_session.av_ping_payload);
++      }
+       session->audio.sequenceNumber = 0;
+       session->audio.timestamp = 0;
+ 
+diff --git a/src/stream.h b/src/stream.h
+index c0b0f96..27892bb 100644
+--- a/src/stream.h
++++ b/src/stream.h
+@@ -38,6 +38,8 @@ namespace stream {
+ 
+     uint32_t encryptionFlagsEnabled;  ///< Bitmask of GameStream encryption features enabled for the session.
+ 
++    bool micEnabled = false;  ///< CloudDeck-Client: client requested the microphone stream (x-ss-mic.enabled).
++
+     std::optional<int> gcmap;  ///< Optional game-controller mapping override from the launch request.
+   };
+ 
+diff --git a/tests/unit/test_clouddeck_mic.cpp b/tests/unit/test_clouddeck_mic.cpp
+new file mode 100644
+index 0000000..097ffd8
+--- /dev/null
++++ b/tests/unit/test_clouddeck_mic.cpp
+@@ -0,0 +1,90 @@
++/**
++ * @file tests/unit/test_clouddeck_mic.cpp
++ * @brief Test src/clouddeck_mic.* (CloudDeck-Client microphone protocol v1).
++ *
++ * kVector1 is shared/fixtures/mic/vector1.hex from CloudDeck-Client, produced by the
++ * client encoder in moonlight-common-c. Decoding it here proves both sides agree.
++ */
++// test includes
++#include "../tests_common.h"
++
++#include <src/clouddeck_mic.h>
++
++namespace {
++  constexpr std::string_view kVector1 =
++    "8d01000030313233343536373839414243444546000000000000002a482827e507ee300f92a34956a7c03b46d5400f54feeee33985a58fdfedfe5021d2201248a8fb1800b11a";
++
++  std::string unhex(std::string_view h) {
++    std::string out;
++    for (std::size_t i = 0; i + 1 < h.size(); i += 2) {
++      out.push_back((char) std::stoi(std::string {h.substr(i, 2)}, nullptr, 16));
++    }
++    return out;
++  }
++
++  crypto::aes_t test_key() {
++    return {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
++  }
++}  // namespace
++
++TEST(CloudDeckMicTest, DecodesSharedClientVector) {
++  crypto::cipher::gcm_t cipher {test_key(), false};
++  auto pkt = unhex(kVector1);
++  ASSERT_TRUE(clouddeck_mic::is_mic_packet(pkt.data(), pkt.size()));
++  auto d = clouddeck_mic::decode_packet(cipher, pkt);
++  ASSERT_TRUE(d.has_value());
++  EXPECT_EQ(d->seq, 42u);
++  EXPECT_EQ(d->rtp_ts, 40320u);
++  EXPECT_EQ(d->flags, 0u);
++  ASSERT_EQ(d->opus.size(), 20u);
++  for (int i = 0; i < 20; i++) {
++    EXPECT_EQ(d->opus[i], (std::uint8_t) (i * 7 + 3));
++  }
++  EXPECT_EQ(pkt.substr(4, 16), "0123456789ABCDEF");
++}
++
++TEST(CloudDeckMicTest, RejectsTamperedPackets) {
++  auto pkt = unhex(kVector1);
++  for (std::size_t pos : {std::size_t {1}, std::size_t {27}, std::size_t {30}, pkt.size() - 1}) {
++    crypto::cipher::gcm_t cipher {test_key(), false};
++    auto bad = pkt;
++    bad[pos] ^= 1;
++    EXPECT_FALSE(clouddeck_mic::decode_packet(cipher, bad).has_value()) << "byte " << pos;
++  }
++  crypto::aes_t wrong = test_key();
++  wrong[0] ^= 1;
++  crypto::cipher::gcm_t wrong_cipher {wrong, false};
++  EXPECT_FALSE(clouddeck_mic::decode_packet(wrong_cipher, pkt).has_value());
++  crypto::cipher::gcm_t cipher {test_key(), false};
++  EXPECT_FALSE(clouddeck_mic::decode_packet(cipher, pkt.substr(0, 40)).has_value());
++}
++
++TEST(CloudDeckMicTest, PingPayloadsAreNeverMicPackets) {
++  // Sunshine ping payloads are hex text; 0x8D can never be their first byte.
++  std::string ping = "0123456789ABCDEF";
++  ping.append(64, 'A');
++  EXPECT_FALSE(clouddeck_mic::is_mic_packet(ping.data(), ping.size()));
++}
++
++TEST(CloudDeckMicTest, NonceUsesClientMicDomain) {
++  auto iv = clouddeck_mic::nonce_for(0x0102030405060708ULL);
++  ASSERT_EQ(iv.size(), 12u);
++  EXPECT_EQ(iv[0], 0x08);
++  EXPECT_EQ(iv[7], 0x01);
++  EXPECT_EQ(iv[10], 'C');
++  EXPECT_EQ(iv[11], 'M');
++}
++
++TEST(CloudDeckMicTest, ReplayWindow) {
++  clouddeck_mic::replay_window_t w;
++  EXPECT_TRUE(w.accept(10));
++  EXPECT_FALSE(w.accept(10));  // duplicate
++  EXPECT_TRUE(w.accept(12));
++  EXPECT_TRUE(w.accept(11));  // late but inside window
++  EXPECT_FALSE(w.accept(11));
++  EXPECT_TRUE(w.accept(100));
++  EXPECT_FALSE(w.accept(36));  // 64 behind
++  EXPECT_TRUE(w.accept(37));  // 63 behind
++  EXPECT_TRUE(w.accept(1000));  // big jump resets the bitmap
++  EXPECT_FALSE(w.accept(100));
++}
+-- 
+2.56.0.windows.2
+
