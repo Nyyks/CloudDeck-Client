@@ -1,0 +1,45 @@
+---
+# Host-side builds: patched Sunshine for the CloudDeck VM (Fedora 43 / Bazzite),
+# plus static checks of the host install scripts.
+name: Host
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+    paths: ['host/**', '.github/workflows/host.yml']
+  pull_request:
+    paths: ['host/**', '.github/workflows/host.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: host-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scripts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: shellcheck
+        run: shellcheck -S warning host/install/*.sh host/sunshine-patches/*.sh
+
+  sunshine:
+    runs-on: ubuntu-24.04
+    container: fedora:43
+    steps:
+      - name: Install git
+        run: dnf -y install git
+      - uses: actions/checkout@v5
+      - name: Build patched Sunshine
+        run: bash host/sunshine-patches/build.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/out"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: clouddeck-sunshine-fc43-x86_64
+          path: |
+            out/*.tar.zst
+            out/*.sha256
+            out/needed-libs.txt
+            out/dropped-files.txt
+          if-no-files-found: error
