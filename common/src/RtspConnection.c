@@ -952,6 +952,8 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
     hasSessionId = false;
     controlStreamId = APP_VERSION_AT_LEAST(7, 1, 431) ? "streamid=control/13/0" : "streamid=control/1/0";
     AudioEncryptionEnabled = false;
+    MicSupportedByHost = false; // CloudDeck-Client mic extension
+    MicNegotiated = false;
     encryptedRtspEnabled = serverInfo->rtspSessionUrl && strstr(serverInfo->rtspSessionUrl, "rtspenc://");
     encryptionCtx = PltCreateCryptoContext();
     decryptionCtx = PltCreateCryptoContext();
@@ -1155,6 +1157,15 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
         }
         EncryptionFeaturesEnabled = 0;
 
+        // CloudDeck-Client: microphone extension (docs/protocol-extensions.md §1)
+        {
+            uint32_t micVersion = 0;
+            MicSupportedByHost = parseSdpAttributeToUInt(response.payload, "x-ss-mic.version", &micVersion) && micVersion >= 1;
+            if (StreamConfig.enableMicrophone && !MicSupportedByHost) {
+                Limelog("Host does not support the microphone extension; continuing without microphone\n");
+            }
+        }
+
         // Parse the Opus surround parameters out of the RTSP DESCRIBE response.
         ret = parseOpusConfigurations(&response);
         if (ret != 0) {
@@ -1328,6 +1339,32 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
         }
 
         freeMessage(&response);
+    }
+
+    // CloudDeck-Client: microphone SETUP. Failure here never fails the connection.
+    if (StreamConfig.enableMicrophone && MicSupportedByHost) {
+        RTSP_MESSAGE response;
+        int error = -1;
+
+        if (!setupStream(&response, "streamid=mic/0/0", &error)) {
+            Limelog("RTSP SETUP streamid=mic failed: %d; continuing without microphone\n", error);
+        }
+        else {
+            uint16_t micPort = 0;
+            char* tag = getOptionContent(response.options, "X-SS-Ping-Payload");
+            if (response.message.response.statusCode == 200 &&
+                    parseServerPortFromTransport(&response, &micPort) && micPort == AudioPortNumber &&
+                    tag != NULL && strlen(tag) == sizeof(MicSessionTag)) {
+                memcpy(MicSessionTag, tag, sizeof(MicSessionTag));
+                MicNegotiated = true;
+                Limelog("Microphone negotiated on audio port %u\n", micPort);
+            }
+            else {
+                Limelog("RTSP SETUP streamid=mic: unusable response (status %d); continuing without microphone\n",
+                        response.message.response.statusCode);
+            }
+            freeMessage(&response);
+        }
     }
 
     {

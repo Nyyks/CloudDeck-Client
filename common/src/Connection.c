@@ -81,6 +81,7 @@ void LiStopConnection(void) {
     }
     if (stage == STAGE_AUDIO_STREAM_START) {
         Limelog("Stopping audio stream...");
+        stopMicrophoneStream(); // CloudDeck-Client: shares the audio socket
         stopAudioStream();
         stage--;
         Limelog("done\n");
@@ -517,6 +518,9 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
     LC_ASSERT(stage == STAGE_AUDIO_STREAM_START);
     ListenerCallbacks.stageComplete(STAGE_AUDIO_STREAM_START);
     Limelog("done\n");
+
+    // CloudDeck-Client: no-op unless the mic was negotiated during the RTSP handshake
+    startMicrophoneStream();
 
     Limelog("Starting input stream...");
     ListenerCallbacks.stageStarting(STAGE_INPUT_STREAM_START);

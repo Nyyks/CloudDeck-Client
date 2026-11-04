@@ -1,0 +1,5 @@
+# Builder image for the patched Sunshine (deps baked in once).
+# Built and used by build-local.sh; not published anywhere.
+FROM fedora:43
+COPY build.sh /tmp/build.sh
+RUN DEPS_ONLY=1 bash /tmp/build.sh /tmp /tmp/out && dnf clean all && rm -f /tmp/build.sh

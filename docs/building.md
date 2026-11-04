@@ -1,8 +1,24 @@
 # Building
 
-CI (`.github/workflows/build.yml`) is the reference build for every platform.
-Pushing to `main`, `feat/**` or `fix/**` builds everything. Pushing a `v*` tag
-also publishes a GitHub Release (prerelease) with all artifacts.
+Day-to-day builds and tests run **locally**. GitHub Actions only runs for `v*`
+release tags (publishing a GitHub Release), or on demand ("Run workflow").
+
+## Host: patched Sunshine + VM bundle (Docker)
+
+```sh
+bash host/sunshine-patches/build-local.sh     # -> out/host/clouddeck-host-*.tar.gz
+CLEAN=1 bash host/sunshine-patches/build-local.sh   # from a fresh checkout
+```
+
+The script builds a `fedora:43` builder image once. The Sunshine checkout,
+build tree and ccache live in Docker volumes, so after a patch change only the
+touched files recompile. The first build takes about 10 minutes.
+
+## Protocol tests (WSL / Linux)
+
+```sh
+bash tests/mic-protocol/run.sh    # builds common/ with CMake, runs the mic packet tests + vector
+```
 
 ## Clone
 

@@ -100,6 +100,10 @@ typedef struct _STREAM_CONFIGURATION {
     // in /launch and /resume requests.
     char remoteInputAesKey[16];
     char remoteInputAesIv[16];
+
+    // CloudDeck-Client: request the microphone stream (docs/protocol-extensions.md §1).
+    // Only takes effect if the host advertises x-ss-mic.version >= 1.
+    bool enableMicrophone;
 } STREAM_CONFIGURATION, *PSTREAM_CONFIGURATION;
 
 // Use this function to zero the stream configuration when allocated on the stack or heap
@@ -1017,6 +1021,15 @@ void LiRequestIdrFrame(void);
 #define LI_FF_PEN_TOUCH_EVENTS        0x01 // LiSendTouchEvent()/LiSendPenEvent() supported
 #define LI_FF_CONTROLLER_TOUCH_EVENTS 0x02 // LiSendControllerTouchEvent() supported
 uint32_t LiGetHostFeatureFlags(void);
+
+// CloudDeck-Client microphone extension (docs/protocol-extensions.md §1).
+// True once the RTSP handshake found a host advertising mic v1.
+bool LiIsMicrophoneSupportedByHost(void);
+// True while the negotiated microphone stream can accept data.
+bool LiIsMicrophoneStreamActive(void);
+// Sends one Opus packet (48 kHz mono) covering frameSamples samples (960 for 20 ms).
+// Thread-safe; returns 0 on success, -1 if the stream isn't active or sending failed.
+int LiSendMicrophoneOpusData(const unsigned char* opusData, int opusLength, unsigned int frameSamples);
 
 #ifdef __cplusplus
 }

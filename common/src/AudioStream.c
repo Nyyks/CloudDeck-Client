@@ -64,6 +64,19 @@ static void AudioPingThreadProc(void* context) {
     }
 }
 
+// CloudDeck-Client: the microphone stream sends from the audio socket to the host's
+// audio port, reusing the NAT path the pings opened (docs/protocol-extensions.md §1).
+int sendAudioSocketDatagram(const void* data, int length) {
+    LC_SOCKADDR saddr;
+
+    if (rtpSocket == INVALID_SOCKET || AudioPortNumber == 0) {
+        return -1;
+    }
+    memcpy(&saddr, &RemoteAddr, sizeof(saddr));
+    SET_PORT(&saddr, AudioPortNumber);
+    return (int)sendto(rtpSocket, (const char*)data, length, 0, (struct sockaddr*)&saddr, AddrLen);
+}
+
 // Initialize the audio stream and start
 int initializeAudioStream(void) {
     LbqInitializeLinkedBlockingQueue(&packetQueue, 30);

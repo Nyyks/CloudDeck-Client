@@ -5,12 +5,11 @@ name: Host
 permissions:
   contents: read
 
+# Normally built locally (host/sunshine-patches/build-local.sh). CI runs on
+# release tags or on demand via "Run workflow".
 on:
   push:
-    branches: [main, 'feat/**', 'fix/**']
-    paths: ['host/**', '.github/workflows/host.yml']
-  pull_request:
-    paths: ['host/**', '.github/workflows/host.yml']
+    tags: ['v*']
   workflow_dispatch:
 
 concurrency:

@@ -12,6 +12,7 @@ LOCAL_MODULE    := moonlight-core
 MLC := ../../../../../../common
 
 LOCAL_SRC_FILES := $(MLC)/src/AudioStream.c \
+                   $(MLC)/src/MicrophoneStream.c \
                    $(MLC)/src/ByteBuffer.c \
                    $(MLC)/src/Connection.c \
                    $(MLC)/src/ConnectionTester.c \

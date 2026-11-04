@@ -7,15 +7,11 @@ name: Build
 permissions:
   contents: read
 
+# Day-to-day builds and tests run locally (docs/building.md). CI only builds
+# release tags, or on demand via "Run workflow".
 on:
   push:
-    branches: [main, 'feat/**', 'fix/**']
     tags: ['v*']
-    # Save CI minutes (private repo): host-only and docs-only changes don't rebuild clients.
-    paths-ignore: ['host/**', 'docs/**', '*.md', '.github/workflows/host.yml']
-  pull_request:
-    branches: [main]
-    paths-ignore: ['host/**', 'docs/**', '*.md', '.github/workflows/host.yml']
   workflow_dispatch:
 
 concurrency:

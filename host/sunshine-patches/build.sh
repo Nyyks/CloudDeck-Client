@@ -12,28 +12,46 @@ set -euo pipefail
 REPO="$(cd "$1" && pwd)"
 OUT="$(mkdir -p "$2" && cd "$2" && pwd)"
 HERE="$REPO/host/sunshine-patches"
-TAG="$(tr -d ' \r\n' < "$HERE/UPSTREAM_TAG")"
 PREFIX=/var/opt/clouddeck-client/sunshine
 PY=3.14
 GCC=14
 WORK="${WORK:-/tmp/sunshine-build}"
 
-echo "== deps (Fedora BuildRequires from upstream spec)"
-dnf -y install --setopt=install_weak_deps=False \
-  cmake desktop-file-utils git libcap-devel libcurl-devel libdrm-devel libevdev-devel libva-devel \
-  libX11-devel libxcb-devel libXcursor-devel libXfixes-devel libXi-devel libXinerama-devel libXrandr-devel \
-  libXtst-devel openssl-devel pipewire-devel systemd-rpm-macros wget which appstream glslc \
-  libappstream-glib vulkan-loader-devel libatomic xz libgudev-devel mesa-libGL-devel mesa-libgbm-devel \
-  miniupnpc-devel nodejs-npm numactl-devel opus-devel pulseaudio-libs-devel qt6-qtbase-devel \
-  qt6-qtsvg-devel systemd-udev uv "gcc$GCC" "gcc$GCC-c++" patch zstd file
+if ! command -v "gcc-$GCC" >/dev/null || [ "${FORCE_DEPS:-0}" = 1 ]; then
+  echo "== deps (Fedora BuildRequires from upstream spec)"
+  dnf -y install --setopt=install_weak_deps=False \
+    cmake desktop-file-utils git libcap-devel libcurl-devel libdrm-devel libevdev-devel libva-devel \
+    libX11-devel libxcb-devel libXcursor-devel libXfixes-devel libXi-devel libXinerama-devel libXrandr-devel \
+    libXtst-devel openssl-devel pipewire-devel systemd-rpm-macros wget which appstream glslc \
+    libappstream-glib vulkan-loader-devel libatomic xz libgudev-devel mesa-libGL-devel mesa-libgbm-devel \
+    miniupnpc-devel nodejs-npm numactl-devel opus-devel pulseaudio-libs-devel qt6-qtbase-devel \
+    qt6-qtsvg-devel systemd-udev uv "gcc$GCC" "gcc$GCC-c++" patch zstd file ccache
+fi
+[ "${DEPS_ONLY:-0}" = 1 ] && { echo "deps installed"; exit 0; }
+
+TAG="$(tr -d ' \r\n' < "$HERE/UPSTREAM_TAG")"
 
 echo "== source $TAG"
-rm -rf "$WORK"
-git clone --quiet --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules \
-  https://github.com/LizardByte/Sunshine.git "$WORK"
-cd "$WORK"
-git config user.name "CloudDeck-Client CI"
-git config user.email "ci@invalid"
+if [ -d "$WORK/.git" ] && [ "$(git -C "$WORK" rev-parse -q --verify "refs/tags/$TAG^{commit}" 2>/dev/null)" = \
+     "$(git -C "$WORK" rev-parse -q --verify "refs/heads/cdc-base" 2>/dev/null)" ]; then
+  # Reuse the checkout (and its build dir) for fast incremental rebuilds while
+  # iterating on patches: back to the pristine tag, then re-apply the series.
+  echo "reusing $WORK"
+  cd "$WORK"
+  git am --abort >/dev/null 2>&1 || true
+  git checkout -q -f cdc-base
+  git reset -q --hard cdc-base
+  git clean -fdq -e build -e .venv -e node_modules -e stage
+else
+  rm -rf "$WORK"
+  git clone --quiet --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules \
+    https://github.com/LizardByte/Sunshine.git "$WORK"
+  cd "$WORK"
+  git switch -q -c cdc-base
+fi
+git config user.name "CloudDeck-Client build"
+git config user.email "build@invalid"
+git switch -q -C cdc-patched cdc-base
 
 echo "== patches"
 APPLIED=0
@@ -56,6 +74,8 @@ uv sync --locked --only-group glad --python "$PY" --no-install-project
 
 echo "== configure"
 export CC="gcc-$GCC" CXX="g++-$GCC"
+launcher=()
+command -v ccache >/dev/null && launcher=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
 COMMIT="$(git rev-parse HEAD)"
 export BRANCH=master BUILD_VERSION="$TAG" COMMIT
 cmake -B build -G "Unix Makefiles" -S . \
@@ -69,7 +89,8 @@ cmake -B build -G "Unix Makefiles" -S . \
   -DSUNSHINE_PUBLISHER_NAME="CloudDeck-Client (patched LizardByte Sunshine)" \
   -DSUNSHINE_PUBLISHER_WEBSITE=https://github.com/Nyyks/CloudDeck-Client \
   -DSUNSHINE_PUBLISHER_ISSUE_URL=https://github.com/Nyyks/CloudDeck-Client/issues \
-  -DGLAD_SKIP_PIP_INSTALL=ON -DPython_EXECUTABLE="$WORK/.venv/bin/python"
+  -DGLAD_SKIP_PIP_INSTALL=ON -DPython_EXECUTABLE="$WORK/.venv/bin/python" \
+  "${launcher[@]}"
 
 echo "== build"
 make -j"$(nproc)" -C build
@@ -104,5 +125,4 @@ fi
 NAME="clouddeck-sunshine-${TAG#v}-p${APPLIED}.${PATCH_ID}-fc$(rpm -E %fedora)-x86_64"
 tar --zstd -C "$STAGE" -cf "$OUT/$NAME.tar.zst" "${PREFIX#/}"
 ( cd "$OUT" && sha256sum "$NAME.tar.zst" > "$NAME.tar.zst.sha256" )
-"$ROOT/bin/sunshine" --version 2>&1 | head -3 || true
 echo "== done: $OUT/$NAME.tar.zst"

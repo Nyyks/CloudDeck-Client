@@ -39,6 +39,23 @@ extern uint16_t AudioPortNumber;
 extern uint16_t VideoPortNumber;
 
 extern SS_PING AudioPingPayload;
+
+// CloudDeck-Client microphone extension (MicrophoneStream.c)
+extern bool MicSupportedByHost;
+extern bool MicNegotiated;
+extern char MicSessionTag[16];
+void startMicrophoneStream(void);
+void stopMicrophoneStream(void);
+int sendAudioSocketDatagram(const void* data, int length);
+void buildMicrophoneNonce(uint64_t seq, unsigned char nonce[12]);
+int buildMicrophonePacket(PPLT_CRYPTO_CONTEXT cryptoContext, const unsigned char key[16], const char sessionTag[16],
+                          uint64_t seq, uint32_t rtpTimestamp, uint16_t flags,
+                          const unsigned char* opusData, int opusLength,
+                          unsigned char* out, int outCapacity);
+int parseMicrophonePacket(PPLT_CRYPTO_CONTEXT cryptoContext, const unsigned char key[16],
+                          const unsigned char* packet, int packetLength,
+                          char sessionTagOut[16], uint64_t* seqOut, uint32_t* rtpTimestampOut, uint16_t* flagsOut,
+                          unsigned char* opusOut, int opusCapacity);
 extern SS_PING VideoPingPayload;
 extern uint32_t ControlConnectData;
 
