@@ -1,7 +1,22 @@
 # ADR-0003: Sunshine changes as a patch series, not a full fork
 
-- Status: Proposed (depends on how Sunshine is installed on the VM; see feasibility §1)
+- Status: Accepted (host facts confirmed by the 2026-11-04 inventory)
 - Date: 2026-11-04
+
+## Host facts (inventory)
+- Sunshine is the RPM `Sunshine-2026.914.233613-1.fc43` baked into CloudDeck's
+  image (`/usr/bin/sunshine`, caps `cap_sys_admin,cap_sys_nice=p`). It runs as
+  user unit `app-dev.lizardbyte.app.Sunshine.service` with CloudDeck drop-ins,
+  and is supervised by `clouddeck-sunshine-watchdog.service`.
+- So the **pinned upstream tag is `v2026.914.233613`** (same version as the
+  host), and the build container is **Fedora 43**.
+- The override is a user-unit drop-in
+  (`~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/zz-clouddeck-client.conf`
+  with `ExecStart=` + `ExecStart=/var/opt/clouddeck-client/sunshine/bin/sunshine`).
+  The unit name, config path, and state path stay as they are, so CloudDeck's
+  watchdog and controller keep working. Uninstalling just removes the drop-in.
+- On a CloudDeck image update that bumps Sunshine, the installer warns about the
+  version mismatch. We then rebase the series and rebuild.
 
 ## Context
 We need small host-side protocol extensions (mic stream, combined-desktop

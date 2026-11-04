@@ -17,7 +17,9 @@ export LC_ALL=C
 section() { printf '\n========== %s ==========\n' "$*"; }
 run() { printf '\n$ %s\n' "$*"; timeout 20 bash -c "$*" 2>&1 | sed -E \
   -e 's/((pass(word)?|secret|token|api[_-]?key|credentials?)[[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1<redacted>/Ig' \
-  | head -n 400; }
+  -e 's/(Bearer|Basic|Token)[[:space:]]+[A-Za-z0-9._~+\/=-]{8,}/\1 <redacted>/g' \
+  -e 's/([?&](token|key|sig|signature|auth)=)[^&[:space:]]+/\1<redacted>/Ig' \
+  | cut -c1-400 | head -n 400; }
 
 section "OS / Bazzite"
 run 'cat /etc/os-release'
@@ -29,7 +31,7 @@ run 'uptime; nproc; free -h; df -hT / /var /home 2>/dev/null'
 run 'systemd-detect-virt; cat /sys/class/dmi/id/sys_vendor /sys/class/dmi/id/product_name 2>/dev/null'
 
 section "Overlay / layered packages / kargs"
-run 'rpm-ostree status --json 2>/dev/null | grep -E "\"(requested-packages|requested-local-packages|packages|base-removals|kernel-arguments)\"" -A6 | head -60'
+run 'rpm-ostree status --booted --json 2>/dev/null | grep -E "\"(requested-packages|requested-local-packages|packages|base-removals|base-local-replacements)\" :" | grep -v "ostree\.\(manifest\|container\)"'
 run 'rpm-ostree kargs'
 
 section "GPU and driver"
@@ -83,7 +85,8 @@ run 'cat /etc/resolv.conf | grep -v "^#"'
 run 'curl -s --max-time 5 https://api.ipify.org; echo " (public IPv4 as seen from VM)"'
 run 'firewall-cmd --state; firewall-cmd --get-active-zones; firewall-cmd --list-all-zones 2>/dev/null | grep -Ev "^\s*$"'
 run 'firewall-cmd --direct --get-all-rules; firewall-cmd --list-rich-rules'
-run 'nft list ruleset 2>/dev/null | head -200'
+run 'nft list tables 2>/dev/null'
+run 'nft list ruleset 2>/dev/null | grep -vE "^\s*$" | grep -E "table|chain|saddr|daddr|dport|accept|drop|reject" | grep -v "^\s*jump" | head -150'
 run 'iptables -S 2>/dev/null | head -80'
 run 'ss -tulpnH | sort -k5'
 
