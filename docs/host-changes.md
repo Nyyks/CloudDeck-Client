@@ -16,6 +16,11 @@ each run to `/var/lib/clouddeck-client/changes.log`.
 | `~user/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/zz-clouddeck-client.conf` | New user-unit drop-in: `ExecStart` → `sunshine-launch` | `uninstall.sh` | Yes (`/home`) |
 | `~user/.config/clouddeck-client/`, `~user/.local/state/clouddeck-client/` | Launcher state (disable flag, health-check result, start times) | `uninstall.sh --purge` | Yes |
 | `/var/lib/clouddeck-client/` | Install state, change log, backups | `uninstall.sh --purge` | Yes |
+| `/var/opt/clouddeck-client/bin/clouddeck-agent` | Host agent binary (static Go) | `uninstall.sh --purge` | Yes |
+| `/etc/systemd/system/clouddeck-agent.service` (enabled) | Agent system unit (root; needed for `vhci_hcd` sysfs and `modprobe vhci-hcd`) | `uninstall.sh` | Yes (`/etc`) |
+| `/etc/clouddeck-client/agent.env` | `CDC_SOCKET_GROUP=<desktop user's group>` | `uninstall.sh` | Yes |
+| `/run/clouddeck-client/agent.sock` (runtime) | Agent socket, `root:<user group>` 0660; only Sunshine connects | Gone when the agent stops | No (tmpfs) |
+| Kernel module `vhci-hcd` (runtime) | Loaded by the agent at start (in the stock kernel, no rpm-ostree) | `modprobe -r vhci-hcd` or reboot | No |
 | PipeWire (runtime only) | Patch 0001 loads `module-null-sink` `sink-clouddeck-mic` and `module-remap-source` `clouddeck-mic` via `pactl` on the first mic stream | `pactl unload-module` or reboot; nothing is written to disk | No (gone after reboot; recreated on the next mic stream) |
 
 **Not touched:** the OS image (no rpm-ostree), `/usr/bin/sunshine`,

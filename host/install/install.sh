@@ -149,6 +149,36 @@ done
 # Keep a copy of the uninstaller on the host so removal never needs the bundle.
 install -m 0755 -o root -g root "$HERE/uninstall.sh" "$BASE/uninstall.sh"
 
+# ---------------------------------------------------------------- host agent (USB passthrough)
+# Optional in the bundle: older bundles have no agent.
+if [ -f "$HERE/clouddeck-agent" ]; then
+    agent_changed=0
+    install -d -m 0755 "$BASE/bin" /etc/clouddeck-client
+    if ! cmp -s "$HERE/clouddeck-agent" "$BASE/bin/clouddeck-agent"; then
+        install -m 0755 -o root -g root "$HERE/clouddeck-agent" "$BASE/bin/clouddeck-agent"
+        agent_changed=1
+    fi
+    env_line="CDC_SOCKET_GROUP=$(id -gn "$TARGET_USER")"
+    if [ "$(cat /etc/clouddeck-client/agent.env 2>/dev/null)" != "$env_line" ]; then
+        echo "$env_line" > /etc/clouddeck-client/agent.env
+        agent_changed=1
+    fi
+    if ! cmp -s "$HERE/files/clouddeck-agent.service" /etc/systemd/system/clouddeck-agent.service; then
+        install -m 0644 "$HERE/files/clouddeck-agent.service" /etc/systemd/system/clouddeck-agent.service
+        agent_changed=1
+    fi
+    systemctl daemon-reload
+    systemctl enable clouddeck-agent.service >/dev/null 2>&1
+    if [ "$agent_changed" -eq 1 ] || ! systemctl is-active --quiet clouddeck-agent.service; then
+        # Restarting detaches any forwarded USB devices; clients reattach.
+        systemctl restart clouddeck-agent.service
+        changed=1
+    fi
+    sleep 1
+    systemctl is-active --quiet clouddeck-agent.service && info "host agent running" ||
+        echo "WARNING: clouddeck-agent failed to start: journalctl -u clouddeck-agent -b" >&2
+fi
+
 # ---------------------------------------------------------------- user unit drop-in
 DROPDIR="$TARGET_HOME/.config/systemd/user/$UNIT.d"
 DROPIN="$DROPDIR/zz-clouddeck-client.conf"

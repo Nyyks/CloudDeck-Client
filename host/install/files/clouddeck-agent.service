@@ -1,0 +1,20 @@
+# Installed by CloudDeck-Client host/install/install.sh (docs/adr/0006-usb-passthrough.md).
+[Unit]
+Description=CloudDeck-Client host agent (USB passthrough via vhci_hcd)
+After=local-fs.target
+
+[Service]
+# CDC_SOCKET_GROUP = the desktop user's group (Sunshine runs as that user)
+EnvironmentFile=/etc/clouddeck-client/agent.env
+ExecStart=/var/opt/clouddeck-client/bin/clouddeck-agent -group ${CDC_SOCKET_GROUP}
+Restart=on-failure
+RestartSec=2
+# Root is required for vhci_hcd sysfs writes and modprobe; restrict the rest.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=full
+ReadWritePaths=/run
+
+[Install]
+WantedBy=multi-user.target

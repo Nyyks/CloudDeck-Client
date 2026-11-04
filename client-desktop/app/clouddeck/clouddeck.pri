@@ -6,7 +6,9 @@ SOURCES += \
     $$PWD/clouddeckprovider.cpp \
     $$PWD/cloudsession.cpp \
     $$PWD/micstreamer.cpp \
-    $$PWD/secretstore.cpp
+    $$PWD/secretstore.cpp \
+    $$PWD/usbforwarder.cpp \
+    $$PWD/usbtunnel.cpp
 
 HEADERS += \
     $$PWD/branding.h \
@@ -15,7 +17,9 @@ HEADERS += \
     $$PWD/clouddeckprovider.h \
     $$PWD/cloudsession.h \
     $$PWD/micstreamer.h \
-    $$PWD/secretstore.h
+    $$PWD/secretstore.h \
+    $$PWD/usbforwarder.h \
+    $$PWD/usbtunnel.h
 
 linux {
     # Secret Service (keychain) over D-Bus; no libsecret dependency.

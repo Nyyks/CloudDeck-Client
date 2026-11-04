@@ -56,6 +56,15 @@ as_user() {
 as_user systemctl --user daemon-reload || true
 [ -d "$STATE_DIR" ] && echo "$(date -Is) uninstall purge=$PURGE" >> "$STATE_DIR/changes.log"
 
+# Host agent: stop it (this detaches every forwarded USB device) and remove its unit.
+if [ -f /etc/systemd/system/clouddeck-agent.service ]; then
+    systemctl disable --now clouddeck-agent.service >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/clouddeck-agent.service
+    rm -rf /etc/clouddeck-client
+    systemctl daemon-reload
+    info "stopped and removed clouddeck-agent"
+fi
+
 if [ "$PURGE" -eq 1 ]; then
     # Only remove the patched files once nothing runs from them.
     if [ "$RESTART" -eq 0 ] && pgrep -u "$TARGET_UID" -f "^$BASE/" >/dev/null; then

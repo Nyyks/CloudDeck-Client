@@ -7,6 +7,7 @@ import QtQuick.Controls.Material 2.2
 import ComputerManager 1.0
 import CloudDeck 1.0
 import CloudDeckMic 1.0
+import CloudDeckUsb 1.0
 
 Item {
     id: root
@@ -301,6 +302,52 @@ Item {
                         wrapMode: Text.Wrap
                         opacity: 0.7
                         text: CloudDeckMic.status + "  ·  " + qsTr("Mute during a stream: Ctrl+Alt+Shift+U")
+                    }
+
+                    // ---- USB devices (docs/adr/0006-usb-passthrough.md)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 8
+                        Label { text: qsTr("USB devices"); font.bold: true; Layout.fillWidth: true }
+                        Button {
+                            visible: CloudDeckUsb.supported
+                            text: qsTr("Refresh")
+                            flat: true
+                            onClicked: CloudDeckUsb.refresh()
+                        }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        opacity: 0.7
+                        text: CloudDeckUsb.status
+                    }
+                    Button {
+                        visible: CloudDeckUsb.supported && !CloudDeckUsb.serverInstalled
+                        text: qsTr("Install usbipd-win")
+                        onClicked: CloudDeckUsb.installServer()
+                    }
+                    Repeater {
+                        model: CloudDeckUsb.devices
+                        delegate: ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            CheckBox {
+                                Layout.fillWidth: true
+                                text: modelData.description + "  (" + modelData.busid + ")" +
+                                      (modelData.attached ? "  ·  " + qsTr("on your CloudDeck") : "")
+                                checked: modelData.forward
+                                onToggled: CloudDeckUsb.setForward(modelData.instanceId, checked)
+                            }
+                            Label {
+                                visible: modelData.warning !== ""
+                                Layout.leftMargin: 40
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                color: "#ffd43b"
+                                text: modelData.warning
+                            }
+                        }
                     }
 
                     RowLayout {

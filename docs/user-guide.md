@@ -56,6 +56,21 @@ The audio is encrypted with the stream's session key. If the host doesn't
 have the update, the setting shows *Host does not support the microphone* and
 streaming works as usual.
 
+## USB devices (Windows client for now)
+
+Needs the CloudDeck host update on the VM, and
+[usbipd-win](https://github.com/dorssel/usbipd-win) on your PC (the app offers
+**Install usbipd-win**).
+
+1. On the CloudDeck screen under **USB devices**, check each device you want on
+   your CloudDeck. The first time, Windows asks for administrator approval to
+   *share* the device with usbipd.
+2. Start a stream. Checked devices move to the VM ("on your CloudDeck") and
+   come back to your PC when the stream ends.
+3. While forwarded, a device can't be used on this PC. Don't forward the
+   keyboard or mouse you're using. Webcams and USB audio may work poorly over
+   the internet.
+
 ## Troubleshooting
 
 - *"streaming host is not reachable"*: CloudDeck only lets in the network the

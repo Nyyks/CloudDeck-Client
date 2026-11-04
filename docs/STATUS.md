@@ -9,7 +9,7 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-04. Phase 1 verified by the owner on real devices with
+Last updated: 2026-11-04 (Phase 3 starting). Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
 explicitly confirmed, so Linux stays *partial* where it differs.
 
@@ -18,11 +18,11 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Release | CI builds (MSI + portable zip, AppImage, APK); tagged releases | done | partial | done | |
 | Release | Side-by-side with stock Moonlight | done | partial | done | ADR-0005 |
 | Release | Own icons | done | partial | done | `tools/icon-gen`. The Android TV banner is still Moonlight's. |
-| Release | Own version number | partial | partial | partial | 0.1.0 from `client-desktop/app/version.txt`, pending the v0.1.0 build |
+| Release | Own version number | done | partial | done | 0.1.0 from `client-desktop/app/version.txt` |
 | Account | Sign in, session restored from keychain | done | partial | done | Linux: Secret Service path untested on a real desktop |
 | Account | MFA challenge | partial | partial | partial | This account has no MFA, so it's untested |
 | VM | Live status, Start / Stop / Restart | done | partial | done | Restart = stop+start (no API) |
-| VM | One-click start and connect | done | partial | done | |
+| VM | One-click start and connect | done | partial | done | Re-verified 2026-11-04 after the fix for hosts that are already known (new VM IP) |
 | VM | Automatic host address | done | partial | done | |
 | VM | Automatic pairing (no PIN typing) | done | partial | done | |
 | VM | Auto-stop on session end | done | partial | done | |
@@ -30,8 +30,8 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Stream | Codecs (H.264/HEVC/AV1), HDR, bitrate/fps | done | partial | done | Inherited from Moonlight |
 | Input | Gamepads, touch modes | done | partial | done | Inherited from Moonlight; extended in Phase 6 |
 | Audio | Microphone passthrough | partial | partial | partial | Protocol v1 implemented end to end: common-c sender (19 tests + shared vector), Sunshine patch 0001 (host decoder tests the same vector), desktop SDL capture with mute hotkey Ctrl+Alt+Shift+U and level meter, Android `VOICE_COMMUNICATION` + AEC. **Not yet tested against the VM.** Push-to-talk and an Android mute button aren't done yet (planned with the Quick Menu). |
-| Host | Patched Sunshine install with automatic fallback to stock | partial | — | — | `host/install`, launcher fail-safe tests pass; not yet installed on the VM |
-| USB | USB device passthrough | not started | not started | not started | Phase 3, design: feasibility §3.2 |
+| Host | Patched Sunshine install with automatic fallback to stock | done | — | — | Installed on the VM by the owner (bundle -id4d49f); streams work through it. CloudDeck default app list preserved |
+| USB | USB device passthrough | partial | not started | not started | Phase 3 (ADR-0006). Host: Go agent (vhci attach, tested with a fake kernel), Sunshine patch 0002 tunnel (tests pass). Windows client: usbipd-win list/share, per-device forwarding during streams. **Not yet tested on the VM.** Linux and Android clients are next. |
 | Display | Multiple monitors | not started | not started | n/a | Phase 4, design: feasibility §3.3 |
 | Display | Tablet as extra screen | not started | n/a | not started | Stretch goal |
 | UX | In-stream Quick Menu | not started | not started | not started | Phase 5 |

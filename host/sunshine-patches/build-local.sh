@@ -36,18 +36,24 @@ if [ "${SKIP_BUILD:-0}" != 1 ]; then
     "$IMAGE" bash /src/host/sunshine-patches/build.sh /src /out
 fi
 
+# Host agent: test + static build in the official Go image (always; ~10 s with cache).
+docker run --rm -v "$HOST_REPO:/src" -v cdc-go-cache:/root/.cache -w /src/host/agent \
+  -e CGO_ENABLED=0 golang:1.27 sh -c \
+  "go vet ./... && go test -count=1 ./... && go build -trimpath -ldflags '-s -w -X main.version=$(git -C "$REPO" rev-parse --short=7 HEAD)' -o /src/out/host/clouddeck-agent ./cmd/clouddeck-agent"
+
 # Assemble the bundle the VM installer expects (same layout as CI). The "-i" part
 # identifies the installer revision, so a bundle with new scripts gets a new name.
 cd "$OUT"
 TB="$(ls -t clouddeck-sunshine-*.tar.zst | head -n1)"
 NAME="$(basename "$TB" .tar.zst)"
-INST_ID="$(cat "$REPO/host/install/install.sh" "$REPO/host/install/uninstall.sh" "$REPO/host/install/files/"* | sha256sum | cut -c1-6)"
+INST_ID="$(cat "$REPO/host/install/install.sh" "$REPO/host/install/uninstall.sh" "$REPO/host/install/files/"* "$OUT/clouddeck-agent" | sha256sum | cut -c1-6)"
 B="clouddeck-host-${NAME#clouddeck-sunshine-}-i$INST_ID"
 rm -rf "$B" && mkdir -p "$B/files"
 cp "$REPO/host/install/install.sh" "$REPO/host/install/uninstall.sh" "$REPO/LICENSE" "$B/"
 cp "$REPO/host/install/files/"* "$B/files/"
 cp "$TB" "$TB.sha256" "$B/"
-chmod +x "$B"/*.sh "$B"/files/sunshine-*
+cp "$OUT/clouddeck-agent" "$B/"
+chmod +x "$B"/*.sh "$B"/files/sunshine-* "$B/clouddeck-agent"
 tar -czf "$B.tar.gz" "$B"
 sha256sum "$B.tar.gz" > "$B.tar.gz.sha256"
 echo "bundle: $OUT/$B.tar.gz"

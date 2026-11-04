@@ -1,6 +1,7 @@
 #include "session.h"
 #include "settings/streamingpreferences.h"
 #include "clouddeck/micstreamer.h"
+#include "clouddeck/usbforwarder.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
 
@@ -1292,6 +1293,7 @@ private:
 
         // Finish cleanup of the connection state
         MicStreamer::get()->onConnectionStopping(); // CloudDeck-Client
+        UsbForwarder::get()->onConnectionStopping(); // CloudDeck-Client: detach forwarded USB
         LiStopConnection();
 
         // Perform a best-effort app quit
@@ -1716,6 +1718,7 @@ bool Session::startConnectionAsync()
     }
 
     MicStreamer::get()->onConnectionStarted(); // CloudDeck-Client
+    UsbForwarder::get()->onConnectionStarted(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert); // CloudDeck-Client
     emit connectionStarted();
     return true;
 }
