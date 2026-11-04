@@ -25,10 +25,19 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
     steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1, sparse-checkout: client-desktop/app/version.txt, sparse-checkout-cone-mode: false }
       - id: v
         shell: bash
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.0-${GITHUB_SHA::7}"; fi
+          BASE=$(tr -d ' \r\n' < client-desktop/app/version.txt)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            V="${GITHUB_REF_NAME#v}"
+            # The tag must match version.txt (pre-release suffixes like -alpha.1 allowed)
+            [[ "${V%%-*}" == "$BASE" ]] || { echo "Tag $GITHUB_REF_NAME does not match version.txt ($BASE)"; exit 1; }
+          else
+            V="$BASE-dev.${GITHUB_SHA::7}"
+          fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
   desktop-unit-tests:

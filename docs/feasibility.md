@@ -190,3 +190,31 @@ for kargs):** *AC:* 2 independent outputs.
 
 **Phase 5: Polish.** Quick Menu, network test, clipboard, file upload,
 shortcuts, auto-reconnect, tray, Android virtual gamepad.
+
+**Phase 6: Controllers** *(scope addition requested by the owner, 2026-11-04)*
+
+Baseline inherited from Moonlight:
+- SDL gamepads on desktop, plus a mapping helper for unknown pads
+- Android gamepad support and the configurable on-screen controller
+
+The phase extends that baseline:
+1. **Controller support:** verify and fill gaps for the pads you actually use
+   (Xbox, DualSense/DualShock, Switch Pro, 8BitDo) on every client. That
+   covers rumble, motion/gyro, touchpad, and the DualSense LED and trigger
+   effects where Sunshine supports them, plus multiple pads and hot-plug.
+2. **Remapping:**
+   - per-controller button and axis remapping with deadzone and sensitivity,
+     saved as profiles
+   - an optional per-app profile
+   - a UI on desktop and Android; the profile format is shared so a profile
+     moves between clients
+3. **On-screen controller:**
+   - Android: a layout editor (position, size, opacity, which buttons), plus
+     profiles
+   - Windows/Linux touchscreens (tablets, 2-in-1s), if wanted
+   - reachable from the Quick Menu
+
+*AC:* each listed pad works with rumble on each client. A remap profile applies
+in-game and survives restart. A custom on-screen layout can be created, saved,
+and used in a stream. Detailed plan to be confirmed with you before the phase
+starts.

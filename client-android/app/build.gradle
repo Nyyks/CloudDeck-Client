@@ -11,8 +11,12 @@ android {
         minSdk 21
         targetSdk 36
 
-        versionName "12.2"
-        versionCode = 315
+        // CloudDeck-Client: one version for all clients (client-desktop/app/version.txt).
+        // versionCode = 100000 + MMmmpp, kept above upstream's 315 so the alpha builds upgrade cleanly.
+        def cdcVersion = file("../../client-desktop/app/version.txt").text.trim()
+        def (cdcMajor, cdcMinor, cdcPatch) = cdcVersion.tokenize('.').collect { it as int }
+        versionName cdcVersion
+        versionCode = 100000 + cdcMajor * 10000 + cdcMinor * 100 + cdcPatch
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
