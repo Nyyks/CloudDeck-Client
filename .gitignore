@@ -47,3 +47,9 @@ target/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Local files provided by the user (credentials, host inventory output)
+CDCred.txt
+*Cred*.txt
+out.txt
+inventory-*.txt
