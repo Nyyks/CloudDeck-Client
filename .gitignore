@@ -56,3 +56,6 @@ inventory-*.txt
 
 # icon-gen build output
 tools/icon-gen/build/
+
+# Qt installer logs
+aqtinstall.log
