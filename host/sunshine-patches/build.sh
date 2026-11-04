@@ -45,7 +45,10 @@ while IFS= read -r p; do
   APPLIED=$((APPLIED + 1))
 done < "$HERE/series"
 echo "$APPLIED patch(es) applied"
-PATCH_ID="$(cat "$HERE/series" "$HERE"/*.patch 2>/dev/null | sha256sum | cut -c1-8)"
+shopt -s nullglob
+patch_files=("$HERE"/*.patch)
+shopt -u nullglob
+PATCH_ID="$(cat "$HERE/series" "${patch_files[@]}" | sha256sum | cut -c1-8)"
 
 echo "== python deps for glad"
 uv python install "$PY"
