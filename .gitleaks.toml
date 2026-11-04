@@ -1,0 +1,16 @@
+title = "CloudDeck-Client gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "jwt"
+description = "JSON Web Token (e.g. CloudDeck portal session)"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "private-key-block"
+description = "PEM private key (pairing certs, signing keys)"
+regex = '''-----BEGIN ((RSA|EC|ENCRYPTED|OPENSSH) )?PRIVATE KEY-----'''
+keywords = ["PRIVATE KEY"]

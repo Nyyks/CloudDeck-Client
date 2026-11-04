@@ -1,0 +1,17 @@
+#!/bin/sh
+# Blocks commits that contain secrets. Enable with:
+#   git config core.hooksPath .githooks
+# Requires gitleaks >= 8.19 (https://github.com/gitleaks/gitleaks, MIT).
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not found on PATH; refusing to commit." >&2
+  echo "Install it (winget install Gitleaks.Gitleaks / brew install gitleaks) or see docs/building.md." >&2
+  exit 1
+fi
+
+# Also refuse HAR captures outright, even if gitleaks finds nothing in them.
+if git diff --cached --name-only | grep -Ei '\.har$|\.env($|\.)' | grep -v '\.env\.example$' >/dev/null; then
+  echo "pre-commit: HAR or .env file staged; these must stay untracked." >&2
+  exit 1
+fi
+
+exec gitleaks git --pre-commit --staged --redact --no-banner --config .gitleaks.toml

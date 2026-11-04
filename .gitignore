@@ -1,0 +1,49 @@
+# ---- Secrets: never commit ----
+.env
+.env.*
+!.env.example
+*.har
+har/
+captures/
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+keystore.properties
+local.properties
+# Sunshine / Moonlight pairing material and state
+sunshine_state.json
+credentials/
+cacert.pem
+cakey.pem
+**/pairing/*.crt
+# Cookies / tokens dumped during API reverse-engineering
+cookies*.txt
+tokens*.json
+
+# ---- Build output ----
+build/
+build-*/
+out/
+dist/
+*.AppImage
+*.apk
+*.aab
+*.msi
+*.exe
+target/
+.gradle/
+.cxx/
+.externalNativeBuild/
+
+# ---- Editors / OS ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
