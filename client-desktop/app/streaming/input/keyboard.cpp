@@ -1,4 +1,5 @@
 #include "streaming/session.h"
+#include "clouddeck/micstreamer.h"
 
 #include <Limelight.h>
 #include "SDL_compat.h"
@@ -175,6 +176,11 @@ void SdlInputHandler::performSpecialKeyCombo(KeyCombo combo)
         }
 
         updateKeyboardGrabState();
+        break;
+
+    case KeyComboToggleMicMute: // CloudDeck-Client
+        MicStreamer::get()->toggleMute();
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Microphone %s", MicStreamer::get()->muted() ? "muted" : "unmuted");
         break;
 
     default:

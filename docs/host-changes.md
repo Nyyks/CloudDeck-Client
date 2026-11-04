@@ -16,6 +16,7 @@ each run to `/var/lib/clouddeck-client/changes.log`.
 | `~user/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/zz-clouddeck-client.conf` | New user-unit drop-in: `ExecStart` → `sunshine-launch` | `uninstall.sh` | Yes (`/home`) |
 | `~user/.config/clouddeck-client/`, `~user/.local/state/clouddeck-client/` | Launcher state (disable flag, health-check result, start times) | `uninstall.sh --purge` | Yes |
 | `/var/lib/clouddeck-client/` | Install state, change log, backups | `uninstall.sh --purge` | Yes |
+| PipeWire (runtime only) | Patch 0001 loads `module-null-sink` `sink-clouddeck-mic` and `module-remap-source` `clouddeck-mic` via `pactl` on the first mic stream | `pactl unload-module` or reboot; nothing is written to disk | No (gone after reboot; recreated on the next mic stream) |
 
 **Not touched:** the OS image (no rpm-ostree), `/usr/bin/sunshine`,
 `~/.config/sunshine/*` (config, apps, pairing state), CloudDeck's own units and

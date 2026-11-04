@@ -3,14 +3,19 @@
 SSH to the VM is blocked by CloudDeck's upstream filter, so you run these steps
 yourself, in a terminal on the VM (Konsole, inside a stream).
 
-## What gets installed (Phase 2, step 1)
+## What gets installed
 
 A patched Sunshine, built from the **same version** as the stock one
-(2026.914.233613). It runs *instead of* the stock binary through a launcher. With
-no patches in the series yet, it behaves exactly like stock Sunshine; this step
-only proves the install path. Nothing in the read-only OS image changes, and
-stock Sunshine, its config, and your pairings stay as they are. The full list is
-in [host-changes.md](host-changes.md).
+(2026.914.233613). It runs *instead of* the stock binary through a launcher.
+Current patches:
+
+| Patch | Adds |
+|---|---|
+| 0001 | Encrypted microphone stream. The first stream with the mic on creates the PipeWire source **CloudDeck Microphone**, which then persists until reboot. Disable with `systemctl --user set-environment CLOUDDECK_MIC=0` followed by a Sunshine restart. |
+
+Nothing in the read-only OS image changes, and stock Sunshine, its config, and
+your pairings stay as they are. The full list is in
+[host-changes.md](host-changes.md).
 
 **Fail-safes:** the VM stays streamable even if the patched build is broken. The
 launcher starts **stock** Sunshine instead when:

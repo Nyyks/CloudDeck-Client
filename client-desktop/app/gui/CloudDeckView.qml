@@ -6,6 +6,7 @@ import QtQuick.Controls.Material 2.2
 
 import ComputerManager 1.0
 import CloudDeck 1.0
+import CloudDeckMic 1.0
 
 Item {
     id: root
@@ -267,6 +268,41 @@ Item {
                             onValueModified: CloudDeck.autoStopIdleMinutes = value
                         }
                     }
+                    // ---- microphone (docs/protocol-extensions.md §1)
+                    Label { text: qsTr("Microphone"); font.bold: true; Layout.topMargin: 8 }
+                    Switch {
+                        text: qsTr("Send my microphone to the CloudDeck")
+                        checked: CloudDeckMic.enabled
+                        onToggled: CloudDeckMic.enabled = checked
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        AutoResizingComboBox {
+                            id: micDevice
+                            Layout.fillWidth: true
+                            model: [qsTr("System default")].concat(CloudDeckMic.devices)
+                            currentIndex: Math.max(0, CloudDeckMic.devices.indexOf(CloudDeckMic.device) + 1)
+                            onActivated: CloudDeckMic.device = index === 0 ? "" : CloudDeckMic.devices[index - 1]
+                            Component.onCompleted: CloudDeckMic.refreshDevices()
+                        }
+                        Button {
+                            text: CloudDeckMic.testing ? qsTr("Stop test") : qsTr("Test")
+                            onClicked: CloudDeckMic.testing ? CloudDeckMic.stopTest() : CloudDeckMic.startTest()
+                        }
+                    }
+                    ProgressBar {
+                        Layout.fillWidth: true
+                        from: 0; to: 1
+                        value: CloudDeckMic.level
+                        visible: CloudDeckMic.testing || CloudDeckMic.level > 0
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        opacity: 0.7
+                        text: CloudDeckMic.status + "  ·  " + qsTr("Mute during a stream: Ctrl+Alt+Shift+U")
+                    }
+
                     RowLayout {
                         Label { text: qsTr("App to launch:"); Layout.fillWidth: true }
                         TextField {

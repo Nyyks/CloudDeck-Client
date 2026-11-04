@@ -1,5 +1,6 @@
 #include "session.h"
 #include "settings/streamingpreferences.h"
+#include "clouddeck/micstreamer.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
 
@@ -656,6 +657,7 @@ bool Session::initialize(QQuickWindow* qtWindow)
     SDL_StopTextInput();
 
     LiInitializeStreamConfiguration(&m_StreamConfig);
+    m_StreamConfig.enableMicrophone = MicStreamer::get()->enabled(); // CloudDeck-Client
     m_StreamConfig.width = m_Preferences->width;
     m_StreamConfig.height = m_Preferences->height;
 
@@ -1289,6 +1291,7 @@ private:
         SDL_assert(m_Session->m_VideoDecoder == nullptr);
 
         // Finish cleanup of the connection state
+        MicStreamer::get()->onConnectionStopping(); // CloudDeck-Client
         LiStopConnection();
 
         // Perform a best-effort app quit
@@ -1712,6 +1715,7 @@ bool Session::startConnectionAsync()
         return false;
     }
 
+    MicStreamer::get()->onConnectionStarted(); // CloudDeck-Client
     emit connectionStarted();
     return true;
 }

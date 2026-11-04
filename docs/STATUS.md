@@ -29,7 +29,8 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | VM | Auto-stop after N idle minutes | partial | partial | not started | Not part of the owner's test; desktop only |
 | Stream | Codecs (H.264/HEVC/AV1), HDR, bitrate/fps | done | partial | done | Inherited from Moonlight |
 | Input | Gamepads, touch modes | done | partial | done | Inherited from Moonlight; extended in Phase 6 |
-| Audio | Microphone passthrough | not started | not started | not started | Phase 2, design: feasibility §3.1 |
+| Audio | Microphone passthrough | partial | partial | partial | Protocol v1 implemented end to end: common-c sender (19 tests + shared vector), Sunshine patch 0001 (host decoder tests the same vector), desktop SDL capture with mute hotkey Ctrl+Alt+Shift+U and level meter, Android `VOICE_COMMUNICATION` + AEC. **Not yet tested against the VM.** Push-to-talk and an Android mute button aren't done yet (planned with the Quick Menu). |
+| Host | Patched Sunshine install with automatic fallback to stock | partial | — | — | `host/install`, launcher fail-safe tests pass; not yet installed on the VM |
 | USB | USB device passthrough | not started | not started | not started | Phase 3, design: feasibility §3.2 |
 | Display | Multiple monitors | not started | not started | n/a | Phase 4, design: feasibility §3.3 |
 | Display | Tablet as extra screen | not started | n/a | not started | Stretch goal |

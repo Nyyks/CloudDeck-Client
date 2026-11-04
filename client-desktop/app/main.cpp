@@ -51,6 +51,7 @@
 #include "gui/appmodel.h"
 #include "backend/autoupdatechecker.h"
 #include "clouddeck/cloudsession.h"
+#include "clouddeck/micstreamer.h"
 #include "backend/computermanager.h"
 #include "backend/systemproperties.h"
 #include "streaming/session.h"
@@ -946,6 +947,8 @@ int main(int argc, char *argv[])
                                            [](QQmlEngine*, QJSEngine*) -> QObject* {
                                                return new CloudSession();
                                            });
+    // Created here, on the GUI thread, before any session can call MicStreamer::get().
+    qmlRegisterSingletonInstance("CloudDeckMic", 1, 0, "CloudDeckMic", MicStreamer::get());
     qmlRegisterSingletonType<AutoUpdateChecker>("AutoUpdateChecker", 1, 0,
                                                 "AutoUpdateChecker",
                                                 [](QQmlEngine*, QJSEngine*) -> QObject* {

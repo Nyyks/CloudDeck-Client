@@ -5,6 +5,7 @@ SOURCES += \
     $$PWD/clouddeckapi.cpp \
     $$PWD/clouddeckprovider.cpp \
     $$PWD/cloudsession.cpp \
+    $$PWD/micstreamer.cpp \
     $$PWD/secretstore.cpp
 
 HEADERS += \
@@ -13,6 +14,7 @@ HEADERS += \
     $$PWD/cloudprovider.h \
     $$PWD/clouddeckprovider.h \
     $$PWD/cloudsession.h \
+    $$PWD/micstreamer.h \
     $$PWD/secretstore.h
 
 linux {

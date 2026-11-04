@@ -41,6 +41,21 @@ request at all.
   streamed for N minutes. 0 = never.
 - **App to launch:** the Sunshine app name. The default is `CloudDeck`.
 
+## Microphone
+
+Needs the CloudDeck host update on the VM ([host-setup.md](host-setup.md)).
+
+1. On the CloudDeck screen, turn on **Send my microphone to the CloudDeck**.
+   On desktop, pick a device and press **Test** to check the level meter.
+   Android asks for the microphone permission.
+2. Start a stream. On the VM, the microphone appears as **CloudDeck Microphone**;
+   choose it in Discord, Steam or the game if it isn't picked automatically.
+3. During a stream on desktop, **Ctrl+Alt+Shift+U** mutes and unmutes.
+
+The audio is encrypted with the stream's session key. If the host doesn't
+have the update, the setting shows *Host does not support the microphone* and
+streaming works as usual.
+
 ## Troubleshooting
 
 - *"streaming host is not reachable"*: CloudDeck only lets in the network the
