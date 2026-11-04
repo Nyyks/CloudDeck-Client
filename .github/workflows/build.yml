@@ -63,9 +63,13 @@ jobs:
       - name: Collect artifacts
         shell: pwsh
         run: |
+          # Upstream scripts keep their internal file names (docs/adr/0005); rename here.
           New-Item -ItemType Directory -Force out | Out-Null
-          Get-ChildItem client-desktop/build -Recurse -Include *.msi | Copy-Item -Destination out/
-          Get-ChildItem client-desktop/build -Recurse -Filter 'MoonlightPortable-x64-*.zip' | Copy-Item -Destination out/
+          $msi = @(Get-ChildItem client-desktop/build -Recurse -Include *.msi)
+          $zip = @(Get-ChildItem client-desktop/build -Recurse -Filter 'MoonlightPortable-x64-*.zip')
+          if ($msi.Count -ne 1 -or $zip.Count -ne 1) { throw "expected 1 msi + 1 zip, got $($msi.Count) + $($zip.Count)" }
+          Copy-Item $msi[0] "out/CloudDeckClient-$env:CI_VERSION-windows-x64.msi"
+          Copy-Item $zip[0] "out/CloudDeckClient-$env:CI_VERSION-windows-x64-portable.zip"
           Get-ChildItem out
       - uses: actions/upload-artifact@v6
         with:
@@ -118,11 +122,14 @@ jobs:
           wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
       - name: Build AppImage
-        run: scripts/build-appimage.sh
+        run: |
+          scripts/build-appimage.sh
+          mkdir -p ../out
+          mv build/installer-release/*.AppImage "../out/CloudDeckClient-${CI_VERSION}-linux-x86_64.AppImage"
       - uses: actions/upload-artifact@v6
         with:
           name: linux-x64-appimage
-          path: client-desktop/build/installer-release/*.AppImage
+          path: out/*.AppImage
           compression-level: 0
           if-no-files-found: error
 
@@ -145,9 +152,13 @@ jobs:
       - name: Build debug APKs
         run: ./gradlew --no-daemon assembleNonRootDebug
       - name: Collect APKs
+        env:
+          CI_VERSION: ${{ needs.setup.outputs.version }}
         run: |
           mkdir -p ../out
-          find app/build/outputs/apk -name '*.apk' -exec cp {} ../out/ \;
+          n=$(find app/build/outputs/apk -name '*.apk' | wc -l)
+          [ "$n" -eq 1 ] || { echo "expected 1 APK, found $n"; exit 1; }
+          cp app/build/outputs/apk/nonRoot/debug/*.apk "../out/CloudDeckClient-${CI_VERSION}-android-arm64-x86_64-debug.apk"
           ls -l ../out
       - uses: actions/upload-artifact@v6
         with:

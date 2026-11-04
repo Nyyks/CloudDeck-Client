@@ -1,5 +1,6 @@
 #include <QGuiApplication>
 #include <QStyleHints>
+#include "clouddeck/branding.h"
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QIcon>
@@ -428,9 +429,9 @@ int main(int argc, char *argv[])
     // Set these here to allow us to use the default QSettings constructor.
     // These also ensure that our cache directory is named correctly. As such,
     // it is critical that these be called before Path::initialize().
-    QCoreApplication::setOrganizationName("Moonlight Game Streaming Project");
-    QCoreApplication::setOrganizationDomain("moonlight-stream.com");
-    QCoreApplication::setApplicationName("Moonlight");
+    QCoreApplication::setOrganizationName(CDC_ORG_NAME);
+    QCoreApplication::setOrganizationDomain(CDC_ORG_DOMAIN);
+    QCoreApplication::setApplicationName(CDC_APP_NAME);
 
     if (QFile(QDir::currentPath() + "/portable.dat").exists()) {
         QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -926,9 +927,9 @@ int main(int argc, char *argv[])
 #endif
 
     // This is necessary to show our icon correctly on Wayland
-    app.setDesktopFileName("com.moonlight_stream.Moonlight");
-    qputenv("SDL_VIDEO_WAYLAND_WMCLASS", "com.moonlight_stream.Moonlight");
-    qputenv("SDL_VIDEO_X11_WMCLASS", "com.moonlight_stream.Moonlight");
+    app.setDesktopFileName(CDC_APP_ID);
+    qputenv("SDL_VIDEO_WAYLAND_WMCLASS", CDC_APP_ID);
+    qputenv("SDL_VIDEO_X11_WMCLASS", CDC_APP_ID);
 
     // Register our C++ types for QML
     qmlRegisterType<ComputerModel>("ComputerModel", 1, 0, "ComputerModel");

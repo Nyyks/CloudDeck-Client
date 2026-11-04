@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b5bdb"/>
+      <stop offset="1" stop-color="#0b7285"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <!-- cloud -->
+  <path fill="#ffffff" d="M78 178c-22 0-40-17-40-38 0-19 14-35 33-38 6-25 28-43 55-43 25 0 46 16 53 39 22 2 39 20 39 42 0 21-17 38-39 38z"/>
+  <!-- play triangle cut into the cloud -->
+  <path fill="#1c4f9c" d="M113 105l44 27-44 27z"/>
+</svg>

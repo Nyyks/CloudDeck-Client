@@ -237,6 +237,7 @@ HEADERS += \
     streaming/bandwidth.h \
     streaming/streamutils.h \
     backend/autoupdatechecker.h \
+    clouddeck/branding.h \
     path.h \
     settings/mappingmanager.h \
     gui/sdlgamepadkeynavigation.h \
@@ -533,22 +534,24 @@ unix:!macx: {
 
     target.path = $$PREFIX/$$BINDIR/
 
-    desktop.files = deploy/linux/com.moonlight_stream.Moonlight.desktop
+    # CloudDeck-Client: own desktop ID / icon / metainfo (docs/adr/0005)
+    desktop.files = clouddeck/deploy/linux/io.github.nyyks.CloudDeckClient.desktop
     desktop.path = $$PREFIX/$$DATADIR/applications/
 
-    icons.files = res/moonlight.svg
+    icons.files = clouddeck/deploy/linux/io.github.nyyks.CloudDeckClient.svg
     icons.path = $$PREFIX/$$DATADIR/icons/hicolor/scalable/apps/
 
-    appstream.files = deploy/linux/com.moonlight_stream.Moonlight.appdata.xml
+    appstream.files = clouddeck/deploy/linux/io.github.nyyks.CloudDeckClient.metainfo.xml
     appstream.path = $$PREFIX/$$DATADIR/metainfo/
 
     INSTALLS += target desktop icons appstream
 }
 win32 {
     RC_ICONS = moonlight.ico
-    QMAKE_TARGET_COMPANY = Moonlight Game Streaming Project
-    QMAKE_TARGET_DESCRIPTION = Moonlight Game Streaming Client
-    QMAKE_TARGET_PRODUCT = Moonlight
+    # CloudDeck-Client (docs/adr/0005)
+    QMAKE_TARGET_COMPANY = CloudDeck-Client
+    QMAKE_TARGET_DESCRIPTION = CloudDeck Client (based on Moonlight)
+    QMAKE_TARGET_PRODUCT = CloudDeck Client
 
     CONFIG -= embed_manifest_exe
     QMAKE_LFLAGS += /MANIFEST:embed /MANIFESTINPUT:$${PWD}/Moonlight.exe.manifest

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>io.github.nyyks.CloudDeckClient</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0-only</project_license>
+	<name>CloudDeck Client</name>
+	<summary>Start and stream your CloudDeck cloud PC</summary>
+	<description>
+		<p>
+			An unofficial client for a CloudDeck cloud PC, built on Moonlight. It starts the
+			machine, pairs automatically and streams from its Sunshine host.
+		</p>
+	</description>
+	<url type="vcs-browser">https://github.com/Nyyks/CloudDeck-Client</url>
+	<launchable type="desktop-id">io.github.nyyks.CloudDeckClient.desktop</launchable>
+	<content_rating type="oars-1.1"/>
+</component>
