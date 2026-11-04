@@ -139,13 +139,14 @@ if /I "%VC_ARCH%" NEQ "%PROCESSOR_ARCHITECTURE%" (
 rem Find Visual Studio and run vcvarsall.bat
 call "%SOURCE_ROOT%\scripts\find-vswhere.bat"
 if !ERRORLEVEL! NEQ 0 goto Error
-for /f "usebackq delims=" %%i in (`%VSWHERE% -latest -property installationPath`) do (
+rem CloudDeck-Client: -products * also finds standalone "Build Tools" installs
+for /f "usebackq delims=" %%i in (`%VSWHERE% -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
     call "%%i\VC\Auxiliary\Build\vcvarsall.bat" %VC_ARCH%
 )
 if !ERRORLEVEL! NEQ 0 goto Error
 
 rem Find VC redistributable DLLs
-for /f "usebackq delims=" %%i in (`%VSWHERE% -latest -find VC\Redist\MSVC\*\%ARCH%\Microsoft.VC*.CRT`) do set VC_REDIST_DLL_PATH=%%i
+for /f "usebackq delims=" %%i in (`%VSWHERE% -latest -products * -find VC\Redist\MSVC\*\%ARCH%\Microsoft.VC*.CRT`) do set VC_REDIST_DLL_PATH=%%i
 if !ERRORLEVEL! NEQ 0 goto Error
 
 echo Cleaning output directories
