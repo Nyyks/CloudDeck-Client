@@ -1,0 +1,32 @@
+#!/bin/sh
+# CloudDeck-Client: run once (as the desktop user, via systemd-run) after install or
+# upgrade. Restarts Sunshine onto the patched build and verifies it serves within
+# 45 s. If it doesn't, disables the patched build and restarts stock Sunshine.
+UNIT=app-dev.lizardbyte.app.Sunshine.service
+PATCHED=/var/opt/clouddeck-client/sunshine/bin/sunshine
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}/clouddeck-client"
+
+log() { echo "clouddeck-client healthcheck: $*" >&2; }
+
+mkdir -p "$CFG"
+rm -f "$CFG/sunshine-disabled"
+log "restarting $UNIT onto the patched build"
+systemctl --user restart "$UNIT"
+
+i=0
+while [ "$i" -lt 45 ]; do
+    if pgrep -u "$(id -u)" -f "^$PATCHED" >/dev/null 2>&1 &&
+       curl -fsS -m 2 -o /dev/null http://127.0.0.1:47989/serverinfo 2>/dev/null; then
+        log "OK: patched Sunshine is serving"
+        echo "ok $(date -Is)" > "$CFG/last-healthcheck"
+        exit 0
+    fi
+    i=$((i + 1))
+    sleep 1
+done
+
+log "FAILED: patched Sunshine not serving after 45 s; falling back to stock"
+echo "healthcheck failed at $(date -Is)" > "$CFG/sunshine-disabled"
+echo "failed $(date -Is)" > "$CFG/last-healthcheck"
+systemctl --user restart "$UNIT"
+exit 1

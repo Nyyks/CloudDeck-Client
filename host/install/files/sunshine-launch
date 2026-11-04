@@ -1,0 +1,53 @@
+#!/bin/sh
+# CloudDeck-Client: ExecStart of the Sunshine user unit (via the drop-in
+# zz-clouddeck-client.conf). Runs the patched Sunshine, or falls back to the stock
+# RPM so the VM always stays streamable. Fallback happens when:
+#   - ~/.config/clouddeck-client/sunshine-disabled exists (set by the health check,
+#     by crash-loop detection below, or by hand)
+#   - the stock Sunshine version differs from the one our build is based on
+#     (a CloudDeck image update moved Sunshine; rebuild the patches first)
+#   - the patched binary is missing or not executable
+#   - it started >= 5 times within 120 s (crash loop)
+# Everything is logged to the journal: journalctl --user -u app-dev.lizardbyte.app.Sunshine
+# CDC_* overrides exist only for host/install/tests/test-launch.sh.
+BASE="${CDC_BASE:-/var/opt/clouddeck-client}"
+PATCHED="$BASE/sunshine/bin/sunshine"
+INFO="$BASE/sunshine/BUILD-INFO"
+STOCK="${CDC_STOCK:-/usr/bin/sunshine}"
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}/clouddeck-client"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/clouddeck-client"
+
+log() { echo "clouddeck-client: $*" >&2; }
+
+mkdir -p "$CFG" "$STATE" 2>/dev/null
+reason=""
+
+if [ -f "$CFG/sunshine-disabled" ]; then
+    reason="disabled: $(head -c 200 "$CFG/sunshine-disabled" 2>/dev/null)"
+elif [ ! -x "$PATCHED" ] || [ ! -r "$INFO" ]; then
+    reason="patched build not installed"
+else
+    want="$(sed -n 's/^upstream_tag=v\{0,1\}//p' "$INFO")"
+    have="${CDC_STOCK_VERSION:-$(rpm -q --qf '%{VERSION}' Sunshine 2>/dev/null)}"
+    if [ -z "$want" ] || [ "$want" != "$have" ]; then
+        reason="version mismatch: patched build is for $want, image has ${have:-no Sunshine RPM}"
+    else
+        # Crash-loop guard: record this start, count starts in the last 120 s.
+        now="$(date +%s)"
+        starts="$STATE/sunshine-starts"
+        { cat "$starts" 2>/dev/null; echo "$now"; } | tail -n 10 > "$starts.tmp" && mv "$starts.tmp" "$starts"
+        recent="$(awk -v n="$now" '$1 > n - 120' "$starts" | wc -l)"
+        if [ "$recent" -ge 5 ]; then
+            echo "crash-loop at $(date -Is): $recent starts in 120 s" > "$CFG/sunshine-disabled"
+            reason="crash loop detected ($recent starts in 120 s); disabled patched build"
+        fi
+    fi
+fi
+
+if [ -n "$reason" ]; then
+    log "starting STOCK Sunshine ($reason)"
+    exec "$STOCK" "$@"
+fi
+
+log "starting PATCHED Sunshine ($(sed -n 's/^patch_id=//p' "$INFO"), based on $want)"
+exec "$PATCHED" "$@"

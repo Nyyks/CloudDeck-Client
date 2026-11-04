@@ -11,8 +11,11 @@ on:
   push:
     branches: [main, 'feat/**', 'fix/**']
     tags: ['v*']
+    # Save CI minutes (private repo): host-only and docs-only changes don't rebuild clients.
+    paths-ignore: ['host/**', 'docs/**', '*.md', '.github/workflows/host.yml']
   pull_request:
     branches: [main]
+    paths-ignore: ['host/**', 'docs/**', '*.md', '.github/workflows/host.yml']
   workflow_dispatch:
 
 concurrency:
@@ -210,5 +213,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ls -l dist
+          PRE=""; [[ "$GITHUB_REF_NAME" == *-* ]] && PRE="--prerelease"   # v1.2.3-alpha.1 -> prerelease
           gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
-            --title "CloudDeck-Client $GITHUB_REF_NAME" --generate-notes --prerelease
+            --title "CloudDeck-Client $GITHUB_REF_NAME" --generate-notes $PRE

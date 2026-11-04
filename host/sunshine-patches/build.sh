@@ -53,7 +53,8 @@ uv sync --locked --only-group glad --python "$PY" --no-install-project
 
 echo "== configure"
 export CC="gcc-$GCC" CXX="g++-$GCC"
-export BRANCH=master BUILD_VERSION="$TAG" COMMIT="$(git rev-parse HEAD)"
+COMMIT="$(git rev-parse HEAD)"
+export BRANCH=master BUILD_VERSION="$TAG" COMMIT
 cmake -B build -G "Unix Makefiles" -S . \
   -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_WERROR=OFF \
   -DCMAKE_BUILD_TYPE=Release \

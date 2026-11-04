@@ -1,6 +1,6 @@
 ---
 # Host-side builds: patched Sunshine for the CloudDeck VM (Fedora 43 / Bazzite),
-# plus static checks of the host install scripts.
+# the installable host bundle, and checks of the host install scripts.
 name: Host
 permissions:
   contents: read
@@ -23,7 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: shellcheck
-        run: shellcheck -S warning host/install/*.sh host/sunshine-patches/*.sh
+        run: shellcheck -S warning host/install/*.sh host/install/files/sunshine-* host/install/tests/*.sh host/sunshine-patches/*.sh
+      - name: launcher fail-safe tests
+        run: bash host/install/tests/test-launch.sh
 
   sunshine:
     runs-on: ubuntu-24.04
@@ -42,4 +44,30 @@ jobs:
             out/*.sha256
             out/needed-libs.txt
             out/dropped-files.txt
+          if-no-files-found: error
+
+  bundle:
+    needs: [scripts, sunshine]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with: { name: clouddeck-sunshine-fc43-x86_64, path: sun }
+      - name: Assemble host bundle
+        run: |
+          NAME="$(basename sun/clouddeck-sunshine-*.tar.zst .tar.zst)"
+          B="clouddeck-host-${NAME#clouddeck-sunshine-}"
+          mkdir -p "$B/files"
+          cp host/install/install.sh host/install/uninstall.sh "$B/"
+          cp host/install/files/* "$B/files/"
+          cp sun/*.tar.zst sun/*.sha256 "$B/"
+          cp LICENSE "$B/"
+          chmod +x "$B"/*.sh "$B"/files/sunshine-*
+          tar -czf "$B.tar.gz" "$B"
+          sha256sum "$B.tar.gz" > "$B.tar.gz.sha256"
+          ls -l
+      - uses: actions/upload-artifact@v6
+        with:
+          name: clouddeck-host-bundle
+          path: clouddeck-host-*.tar.gz*
           if-no-files-found: error

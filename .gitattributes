@@ -1,6 +1,9 @@
 * text=auto
 *.sh text eol=lf
 .githooks/* text eol=lf
+host/install/files/* text eol=lf
+host/sunshine-patches/UPSTREAM_TAG text eol=lf
+host/sunshine-patches/series text eol=lf
 *.patch -text
 *.png binary
 *.ico binary
