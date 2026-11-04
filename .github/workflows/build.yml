@@ -163,6 +163,8 @@ jobs:
         run: |
           NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK" > /dev/null
+      - name: Unit tests
+        run: ./gradlew --no-daemon testNonRootDebugUnitTest
       - name: Build debug APKs
         run: ./gradlew --no-daemon assembleNonRootDebug
       - name: Collect APKs

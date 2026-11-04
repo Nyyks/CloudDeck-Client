@@ -137,6 +137,13 @@ android {
         }
     }
 
+    // CloudDeck-Client: JVM unit tests read fixtures shared with the desktop tests
+    testOptions {
+        unitTests.all { test ->
+            test.systemProperty('fixtures.dir', "${rootDir}/../shared/fixtures/clouddeck")
+        }
+    }
+
     packaging {
         resources {
             // BouncyCastle includes duplicate LICENSE.md files
@@ -154,4 +161,8 @@ dependencies {
     implementation 'com.github.cgutman:ShieldControllerExtensions:1.0.1'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
+    // CloudDeck-Client unit tests (org.json: android.jar only ships stubs on the JVM)
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250517'
 }

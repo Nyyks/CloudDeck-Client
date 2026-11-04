@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CloudDeck-Client strings (kept separate from upstream strings.xml to ease merges). -->
+<resources>
+    <string name="cd_title">CloudDeck</string>
+    <string name="cd_sign_in_title">Sign in to CloudDeck</string>
+    <string name="cd_sign_in_note">Your password is used once and never stored. A session token is kept in %1$s.</string>
+    <string name="cd_email">Email</string>
+    <string name="cd_password">Password</string>
+    <string name="cd_mfa_code">Verification code</string>
+    <string name="cd_sign_in">Sign in</string>
+    <string name="cd_verify">Verify</string>
+    <string name="cd_sign_out">Sign out</string>
+    <string name="cd_signing_in">Signing in…</string>
+    <string name="cd_your_clouddeck">Your CloudDeck</string>
+    <string name="cd_start_and_connect">Start and connect</string>
+    <string name="cd_connect">Connect</string>
+    <string name="cd_start">Start</string>
+    <string name="cd_stop">Stop</string>
+    <string name="cd_restart">Restart</string>
+    <string name="cd_cancel">Cancel</string>
+    <string name="cd_manage_pcs">Manage PCs</string>
+    <string name="cd_auto_stop">Stop my CloudDeck when the stream ends</string>
+    <string name="cd_status_running">Running</string>
+    <string name="cd_status_off">Stopped</string>
+    <string name="cd_status_starting">Starting</string>
+    <string name="cd_status_stopping">Stopping</string>
+    <string name="cd_status_unknown">Unknown</string>
+    <string name="cd_confirm_stop">Stop your CloudDeck? Unsaved work on it will be lost.</string>
+    <string name="cd_confirm_restart">Restart your CloudDeck? Unsaved work on it will be lost.</string>
+    <string name="cd_progress_starting">Starting your CloudDeck… (%1$d s)</string>
+    <string name="cd_progress_wait_stop">Waiting for your CloudDeck to finish stopping…</string>
+    <string name="cd_progress_dns">Waiting for network address…</string>
+    <string name="cd_progress_host">Waiting for the streaming host…</string>
+    <string name="cd_progress_connecting">Connecting to your CloudDeck…</string>
+    <string name="cd_progress_pairing">Pairing with your CloudDeck…</string>
+    <string name="cd_progress_launching">Launching %1$s…</string>
+    <string name="cd_err_start_timeout">Timed out waiting for your CloudDeck to start.</string>
+    <string name="cd_err_start_failed">CloudDeck reported an error while starting. Try again in a few minutes.</string>
+    <string name="cd_err_dns">%1$s still does not point to your CloudDeck. Try again in a minute.</string>
+    <string name="cd_err_host_unreachable">Your CloudDeck is running, but its streaming host is not reachable. If you started it from another network, restart it from this device.</string>
+    <string name="cd_err_add_failed">Could not connect to %1$s.</string>
+    <string name="cd_err_pair_failed">Pairing failed: %1$s</string>
+    <string name="cd_err_pin_submit">Could not submit the pairing PIN through CloudDeck: %1$s</string>
+    <string name="cd_err_no_app">No app named \"%1$s\" on your CloudDeck.</string>
+    <string name="cd_err_session_expired">Your CloudDeck session expired. Please sign in again.</string>
+</resources>
