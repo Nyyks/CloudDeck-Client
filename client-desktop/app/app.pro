@@ -10,6 +10,9 @@ unix:!macx {
 
 include(../globaldefs.pri)
 
+# CloudDeck-Client: all fork additions live in app/clouddeck (docs/adr/0005)
+include(clouddeck/clouddeck.pri)
+
 # Precompile QML files to avoid writing qmlcache on portable versions.
 # Since this binds the app against the Qt runtime version, we will only
 # do this for Windows and Mac (when disable-prebuilts is not defined),
@@ -237,7 +240,6 @@ HEADERS += \
     streaming/bandwidth.h \
     streaming/streamutils.h \
     backend/autoupdatechecker.h \
-    clouddeck/branding.h \
     path.h \
     settings/mappingmanager.h \
     gui/sdlgamepadkeynavigation.h \

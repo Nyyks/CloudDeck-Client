@@ -1,0 +1,10 @@
+{
+  "id": "m_43ca6bbd2b",
+  "status": "running",
+  "region": "eu-de-nbg-1",
+  "password": "not-a-real-password",
+  "last_started": 1793799500000,
+  "public_ip": "203.0.113.10",
+  "created_at": 1793208900000,
+  "os": "clouddeck-26.04.1"
+}

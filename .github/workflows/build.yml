@@ -31,6 +31,20 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.0-${GITHUB_SHA::7}"; fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
+  desktop-unit-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+      - name: Install Qt
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qt6-base-dev-tools
+      - name: Build and run CloudDeck unit tests
+        run: |
+          mkdir -p build-tests && cd build-tests
+          qmake6 ../client-desktop/tests/clouddeck/clouddeck-tests.pro
+          make -j"$(nproc)"
+          ./tst_clouddeckapi
+
   windows:
     needs: setup
     runs-on: windows-2025
@@ -168,7 +182,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [setup, windows, linux-appimage, android]
+    needs: [setup, desktop-unit-tests, windows, linux-appimage, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write

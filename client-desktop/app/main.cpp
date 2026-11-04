@@ -50,6 +50,7 @@
 #include "gui/computermodel.h"
 #include "gui/appmodel.h"
 #include "backend/autoupdatechecker.h"
+#include "clouddeck/cloudsession.h"
 #include "backend/computermanager.h"
 #include "backend/systemproperties.h"
 #include "streaming/session.h"
@@ -940,6 +941,11 @@ int main(int argc, char *argv[])
                                               [](QQmlEngine* qmlEngine, QJSEngine*) -> QObject* {
                                                   return new ComputerManager(StreamingPreferences::get(qmlEngine));
                                               });
+    // CloudDeck-Client: portal integration (docs/clouddeck-api.md)
+    qmlRegisterSingletonType<CloudSession>("CloudDeck", 1, 0, "CloudDeck",
+                                           [](QQmlEngine*, QJSEngine*) -> QObject* {
+                                               return new CloudSession();
+                                           });
     qmlRegisterSingletonType<AutoUpdateChecker>("AutoUpdateChecker", 1, 0,
                                                 "AutoUpdateChecker",
                                                 [](QQmlEngine*, QJSEngine*) -> QObject* {
@@ -990,7 +996,8 @@ int main(int argc, char *argv[])
 
     switch (commandLineParserResult) {
     case GlobalCommandLineParser::NormalStartRequested:
-        initialView = "qrc:/gui/PcView.qml";
+        // CloudDeck-Client: start on the CloudDeck screen; PcView is one click away.
+        initialView = "qrc:/gui/CloudDeckView.qml";
         break;
     case GlobalCommandLineParser::StreamRequested:
         {
