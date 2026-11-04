@@ -8,47 +8,50 @@ LOCAL_PATH := $(MY_LOCAL_PATH)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := moonlight-core
 
-LOCAL_SRC_FILES := moonlight-common-c/src/AudioStream.c \
-                   moonlight-common-c/src/ByteBuffer.c \
-                   moonlight-common-c/src/Connection.c \
-                   moonlight-common-c/src/ConnectionTester.c \
-                   moonlight-common-c/src/ControlStream.c \
-                   moonlight-common-c/src/FakeCallbacks.c \
-                   moonlight-common-c/src/InputStream.c \
-                   moonlight-common-c/src/LinkedBlockingQueue.c \
-                   moonlight-common-c/src/Misc.c \
-                   moonlight-common-c/src/Platform.c \
-                   moonlight-common-c/src/PlatformCrypto.c \
-                   moonlight-common-c/src/PlatformSockets.c \
-                   moonlight-common-c/src/RtpAudioQueue.c \
-                   moonlight-common-c/src/RtpVideoQueue.c \
-                   moonlight-common-c/src/RtspConnection.c \
-                   moonlight-common-c/src/RtspParser.c \
-                   moonlight-common-c/src/SdpGenerator.c \
-                   moonlight-common-c/src/SimpleStun.c \
-                   moonlight-common-c/src/VideoDepacketizer.c \
-                   moonlight-common-c/src/VideoStream.c \
-                   moonlight-common-c/nanors/deps/obl/oblas_common.c \
-                   moonlight-common-c/nanors/deps/obl/oblas_lite.c \
-                   moonlight-common-c/nanors/rs.c \
-                   moonlight-common-c/enet/callbacks.c \
-                   moonlight-common-c/enet/compress.c \
-                   moonlight-common-c/enet/host.c \
-                   moonlight-common-c/enet/list.c \
-                   moonlight-common-c/enet/packet.c \
-                   moonlight-common-c/enet/peer.c \
-                   moonlight-common-c/enet/protocol.c \
-                   moonlight-common-c/enet/unix.c \
-                   moonlight-common-c/enet/win32.c \
+# CloudDeck-Client: moonlight-common-c lives once at the repo root (see docs/adr/0001)
+MLC := ../../../../../../common
+
+LOCAL_SRC_FILES := $(MLC)/src/AudioStream.c \
+                   $(MLC)/src/ByteBuffer.c \
+                   $(MLC)/src/Connection.c \
+                   $(MLC)/src/ConnectionTester.c \
+                   $(MLC)/src/ControlStream.c \
+                   $(MLC)/src/FakeCallbacks.c \
+                   $(MLC)/src/InputStream.c \
+                   $(MLC)/src/LinkedBlockingQueue.c \
+                   $(MLC)/src/Misc.c \
+                   $(MLC)/src/Platform.c \
+                   $(MLC)/src/PlatformCrypto.c \
+                   $(MLC)/src/PlatformSockets.c \
+                   $(MLC)/src/RtpAudioQueue.c \
+                   $(MLC)/src/RtpVideoQueue.c \
+                   $(MLC)/src/RtspConnection.c \
+                   $(MLC)/src/RtspParser.c \
+                   $(MLC)/src/SdpGenerator.c \
+                   $(MLC)/src/SimpleStun.c \
+                   $(MLC)/src/VideoDepacketizer.c \
+                   $(MLC)/src/VideoStream.c \
+                   $(MLC)/nanors/deps/obl/oblas_common.c \
+                   $(MLC)/nanors/deps/obl/oblas_lite.c \
+                   $(MLC)/nanors/rs.c \
+                   $(MLC)/enet/callbacks.c \
+                   $(MLC)/enet/compress.c \
+                   $(MLC)/enet/host.c \
+                   $(MLC)/enet/list.c \
+                   $(MLC)/enet/packet.c \
+                   $(MLC)/enet/peer.c \
+                   $(MLC)/enet/protocol.c \
+                   $(MLC)/enet/unix.c \
+                   $(MLC)/enet/win32.c \
                    simplejni.c \
                    callbacks.c \
                    minisdl.c \
 
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/moonlight-common-c/enet/include \
-                    $(LOCAL_PATH)/moonlight-common-c/nanors/deps/obl \
-                    $(LOCAL_PATH)/moonlight-common-c/nanors \
-                    $(LOCAL_PATH)/moonlight-common-c/src \
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(MLC)/enet/include \
+                    $(LOCAL_PATH)/$(MLC)/nanors/deps/obl \
+                    $(LOCAL_PATH)/$(MLC)/nanors \
+                    $(LOCAL_PATH)/$(MLC)/src \
 
 LOCAL_CFLAGS := -DHAS_SOCKLEN_T=1 -DLC_ANDROID -DHAVE_CLOCK_GETTIME=1
 
