@@ -9,7 +9,7 @@ Unofficial; not affiliated with CloudDeck, Moonlight, or LizardByte.
 
 ## Status
 
-**Phase 0 (discovery) in progress.** No client builds yet. See
+**Phase 1 (MVP) in progress.** CI builds Windows, Linux and Android clients; the CloudDeck sign-in and start-and-connect flow is implemented but not yet verified end-to-end. See
 [docs/STATUS.md](docs/STATUS.md) and [docs/feasibility.md](docs/feasibility.md).
 
 ## Layout

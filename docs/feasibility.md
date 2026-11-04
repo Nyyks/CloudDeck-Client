@@ -27,7 +27,7 @@ Sources:
 | VM firewall | firewalld zone `FedoraWorkstation` on both NICs: **TCP+UDP 1025–65535 open**, plus ssh. No rich or direct rules. **The VM does not do the IP allowlisting.** |
 | **Upstream filter** | Probed from the starting IP. **Only TCP 47984, 47989, 48010 get through.** 22, 47990, 47985–48009 (except those three), 3240, 8080, 8443, 8989, 80, 443, 49000, 50123 all time out (filtered, not refused). UDP not probed; streaming works, so the Sunshine UDP ports (47998–48000) must be open. |
 | CloudDeck components (leave alone) | `clouddeck-controller-service` (root, TCP 8989, probably the portal → VM channel, e.g. pairing-PIN submission via Sunshine's local web API), `clouddeck-gpu-powercap` (10 s timer), `clouddeck-growfs`, `clouddeck-flatpak-install`, `clouddeck-sunshine-watchdog`. A **"MoonlightWeb"/AppImage process** (TCP 8080/8443 public bind, 48001/48003 localhost) is most likely CloudDeck's browser-streaming bridge (`*.cldk.me`). `wondershaper.service` (bandwidth shaping) is present. |
-| ⚠ Unidentified | **`pictl-agent`** (`/usr/local/bin/pictl-agent`, root-only systemd timer and service dated 2026-10-28 18:45) runs as root and long-polls `https://mgmt.satan.lgbt/api/agent/commands` with a bearer token. `/usr/local/bin/rclone` has the same timestamp. **Not part of CloudDeck's naming or image. Raised with the owner; untouched.** |
+| Owner's own tooling (leave alone) | `pictl-agent` (root systemd timer, `/usr/local/bin`) and `/usr/local/bin/rclone`. The owner confirmed on 2026-11-04 that both are theirs. Install scripts must not touch them. |
 | SSH | `sshd` active on the VM but **unreachable from the internet** (port 22 is filtered upstream). |
 
 ### Constraints that follow

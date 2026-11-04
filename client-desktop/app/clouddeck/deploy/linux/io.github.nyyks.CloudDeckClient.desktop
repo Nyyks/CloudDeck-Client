@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=CloudDeck Client
+Comment=Start and stream your CloudDeck cloud PC (based on Moonlight)
+Exec=moonlight
+Icon=io.github.nyyks.CloudDeckClient
+Terminal=false
+Type=Application
+Categories=Qt;Game;Network;RemoteAccess;
+Keywords=clouddeck;cloud gaming;stream;sunshine;moonlight;remote play;
+StartupWMClass=io.github.nyyks.CloudDeckClient

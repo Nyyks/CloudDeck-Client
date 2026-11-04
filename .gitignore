@@ -53,3 +53,6 @@ CDCred.txt
 *Cred*.txt
 out.txt
 inventory-*.txt
+
+# icon-gen build output
+tools/icon-gen/build/

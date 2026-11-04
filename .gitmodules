@@ -1,0 +1,15 @@
+# Root submodule registry (see docs/adr/0001-monorepo-layout.md).
+# Gitlinks arrive via `git subtree`; these entries make them checkout-able.
+# The client copies of moonlight-common-c were removed: both clients build ../common.
+[submodule "common/enet"]
+	path = common/enet
+	url = https://github.com/cgutman/enet.git
+[submodule "common/nanors"]
+	path = common/nanors
+	url = https://github.com/sleepybishop/nanors.git
+[submodule "client-desktop/qmdnsengine/qmdnsengine"]
+	path = client-desktop/qmdnsengine/qmdnsengine
+	url = https://github.com/cgutman/qmdnsengine.git
+[submodule "client-desktop/app/SDL_GameControllerDB"]
+	path = client-desktop/app/SDL_GameControllerDB
+	url = https://github.com/gabomdq/SDL_GameControllerDB.git

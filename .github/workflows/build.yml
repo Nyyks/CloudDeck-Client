@@ -1,0 +1,205 @@
+---
+# CloudDeck-Client CI: builds all clients; tagged builds publish a GitHub Release.
+# Desktop jobs reuse upstream moonlight-qt's scripts from client-desktop/ (they take
+# their working directory as the source root). Upstream's own workflows under
+# client-desktop/.github are inert in this monorepo.
+name: Build
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.0-${GITHUB_SHA::7}"; fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+  desktop-unit-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+      - name: Install Qt
+        run: sudo apt-get update && sudo apt-get install -y qt6-base-dev qt6-base-dev-tools
+      - name: Build and run CloudDeck unit tests
+        run: |
+          mkdir -p build-tests && cd build-tests
+          qmake6 ../client-desktop/tests/clouddeck/clouddeck-tests.pro
+          make -j"$(nproc)"
+          ./tst_clouddeckapi
+
+  windows:
+    needs: setup
+    runs-on: windows-2025
+    env:
+      CI_VERSION: ${{ needs.setup.outputs.version }}
+      QT_VERSION: 6.12.0
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive, fetch-depth: 1 }
+      - name: Download prebuilt dependencies
+        working-directory: client-desktop
+        run: powershell ./setup-deps.ps1
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: true
+          set-env: false
+          add-tools-to-path: false
+          tools: tools_qtcreator_gui
+          version: ${{ env.QT_VERSION }}
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e'
+      - name: Build x64 (MSI + portable zip)
+        working-directory: client-desktop
+        shell: cmd
+        run: |
+          set "PATH=%QT_PATH%;%PATH%"
+          scripts\build-arch.bat Release x64
+        env:
+          QT_PATH: ${{ runner.workspace }}\Qt\${{ env.QT_VERSION }}\msvc2022_64\bin
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          # Upstream scripts keep their internal file names (docs/adr/0005); rename here.
+          New-Item -ItemType Directory -Force out | Out-Null
+          $msi = @(Get-ChildItem client-desktop/build -Recurse -Include *.msi)
+          $zip = @(Get-ChildItem client-desktop/build -Recurse -Filter 'MoonlightPortable-x64-*.zip')
+          if ($msi.Count -ne 1 -or $zip.Count -ne 1) { throw "expected 1 msi + 1 zip, got $($msi.Count) + $($zip.Count)" }
+          Copy-Item $msi[0] "out/CloudDeckClient-$env:CI_VERSION-windows-x64.msi"
+          Copy-Item $zip[0] "out/CloudDeckClient-$env:CI_VERSION-windows-x64-portable.zip"
+          Get-ChildItem out
+      - uses: actions/upload-artifact@v6
+        with:
+          name: windows-x64
+          path: out/*
+          if-no-files-found: error
+
+  linux-appimage:
+    needs: setup
+    runs-on: ubuntu-22.04
+    env:
+      CI_VERSION: ${{ needs.setup.outputs.version }}
+    defaults:
+      run:
+        working-directory: client-desktop
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive, fetch-depth: 1 }
+      - name: Setup environment
+        run: |
+          wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.4.313-jammy.list https://packages.lunarg.com/vulkan/1.4.313/lunarg-vulkan-1.4.313-jammy.list
+          sudo apt update
+          sudo apt install -y qt6-base-dev qt6-declarative-dev libqt6svg6-dev qml6-module-qtquick-controls qml6-module-qtquick-templates qml6-module-qtquick-layouts \
+            qml6-module-qtqml-workerscript qml6-module-qtquick-window qml6-module-qtquick python3-pip nasm libgbm-dev libdrm-dev libfreetype-dev libasound2-dev \
+            libdbus-1-dev libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev libglu1-mesa-dev libibus-1.0-dev libpulse-dev libudev-dev libx11-dev libxcursor-dev \
+            libxext-dev libxi-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev libxxf86vm-dev libxcb-dri3-dev libx11-xcb-dev \
+            libxfixes-dev libxtst-dev wayland-protocols libopus-dev libvdpau-dev libgl-dev libpipewire-0.3-dev liburing-dev vulkan-sdk cmake
+          sudo pip3 install meson
+          mkdir -p dep_root/{bin,include,lib}
+          echo "DEP_ROOT=$PWD/dep_root" >> "$GITHUB_ENV"
+          echo "$PWD/dep_root/bin" >> "$GITHUB_PATH"
+      - name: Cache built dependencies
+        id: deps-cache
+        uses: actions/cache@v4
+        with:
+          path: client-desktop/deps-install
+          key: linux-deps-v1-${{ runner.os }}-${{ hashFiles('.github/scripts/build-linux-deps.sh', 'client-desktop/app/deploy/linux/appimage/*.patch') }}
+      - name: Build dependencies (SDL3, sdl2-compat, SDL_ttf, libva, libplacebo, dav1d, FFmpeg)
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: bash ../.github/scripts/build-linux-deps.sh "$PWD/deps-install"
+      - name: Install cached dependencies
+        run: |
+          sudo cp -a deps-install/. /
+          sudo ldconfig
+      - name: Install linuxdeploy
+        working-directory: client-desktop/dep_root/bin
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+      - name: Build AppImage
+        run: |
+          scripts/build-appimage.sh
+          mkdir -p ../out
+          mv build/installer-release/*.AppImage "../out/CloudDeckClient-${CI_VERSION}-linux-x86_64.AppImage"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: linux-x64-appimage
+          path: out/*.AppImage
+          compression-level: 0
+          if-no-files-found: error
+
+  android:
+    needs: setup
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: client-android
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive, fetch-depth: 1 }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: '25' }
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Install NDK
+        run: |
+          NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK" > /dev/null
+      - name: Unit tests
+        run: |
+          ./gradlew --no-daemon testNonRootDebugUnitTest
+          # Fail if the CloudDeck tests silently did not run
+          R=app/build/test-results/testNonRootDebugUnitTest/TEST-com.limelight.clouddeck.CloudDeckApiTest.xml
+          test -f "$R" || { echo "CloudDeck unit test results missing"; exit 1; }
+          grep -o '<testsuite [^>]*' "$R"
+      - name: Build debug APKs
+        run: ./gradlew --no-daemon assembleNonRootDebug
+      - name: Collect APKs
+        env:
+          CI_VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          mkdir -p ../out
+          n=$(find app/build/outputs/apk -name '*.apk' | wc -l)
+          [ "$n" -eq 1 ] || { echo "expected 1 APK, found $n"; exit 1; }
+          cp app/build/outputs/apk/nonRoot/debug/*.apk "../out/CloudDeckClient-${CI_VERSION}-android-arm64-x86_64-debug.apk"
+          ls -l ../out
+      - uses: actions/upload-artifact@v6
+        with:
+          name: android-apk
+          path: out/*.apk
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [setup, desktop-unit-tests, windows, linux-appimage, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with: { path: dist, merge-multiple: true }
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -l dist
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
+            --title "CloudDeck-Client $GITHUB_REF_NAME" --generate-notes --prerelease

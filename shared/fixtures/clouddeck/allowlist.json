@@ -1,0 +1,29 @@
+{
+  "_comment": "Endpoint allowlist cases shared by the desktop (Qt Test) and Android (JUnit) CloudProvider tests. See docs/clouddeck-api.md.",
+  "cases": [
+    { "method": "GET",    "path": "/accounts/a_7d7306fe31",                 "allowed": true },
+    { "method": "GET",    "path": "/machines/m_43ca6bbd2b",                 "allowed": true },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/start",           "allowed": true },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/stop",            "allowed": true },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/clients",         "allowed": true },
+
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/reset",           "allowed": false, "why": "factory wipe" },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/clients/reset",   "allowed": false, "why": "unpairs every device; not exposed yet" },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/storage-upgrades","allowed": false, "why": "costs money" },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/stream-token",    "allowed": false },
+    { "method": "PATCH",  "path": "/accounts/a_7d7306fe31",                 "allowed": false, "why": "account settings" },
+    { "method": "DELETE", "path": "/accounts/a_7d7306fe31",                 "allowed": false, "why": "account deletion" },
+    { "method": "POST",   "path": "/checkout-sessions",                     "allowed": false },
+    { "method": "POST",   "path": "/billing-portal-sessions",               "allowed": false },
+    { "method": "GET",    "path": "/subscriptions/sub_123",                 "allowed": false },
+    { "method": "POST",   "path": "/reservations",                          "allowed": false },
+    { "method": "GET",    "path": "/machines/m_43ca6bbd2b/../reset",        "allowed": false, "why": "path traversal" },
+    { "method": "GET",    "path": "/machines/m_43ca6bbd2b%2Freset",         "allowed": false, "why": "encoded slash" },
+    { "method": "GET",    "path": "/machines/m_43ca6bbd2b?x=1",             "allowed": false },
+    { "method": "POST",   "path": "/machines/m_43ca6bbd2b/start/",          "allowed": false },
+    { "method": "GET",    "path": "/machines/43ca6bbd2b",                   "allowed": false, "why": "missing prefix" },
+    { "method": "POST",   "path": "/machines/m_/start",                     "allowed": false },
+    { "method": "GET",    "path": "/MACHINES/m_43ca6bbd2b",                 "allowed": false },
+    { "method": "get",    "path": "/machines/m_43ca6bbd2b",                 "allowed": false, "why": "methods are exact" }
+  ]
+}
