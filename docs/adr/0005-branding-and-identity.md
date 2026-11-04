@@ -32,5 +32,8 @@ gain an `#include` or a path change, each marked `CloudDeck-Client`.
 ## Consequences
 - `grep -rn "CloudDeck-Client" client-*/` lists every upstream touch point when
   merging.
-- Still to do: icons (Windows `.ico`, Android mipmaps, in-app logo). Tracked in
-  STATUS.md.
+- Icons are generated from `tools/icon-gen/icon.svg` (plus `foreground.svg` for
+  the Android adaptive icon) by `tools/icon-gen`. It overwrites upstream's asset
+  files in place (`moonlight.ico`, `res/moonlight.svg`, mipmaps), so no build file
+  changes. Rerun it after an upstream merge that touches those assets.
+- Still Moonlight's: the Android TV banner (`atv_banner`).
