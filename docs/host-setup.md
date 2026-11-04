@@ -26,13 +26,12 @@ launcher starts **stock** Sunshine instead when:
 
 ## Install
 
-1. In the VM's browser, download the latest **clouddeck-host-bundle** from the
-   repo's Actions page (*Host* workflow, *Artifacts*). Later it will also be
-   attached to releases.
+1. In the VM's browser (signed in to GitHub), open the repo's **Releases** and
+   download `clouddeck-host-*.tar.gz` and its `.sha256` from the newest
+   release that has them (currently *Phase 2 mic test 1*).
 2. In Konsole:
    ```sh
    cd ~/Downloads
-   unzip clouddeck-host-bundle.zip          # GitHub wraps artifacts in a zip
    sha256sum -c clouddeck-host-*.tar.gz.sha256
    tar xzf clouddeck-host-*.tar.gz
    cd clouddeck-host-*/
