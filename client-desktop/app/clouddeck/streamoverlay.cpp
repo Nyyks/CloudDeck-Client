@@ -3,6 +3,7 @@
 #include "cloudsession.h"
 #include "displaysettings.h"
 #include "micstreamer.h"
+#include "shortcuts.h"
 #include "streaming/session.h"
 
 #include <QCoreApplication>
@@ -28,7 +29,7 @@ static constexpr int kMenuMaxHeight = 660;
 static bool isMenuHotkey(const SDL_KeyboardEvent& k)
 {
     return (k.keysym.mod & KMOD_CTRL) && (k.keysym.mod & KMOD_ALT) && (k.keysym.mod & KMOD_SHIFT) &&
-           (k.keysym.sym == SDLK_o || k.keysym.scancode == SDL_SCANCODE_O);
+           (k.keysym.sym == Shortcuts::keycodeFor("menu") || k.keysym.scancode == Shortcuts::scancodeFor("menu"));
 }
 
 // Device pixel ratio of the screen containing a native-pixel point. Qt 6 keeps a
@@ -351,4 +352,11 @@ void StreamOverlay::hideNotice()
     m_NoticeText.clear();
     emit changed();
     if (m_Notice) m_Notice->hide();
+}
+
+QString StreamOverlay::menuKey() const { return Shortcuts::keyFor("menu"); }
+
+QString StreamOverlay::pushToTalkHint() const
+{
+    return Shortcuts::pushToTalkEnabled() ? tr("Push-to-talk: hold %1 to talk.").arg(Shortcuts::pushToTalkLabel()) : QString();
 }

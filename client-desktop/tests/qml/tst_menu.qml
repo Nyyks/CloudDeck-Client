@@ -19,6 +19,8 @@ Item {
         property bool micEnabled: true
         property bool showButton: true
         property bool canShutDown: true
+        property string menuKey: "O"
+        property string pushToTalkHint: "Push-to-talk: hold Caps Lock to talk."
         property string noticeText: "Connection lost. Reconnecting (1 of 5)..."
         property int closes: 0
         property int shutdowns: 0

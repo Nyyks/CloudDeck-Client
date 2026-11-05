@@ -9,6 +9,7 @@ import CloudDeck 1.0
 import CloudDeckMic 1.0
 import CloudDeckUsb 1.0
 import CloudDeckDisplay 1.0
+import CloudDeckShortcuts 1.0
 
 Item {
     id: root
@@ -16,6 +17,12 @@ Item {
 
     property var activeLauncher: null
     property bool streamLaunched: false
+
+    function micMuteKey() {
+        var a = CloudDeckShortcuts.actions
+        for (var i = 0; i < a.length; i++) if (a[i].id === "micMute") return a[i].key
+        return "U"
+    }
 
     function statusColor(s) {
         if (s === "running") return "#40c057"
@@ -343,7 +350,7 @@ Item {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         opacity: 0.7
-                        text: CloudDeckMic.status + "  ·  " + qsTr("Mute during a stream: Ctrl+Alt+Shift+U")
+                        text: CloudDeckMic.status + "  ·  " + qsTr("Mute during a stream: Ctrl+Alt+Shift+%1").arg(micMuteKey())
                     }
 
                     // ---- USB devices (docs/adr/0006-usb-passthrough.md)
@@ -389,6 +396,80 @@ Item {
                                 color: "#ffd43b"
                                 text: modelData.warning
                             }
+                        }
+                    }
+
+                    // ---- shortcuts and push-to-talk (docs/adr/0012-shortcuts-push-to-talk.md)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 8
+                        Label { text: qsTr("Shortcuts during a stream"); font.bold: true; Layout.fillWidth: true }
+                        Button {
+                            text: shortcutsList.visible ? qsTr("Hide") : qsTr("Change...")
+                            flat: true
+                            onClicked: shortcutsList.visible = !shortcutsList.visible
+                        }
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Label { text: qsTr("Push-to-talk:"); Layout.fillWidth: true }
+                        ComboBox {
+                            id: pttBox
+                            Layout.preferredWidth: 260
+                            textRole: "label"
+                            valueRole: "id"
+                            model: CloudDeckShortcuts.pttOptions
+                            Component.onCompleted: currentIndex = indexOfValue(CloudDeckShortcuts.pushToTalk)
+                            onActivated: CloudDeckShortcuts.pushToTalk = currentValue
+                        }
+                    }
+                    Label {
+                        visible: CloudDeckShortcuts.pushToTalk !== ""
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        opacity: 0.7
+                        text: qsTr("While streaming with the microphone on, it only sends while you hold this. The key or button doesn't reach the CloudDeck.")
+                    }
+                    ColumnLayout {
+                        id: shortcutsList
+                        visible: false
+                        Layout.fillWidth: true
+                        spacing: 2
+                        Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            opacity: 0.7
+                            text: qsTr("All shortcuts are Ctrl+Alt+Shift plus the key you choose. Changes apply to the next stream.")
+                        }
+                        Repeater {
+                            model: CloudDeckShortcuts.actions
+                            delegate: RowLayout {
+                                Layout.fillWidth: true
+                                Label { text: modelData.label; Layout.fillWidth: true; elide: Text.ElideRight }
+                                Label { text: "Ctrl+Alt+Shift+"; opacity: 0.7 }
+                                ComboBox {
+                                    Layout.preferredWidth: 80
+                                    model: CloudDeckShortcuts.keys
+                                    currentIndex: CloudDeckShortcuts.keys.indexOf(modelData.key)
+                                    onActivated: {
+                                        var err = CloudDeckShortcuts.setKey(modelData.id, currentText)
+                                        shortcutError.text = err
+                                        if (err !== "") currentIndex = CloudDeckShortcuts.keys.indexOf(modelData.key)
+                                    }
+                                }
+                            }
+                        }
+                        Label {
+                            id: shortcutError
+                            visible: text !== ""
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            color: "#ffd43b"
+                        }
+                        Button {
+                            text: qsTr("Reset to defaults")
+                            flat: true
+                            onClicked: { CloudDeckShortcuts.resetDefaults(); shortcutError.text = "" }
                         }
                     }
 

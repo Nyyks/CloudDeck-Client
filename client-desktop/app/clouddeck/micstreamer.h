@@ -42,6 +42,8 @@ public:
     Q_INVOKABLE void startTest();
     Q_INVOKABLE void stopTest();
     Q_INVOKABLE void toggleMute() { setMuted(!m_Muted); }
+    // Push-to-talk (docs/adr/0012): while enabled, the mic only sends while the key is held.
+    void setPushToTalkHeld(bool held) { m_PttHeld = held; }
 
     // Called by Session (any thread): after LiStartConnection() succeeded / before LiStopConnection().
     void onConnectionStarted();
@@ -70,6 +72,8 @@ private:
     QStringList m_Devices;
     std::atomic<double> m_Level {0.0};
     std::atomic<bool> m_Muted {false};
+    std::atomic<bool> m_PttMode {false}; // read from the setting when a stream starts
+    std::atomic<bool> m_PttHeld {false};
     std::atomic<bool> m_Streaming {false};
     bool m_Testing = false;
     bool m_HostUnsupported = false;

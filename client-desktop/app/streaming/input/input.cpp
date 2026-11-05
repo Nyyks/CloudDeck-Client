@@ -1,6 +1,7 @@
 #include <Limelight.h>
 #include "SDL_compat.h"
 #include "streaming/session.h"
+#include "clouddeck/shortcuts.h" // CloudDeck-Client
 #include "settings/mappingmanager.h"
 #include "path.h"
 #include "utils.h"
@@ -140,6 +141,17 @@ SdlInputHandler::SdlInputHandler(StreamingPreferences& prefs, int streamWidth, i
     m_SpecialKeyCombos[KeyComboToggleMicMute].keyCode = SDLK_u;
     m_SpecialKeyCombos[KeyComboToggleMicMute].scanCode = SDL_SCANCODE_U;
     m_SpecialKeyCombos[KeyComboToggleMicMute].enabled = true;
+
+    // CloudDeck-Client: the letters are configurable (docs/adr/0012-shortcuts-push-to-talk.md).
+    static_assert(KeyComboMax == 12, "update the shortcut ids below");
+    static const char* const shortcutIds[KeyComboMax] = {
+        "quit", "ungrab", "fullscreen", "stats", "mouseMode", "cursorHide", "minimize",
+        "paste", "regionLock", "quitAndExit", "keyboardGrab", "micMute",
+    };
+    for (int i = 0; i < KeyComboMax; i++) {
+        m_SpecialKeyCombos[i].keyCode = Shortcuts::keycodeFor(shortcutIds[i]);
+        m_SpecialKeyCombos[i].scanCode = Shortcuts::scancodeFor(shortcutIds[i]);
+    }
 
     m_OldIgnoreDevices = SDL_GetHint(SDL_HINT_GAMECONTROLLER_IGNORE_DEVICES);
     m_OldIgnoreDevicesExcept = SDL_GetHint(SDL_HINT_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT);

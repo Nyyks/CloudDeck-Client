@@ -274,6 +274,8 @@ private:
     // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
     class StreamOverlay* m_Overlay = nullptr;
     bool m_UserAudioMuted = false; // "Mute the CloudDeck's sound" (separate from mute-on-focus-loss)
+    SDL_Scancode m_PttScancode = SDL_SCANCODE_UNKNOWN; // CloudDeck-Client: push-to-talk binding
+    Uint8 m_PttMouseButton = 0;
     // CloudDeck-Client: two-way text clipboard (docs/adr/0008-clipboard-sync.md)
     class ClipboardSync* m_Clipboard = nullptr;
     QString m_LastClipboard; // last text we sent or applied, to avoid echoes

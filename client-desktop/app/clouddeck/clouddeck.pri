@@ -14,6 +14,7 @@ SOURCES += \
     $$PWD/nettest.cpp \
     $$PWD/streamoverlay.cpp \
     $$PWD/secretstore.cpp \
+    $$PWD/shortcuts.cpp \
     $$PWD/spanlayout.cpp \
     $$PWD/usbforwarder.cpp \
     $$PWD/usbtunnel.cpp
@@ -33,6 +34,7 @@ HEADERS += \
     $$PWD/nettest.h \
     $$PWD/streamoverlay.h \
     $$PWD/secretstore.h \
+    $$PWD/shortcuts.h \
     $$PWD/spanlayout.h \
     $$PWD/usbforwarder.h \
     $$PWD/usbtunnel.h

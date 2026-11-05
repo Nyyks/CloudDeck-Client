@@ -21,7 +21,7 @@ Pane {
     background: Rectangle { color: "#1d222b"; border.color: "#2f3746"; border.width: 1 }
 
     Keys.onEscapePressed: overlay.closeMenu()
-    Shortcut { sequence: "Ctrl+Alt+Shift+O"; onActivated: overlay.closeMenu() }
+    Shortcut { sequence: "Ctrl+Alt+Shift+" + overlay.menuKey; onActivated: overlay.closeMenu() }
 
     // Close when the user clicks back into the stream (or anywhere else).
     Connections {
@@ -177,6 +177,10 @@ Pane {
                     visible: !overlay.micEnabled
                     text: qsTr("Turning the microphone on or off reconnects the stream for a second.")
                 }
+                Hint {
+                    visible: overlay.micEnabled && overlay.pushToTalkHint !== ""
+                    text: overlay.pushToTalkHint
+                }
                 SwitchRow {
                     visible: overlay.micEnabled
                     text: qsTr("Mute my microphone")
@@ -269,7 +273,7 @@ Pane {
                 }
                 Hint {
                     Layout.bottomMargin: 14
-                    text: qsTr("Ctrl+Alt+Shift+O opens and closes this menu.")
+                    text: qsTr("Ctrl+Alt+Shift+%1 opens and closes this menu.").arg(overlay.menuKey)
                 }
             }
         }
