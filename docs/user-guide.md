@@ -74,6 +74,19 @@ Needs the CloudDeck host update on the VM, plus:
    keyboard or mouse you're using. Webcams and USB audio may work poorly over
    the internet.
 
+## Clipboard (desktop)
+
+Needs the CloudDeck host update on the VM.
+
+*Share the clipboard (text) with my CloudDeck while streaming* is on by default:
+- Text you copy on your PC, also in other apps while the stream runs, can be
+  pasted on the CloudDeck.
+- Text you copy on the CloudDeck can be pasted on your PC.
+- When a stream starts, your PC's clipboard is copied to the CloudDeck.
+
+It's text only, up to 100 KB. Images and files aren't shared. It needs Plasma's
+clipboard (the system tray's *Clipboard* entry), which is there by default.
+
 ## Display and multiple monitors (desktop)
 
 Needs the CloudDeck host update on the VM.

@@ -270,6 +270,12 @@ Item {
                             onValueModified: CloudDeck.autoStopIdleMinutes = value
                         }
                     }
+                    // ---- clipboard (docs/adr/0008-clipboard-sync.md)
+                    Switch {
+                        text: qsTr("Share the clipboard (text) with my CloudDeck while streaming")
+                        checked: CloudDeck.clipboardSync
+                        onToggled: CloudDeck.clipboardSync = checked
+                    }
                     // ---- microphone (docs/protocol-extensions.md §1)
                     Label { text: qsTr("Microphone"); font.bold: true; Layout.topMargin: 8 }
                     Switch {

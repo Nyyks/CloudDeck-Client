@@ -125,3 +125,52 @@ func TestDetachAllRestoresDisplay(t *testing.T) {
 		t.Fatalf("mode = %s after shutdown", kw.mode())
 	}
 }
+
+type memClipboard struct {
+	mu   sync.Mutex
+	text string
+}
+
+func (m *memClipboard) Get() (string, error) { m.mu.Lock(); defer m.mu.Unlock(); return m.text, nil }
+func (m *memClipboard) Set(t string) error   { m.mu.Lock(); defer m.mu.Unlock(); m.text = t; return nil }
+
+func TestClipboardSyncOverServer(t *testing.T) {
+	cb := &memClipboard{text: "vm"}
+	s := &Server{VHCI: newFake(), Clipboard: cb, ClipboardPoll: 10 * time.Millisecond}
+	a, b := net.Pipe()
+	go s.handle(b)
+	io.WriteString(a, "CDC1 "+fp+" /clouddeck/v1/clipboard/sync\n")
+	br := bufio.NewReader(a)
+	if line, _ := br.ReadString('\n'); line != "OK\n" {
+		t.Fatalf("reply = %q", line)
+	}
+	if line, _ := br.ReadString('\n'); !strings.Contains(line, `"max_bytes":102400`) {
+		t.Fatalf("status = %q", line)
+	}
+	io.WriteString(a, `{"text":"from client"}`+"\n")
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if txt, _ := cb.Get(); txt == "from client" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("client text not applied")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	cb.Set("copied on vm")
+	if line, _ := br.ReadString('\n'); line != `{"text":"copied on vm"}`+"\n" {
+		t.Fatalf("host update = %q", line)
+	}
+	go io.Copy(io.Discard, br)
+	s.DetachAll()
+	s.Wait()
+
+	none := &Server{VHCI: newFake()}
+	x, y := net.Pipe()
+	go none.handle(y)
+	io.WriteString(x, "CDC1 "+fp+" /clouddeck/v1/clipboard/sync\n")
+	if line, _ := bufio.NewReader(x).ReadString('\n'); !strings.HasPrefix(line, "ERR clipboard sync is not configured") {
+		t.Fatalf("no clipboard = %q", line)
+	}
+}

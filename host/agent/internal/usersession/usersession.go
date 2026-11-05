@@ -1,4 +1,6 @@
-package display
+// Package usersession runs commands as the desktop user inside their Plasma session
+// (Wayland socket and session D-Bus); the agent itself runs as root.
+package usersession
 
 import (
 	"bytes"
@@ -15,9 +17,9 @@ import (
 	"time"
 )
 
-// SessionRunner returns a Runner that executes kscreen-doctor as the desktop user,
-// connected to that user's Wayland session (the agent itself runs as root).
-func SessionRunner(username string) (Runner, error) {
+// Runner returns a function that runs `program` as the desktop user, connected to
+// that user's Wayland session and session bus, with a 15 s timeout.
+func Runner(username, program string) (func(args ...string) ([]byte, error), error) {
 	u, err := user.Lookup(username)
 	if err != nil {
 		return nil, err
@@ -27,7 +29,7 @@ func SessionRunner(username string) (Runner, error) {
 	if err1 != nil || err2 != nil || uid == 0 {
 		return nil, fmt.Errorf("unusable desktop user %q", username)
 	}
-	bin, err := exec.LookPath("kscreen-doctor")
+	bin, err := exec.LookPath(program)
 	if err != nil {
 		return nil, err
 	}

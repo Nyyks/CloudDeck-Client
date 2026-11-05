@@ -14,11 +14,15 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - Multiple monitors as one wide stream, and fitting the VM's resolution to the stream window
   (follows resizes and fullscreen toggles with an in-place stream restart)
   (ADR-0007). The agent switches KWin's mode for the stream and restores it afterwards.
-  Not yet verified on the VM.
+  Fit to window is verified on Windows. Multiple monitors are not verified yet.
 - `host/tools/display-test.sh`: a 15-second, self-reverting check of KWin custom modes.
+- Two-way text clipboard sync during streams (ADR-0008), through the agent and Plasma's Klipper.
+  On by default. Not yet verified on the VM.
 ### Fixed
 - Start and connect timed out when the host was already known under a new VM IP.
 - HTTP/2 errors with the CloudFront API endpoint (desktop now uses HTTP/1.1).
+- A second stream in the same client run hung on "Loading app list", then failed with
+  "app not found".
 
 ## [0.1.0] - 2026-11-04
 Phase 1 MVP. Verified end-to-end on Windows and Android against the real CloudDeck VM.

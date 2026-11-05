@@ -1,6 +1,7 @@
 #include "cloudsession.h"
 #include "clouddeckprovider.h"
 #include "secretstore.h"
+#include "clipboardsync.h"
 
 #include "backend/computermanager.h"
 #include "backend/computerseeker.h"
@@ -74,6 +75,8 @@ bool CloudSession::autoStopOnSessionEnd() const { return QSettings().value("clou
 void CloudSession::setAutoStopOnSessionEnd(bool v) { QSettings().setValue("clouddeck/autoStopOnSessionEnd", v); emit settingsChanged(); }
 int CloudSession::autoStopIdleMinutes() const { return QSettings().value("clouddeck/autoStopIdleMinutes", 0).toInt(); }
 void CloudSession::setAutoStopIdleMinutes(int v) { QSettings().setValue("clouddeck/autoStopIdleMinutes", qMax(0, v)); emit settingsChanged(); }
+bool CloudSession::clipboardSync() const { return ClipboardSync::enabled(); }
+void CloudSession::setClipboardSync(bool v) { ClipboardSync::setEnabled(v); emit settingsChanged(); }
 
 // ------------------------------------------------------------------ state helpers
 

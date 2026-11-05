@@ -23,7 +23,9 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
+	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/clipboard"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/display"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/usbip"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/vhci"
@@ -81,8 +83,11 @@ type Attachment struct {
 type Server struct {
 	VHCI    Controller
 	Display Display // nil: display matching unavailable (no desktop user configured)
-	Version string
-	Log     *log.Logger
+	// Clipboard is the VM's clipboard (nil: clipboard sync unavailable).
+	Clipboard     clipboard.Clipboard
+	ClipboardPoll time.Duration // 0 = 700 ms
+	Version       string
+	Log           *log.Logger
 
 	mu       sync.Mutex // guards attached and leases; serializes port selection + attach
 	attached []*Attachment
@@ -134,10 +139,15 @@ func (s *Server) handle(c net.Conn) {
 		if s.Display != nil {
 			features = append(features, "display")
 		}
+		if s.Clipboard != nil {
+			features = append(features, "clipboard")
+		}
 		s.reply(c, map[string]any{"agent": "clouddeck-agent", "version": s.Version, "features": features})
 		c.Close()
 	case "/clouddeck/v1/display/set":
 		s.displaySet(req, c, br)
+	case "/clouddeck/v1/clipboard/sync":
+		s.clipboardSync(req, c, br)
 	case "/clouddeck/v1/usb/list":
 		s.reply(c, map[string]any{"attached": s.List(req.Client)})
 		c.Close()
@@ -221,6 +231,50 @@ func (s *Server) displaySet(req Request, c net.Conn, r io.Reader) {
 		return
 	}
 	_, _ = io.Copy(io.Discard, r) // until the client goes away
+}
+
+// clipboardSync keeps the client's and the VM's text clipboard in step until the
+// tunnel closes (docs/adr/0008-clipboard-sync.md). After "OK" the agent writes one
+// JSON status line, then both sides exchange {"text":...} lines.
+func (s *Server) clipboardSync(req Request, c net.Conn, r io.Reader) {
+	defer c.Close()
+	if s.Clipboard == nil {
+		fmt.Fprintf(c, "ERR clipboard sync is not configured on this host\n")
+		return
+	}
+	if _, err := s.Clipboard.Get(); err != nil {
+		s.logf("clipboard for client %s: %v", short(req.Client), err)
+		fmt.Fprintf(c, "ERR %s\n", oneLine(err.Error()))
+		return
+	}
+	s.active.Add(1)
+	defer s.active.Done()
+	s.mu.Lock()
+	s.leases = append(s.leases, c)
+	if s.closing {
+		c.Close()
+	}
+	s.mu.Unlock()
+	defer func() {
+		s.mu.Lock()
+		for i, x := range s.leases {
+			if x == c {
+				s.leases = append(s.leases[:i], s.leases[i+1:]...)
+				break
+			}
+		}
+		s.mu.Unlock()
+	}()
+	if _, err := fmt.Fprintf(c, "OK\n{\"max_bytes\":%d}\n", clipboard.MaxBytes); err != nil {
+		return
+	}
+	poll := s.ClipboardPoll
+	if poll == 0 {
+		poll = 700 * time.Millisecond
+	}
+	s.logf("clipboard sync started for client %s", short(req.Client))
+	_ = clipboard.Sync(s.Clipboard, r, c, poll, s.logf)
+	s.logf("clipboard sync ended for client %s", short(req.Client))
 }
 
 func oneLine(s string) string {

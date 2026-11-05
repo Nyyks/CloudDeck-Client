@@ -56,6 +56,7 @@ flowchart LR
   - `usb/attach`: USB/IP into `vhci_hcd` (ADR-0006).
   - `display/set`: the VM's display mode for a stream, through `kscreen-doctor`
     (ADR-0007).
+  - `clipboard/sync`: two-way text clipboard through Klipper (ADR-0008).
 
   Each holds its tunnel open for as long as the effect lasts.
 

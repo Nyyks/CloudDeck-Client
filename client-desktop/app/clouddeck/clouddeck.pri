@@ -2,6 +2,8 @@
 # upstream's file lists stay untouched (docs/adr/0005).
 
 SOURCES += \
+    $$PWD/agenttunnel.cpp \
+    $$PWD/clipboardsync.cpp \
     $$PWD/clouddeckapi.cpp \
     $$PWD/clouddeckprovider.cpp \
     $$PWD/cloudsession.cpp \
@@ -14,7 +16,9 @@ SOURCES += \
     $$PWD/usbtunnel.cpp
 
 HEADERS += \
+    $$PWD/agenttunnel.h \
     $$PWD/branding.h \
+    $$PWD/clipboardsync.h \
     $$PWD/clouddeckapi.h \
     $$PWD/cloudprovider.h \
     $$PWD/clouddeckprovider.h \

@@ -260,6 +260,9 @@ private:
     Uint32 m_ResizeCheckAt = 0;          // SDL ticks at which to compare window and stream size; 0 = none
     void maybeRestartForWindowSize();
     void restartStreamAt(int width, int height);
+    // CloudDeck-Client: two-way text clipboard (docs/adr/0008-clipboard-sync.md)
+    class ClipboardSync* m_Clipboard = nullptr;
+    QString m_LastClipboard; // last text we sent or applied, to avoid echoes
     SupportedVideoFormatList m_SupportedVideoFormats; // Sorted in order of descending priority
     STREAM_CONFIGURATION m_StreamConfig;
     DECODER_RENDERER_CALLBACKS m_VideoCallbacks;

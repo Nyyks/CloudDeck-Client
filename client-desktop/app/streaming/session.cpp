@@ -4,6 +4,7 @@
 #include "clouddeck/usbforwarder.h"
 #include "clouddeck/displaysettings.h"
 #include "clouddeck/displaylease.h"
+#include "clouddeck/clipboardsync.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
 
@@ -662,6 +663,7 @@ bool Session::initialize(QQuickWindow* qtWindow)
 
     LiInitializeStreamConfiguration(&m_StreamConfig);
     m_StreamConfig.enableMicrophone = MicStreamer::get()->enabled(); // CloudDeck-Client
+    ClipboardSync::sdlEventType(); // CloudDeck-Client: register the event type on the SDL thread
     m_StreamConfig.width = m_Preferences->width;
     m_StreamConfig.height = m_Preferences->height;
 
@@ -1368,6 +1370,8 @@ private:
         LiStopConnection();
         delete m_Session->m_DisplayLease; // CloudDeck-Client: the host restores its display mode
         m_Session->m_DisplayLease = nullptr;
+        delete m_Session->m_Clipboard; // CloudDeck-Client: ends clipboard sync
+        m_Session->m_Clipboard = nullptr;
 
         // Perform a best-effort app quit
         if (shouldQuit) {
@@ -1943,6 +1947,10 @@ bool Session::startConnectionAsync()
         return true;
     }
     UsbForwarder::get()->onConnectionStarted(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert); // CloudDeck-Client
+    if (ClipboardSync::enabled()) { // CloudDeck-Client: lives for the whole session, across restarts
+        m_Clipboard = new ClipboardSync(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert);
+        m_Clipboard->start();
+    }
     emit connectionStarted();
     return true;
 }
@@ -2201,6 +2209,15 @@ void Session::exec()
     if (m_FitToWindow) {
         m_ResizeCheckAt = SDL_GetTicks() + 1500;
     }
+    // CloudDeck-Client: the local clipboard wins when a stream starts
+    if (m_Clipboard != nullptr && SDL_HasClipboardText()) {
+        char* c = SDL_GetClipboardText();
+        m_LastClipboard = QString::fromUtf8(c ? c : "");
+        SDL_free(c);
+        if (!m_LastClipboard.isEmpty()) {
+            m_Clipboard->offer(m_LastClipboard);
+        }
+    }
     SDL_Event event;
     for (;;) {
         maybeRestartForWindowSize(); // CloudDeck-Client
@@ -2235,6 +2252,26 @@ void Session::exec()
             continue;
         }
 #endif
+        // CloudDeck-Client: clipboard sync. Text from the CloudDeck becomes the local
+        // clipboard; local changes (also from other apps while streaming) go to the CloudDeck.
+        if (event.type == ClipboardSync::sdlEventType()) {
+            QString text;
+            if (m_Clipboard != nullptr && m_Clipboard->takeIncoming(text)) {
+                m_LastClipboard = text;
+                SDL_SetClipboardText(text.toUtf8().constData());
+            }
+            continue;
+        }
+        if (event.type == SDL_CLIPBOARDUPDATE && m_Clipboard != nullptr && SDL_HasClipboardText()) {
+            char* c = SDL_GetClipboardText();
+            QString text = QString::fromUtf8(c ? c : "");
+            SDL_free(c);
+            if (!text.isEmpty() && text != m_LastClipboard) {
+                m_LastClipboard = text;
+                m_Clipboard->offer(text);
+            }
+        }
+
         // CloudDeck-Client: no input reaches the host while the stream restarts at a new size
         if (m_Restarting && dropDuringRestart(event.type)) {
             continue;

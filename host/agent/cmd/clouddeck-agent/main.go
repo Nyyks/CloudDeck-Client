@@ -1,6 +1,7 @@
 // clouddeck-agent: CloudDeck-Client host agent (runs as root, systemd system unit).
 // Reached only through Sunshine's /clouddeck/v1/* tunnel (patch 0002) over a Unix
-// socket. See docs/adr/0006-usb-passthrough.md and docs/adr/0007-multi-monitor.md.
+// socket. See docs/adr/0006-usb-passthrough.md, 0007-multi-monitor.md and
+// 0008-clipboard-sync.md.
 package main
 
 import (
@@ -16,7 +17,9 @@ import (
 	"time"
 
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/agent"
+	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/clipboard"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/display"
+	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/usersession"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/vhci"
 )
 
@@ -42,13 +45,19 @@ func main() {
 	srv := &agent.Server{VHCI: ctl, Version: version, Log: logger}
 	var disp *display.Manager
 	if *desktopUser != "" {
-		run, err := display.SessionRunner(*desktopUser)
+		run, err := usersession.Runner(*desktopUser, "kscreen-doctor")
 		if err != nil {
 			logger.Printf("warning: display matching disabled: %v", err)
 		} else {
 			disp = &display.Manager{Run: run, StateFile: filepath.Join(*stateDir, "display-restore.json")}
 			srv.Display = disp
 			go restoreLeftover(disp, logger)
+		}
+		busctl, err := usersession.Runner(*desktopUser, "busctl")
+		if err != nil {
+			logger.Printf("warning: clipboard sync disabled: %v", err)
+		} else {
+			srv.Clipboard = clipboard.Klipper{Run: busctl}
 		}
 	}
 

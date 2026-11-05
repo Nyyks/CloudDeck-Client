@@ -22,7 +22,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Account | Sign in, session restored from keychain | done | partial | done | Linux: Secret Service path untested on a real desktop |
 | Account | MFA challenge | partial | partial | partial | This account has no MFA, so it's untested |
 | VM | Live status, Start / Stop / Restart | done | partial | done | Restart = stop+start (no API) |
-| VM | One-click start and connect | done | partial | done | Re-verified 2026-11-04 after the fix for hosts that are already known (new VM IP) |
+| VM | One-click start and connect | done | partial | done | Re-verified 2026-11-04 after the fix for hosts that are already known (new VM IP); 2026-11-05: a second stream in the same run no longer hangs on the app list |
 | VM | Automatic host address | done | partial | done | |
 | VM | Automatic pairing (no PIN typing) | done | partial | done | |
 | VM | Auto-stop on session end | done | partial | done | |
@@ -33,13 +33,13 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Host | Patched Sunshine install with automatic fallback to stock | done | — | — | Installed on the VM by the owner (bundle -id4d49f); streams work through it. CloudDeck default app list preserved |
 | USB | USB device passthrough | done | partial | not planned | ADR-0006. Host: Go agent + Sunshine patch 0002 tunnel. Windows: usbipd-win, **verified by the owner on 2026-11-05**. Linux: pkexec helper on the kernel usbip-host (no network listener); agent and helper interop-tested with fake kernels, not yet run on a real Linux PC (owner tests later). Android not planned (owner doesn't need it). |
 | Display | Multiple monitors, one wide stream (4a) | partial | partial | n/a | ADR-0007. One borderless window over the chosen monitors; the host agent switches the VM to the combined resolution via kscreen-doctor and restores it when the stream ends. Agent and layout unit-tested; **not yet run on the VM**. Linux via XWayland. |
-| Display | Windowed mode | partial | partial | n/a | Inherited from Moonlight (Settings → Display mode; Ctrl+Alt+Shift+X); not explicitly tested with CloudDeck yet |
-| Display | Fit the VM resolution to the window or screen, following resizes | partial | partial | not started | ADR-0007 amendment: an in-place stream restart at the new size about 1 s after a resize settles, keeping USB and the running app. Off by default until verified. **Testable on a laptop.** |
+| Display | Windowed mode | done | partial | n/a | Inherited from Moonlight (Settings → Display mode; Ctrl+Alt+Shift+X). Used by the owner on Windows on 2026-11-05 |
+| Display | Fit the VM resolution to the window or screen, following resizes | done | partial | not started | ADR-0007 amendment: an in-place stream restart at the new size about 1 s after a resize settles, keeping USB and the running app. Verified by the owner on Windows on 2026-11-05 (windowed resizes, fullscreen toggle, reconnect). Off by default. |
 | Display | Multiple monitors as separate outputs (4b) | not started | not started | n/a | Needs kernel arguments (EDID overrides): owner approval first |
 | Display | Tablet as extra screen | not started | n/a | not started | Stretch goal |
 | UX | In-stream Quick Menu | not started | not started | not started | Phase 5 |
 | UX | Network test, auto-recommended settings, low-bandwidth mode | not started | not started | not started | Phase 5 |
-| UX | Clipboard sync (text) | not started | not started | not started | Phase 5 |
+| UX | Clipboard sync (text) | partial | partial | not started | ADR-0008: two-way via the agent and Plasma's Klipper (busctl as the desktop user), on by default, up to 100 KiB of text. Agent unit-tested; **not yet run on the VM** |
 | UX | File upload / drag-and-drop | not started | not started | not started | Phase 5 |
 | UX | Configurable shortcuts, auto-reconnect | not started | not started | not started | Phase 5 |
 | UX | Tray icon | not started | not started | n/a | Phase 5 |
