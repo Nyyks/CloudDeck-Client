@@ -40,6 +40,9 @@ public abstract class VirtualControllerElement extends View {
     protected VirtualController virtualController;
     protected final int elementId;
 
+    // CloudDeck-Client: for the button style (clouddeck/OnScreenController.java)
+    public int getElementId() { return elementId; }
+
     private final Paint paint = new Paint();
 
     private int normalColor = 0xF0888888;

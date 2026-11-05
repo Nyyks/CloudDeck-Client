@@ -140,7 +140,15 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // ControllerHandler reads this for every button press, so it applies live.
             prefConfig.flipFaceButtons = on;
             android.preference.PreferenceManager.getDefaultSharedPreferences(Game.this)
-                    .edit().putBoolean("checkbox_flip_face_buttons", on).apply();
+                    .edit().putBoolean("checkbox_flip_face_buttons", on).commit();
+            if (virtualController != null) {
+                virtualController.refreshLayout(); // on-screen buttons follow the layout
+            }
+        }
+
+        @Override
+        public VirtualController virtualController() {
+            return virtualController;
         }
 
         @Override

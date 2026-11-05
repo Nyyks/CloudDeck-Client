@@ -168,6 +168,15 @@ public class VirtualController {
 
         // Apply user preferences onto the default layout
         VirtualControllerConfigurationLoader.loadFromPreferences(this, context);
+
+        // CloudDeck-Client: Xbox or PlayStation button style
+        com.limelight.clouddeck.OnScreenController.applyStyle(this, context,
+                com.limelight.preferences.PreferenceConfiguration.readPreferences(context).flipFaceButtons);
+    }
+
+    // CloudDeck-Client: the stream menu's "Edit layout" (same as tapping the gear button)
+    public void startEditing() {
+        if (currentMode == ControllerMode.Active) buttonConfigure.performClick();
     }
 
     public ControllerMode getControllerMode() {

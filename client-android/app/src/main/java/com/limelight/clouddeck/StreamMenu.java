@@ -38,6 +38,8 @@ public final class StreamMenu {
         void toggleKeyboard();
         void disconnect();
         String streamInfo();
+        /** The on-screen controller, or null when it is off. */
+        com.limelight.binding.input.virtual_controller.VirtualController virtualController();
     }
 
     private static final String PREF_HIDE_BUTTON = "cdMenuButtonHidden";
@@ -136,6 +138,22 @@ public final class StreamMenu {
             updateButton();
         }));
 
+        final com.limelight.binding.input.virtual_controller.VirtualController osc = host.virtualController();
+        if (osc != null) {
+            body.addView(toggle(R.string.cd_osc_playstation,
+                    OnScreenController.STYLE_PLAYSTATION.equals(OnScreenController.style(activity)), on -> {
+                        OnScreenController.setStyle(activity, on ? OnScreenController.STYLE_PLAYSTATION : OnScreenController.STYLE_XBOX);
+                        osc.refreshLayout();
+                    }));
+            body.addView(action(R.string.cd_osc_edit, false, b -> {
+                dialog.dismiss();
+                android.widget.Toast.makeText(activity, R.string.cd_osc_edit_hint, android.widget.Toast.LENGTH_LONG).show();
+                osc.startEditing();
+            }));
+            body.addView(action(R.string.cd_osc_save, false, b -> askLayoutName(osc)));
+            body.addView(action(R.string.cd_osc_load, false, b -> pickLayout(osc, false)));
+            body.addView(action(R.string.cd_osc_delete, false, b -> pickLayout(osc, true)));
+        }
         body.addView(action(R.string.cd_menu_keyboard, false, b -> {
             dialog.dismiss();
             // Let the dialog's window go first, or the keyboard opens for it.
@@ -164,6 +182,40 @@ public final class StreamMenu {
         scroll.addView(body);
         root.addView(scroll);
         return root;
+    }
+
+    private void askLayoutName(com.limelight.binding.input.virtual_controller.VirtualController osc) {
+        final android.widget.EditText name = new android.widget.EditText(activity);
+        name.setHint(R.string.cd_osc_name);
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.cd_osc_save)
+                .setView(name)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String n = name.getText().toString().trim();
+                    if (!n.isEmpty()) OnScreenController.saveLayout(osc, activity, n);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void pickLayout(com.limelight.binding.input.virtual_controller.VirtualController osc, boolean delete) {
+        final java.util.List<String> names = OnScreenController.layoutProfiles(activity);
+        if (names.isEmpty()) {
+            android.widget.Toast.makeText(activity, R.string.cd_osc_none, android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle(delete ? R.string.cd_osc_delete : R.string.cd_osc_load)
+                .setItems(names.toArray(new String[0]), (d, which) -> {
+                    if (delete) {
+                        OnScreenController.deleteLayout(activity, names.get(which));
+                    } else {
+                        OnScreenController.loadLayout(osc, activity, names.get(which));
+                        if (dialog != null) dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private interface OnToggle { void toggled(boolean on); }

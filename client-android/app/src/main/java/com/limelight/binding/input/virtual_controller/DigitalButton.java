@@ -43,6 +43,7 @@ public class DigitalButton extends VirtualControllerElement {
 
     private List<DigitalButtonListener> listeners = new ArrayList<>();
     private String text = "";
+    private int labelColor = 0; // CloudDeck-Client: button style colour of the label, 0 = outline colour
     private int icon = -1;
     private long timerLongClickTimeout = 3000;
     private final Runnable longClickRunnable = new Runnable() {
@@ -128,6 +129,12 @@ public class DigitalButton extends VirtualControllerElement {
         invalidate();
     }
 
+    // CloudDeck-Client: label colour for the Xbox/PlayStation button style
+    public void setLabelColor(int color) {
+        this.labelColor = color;
+        invalidate();
+    }
+
     public void setIcon(int id) {
         this.icon = id;
         invalidate();
@@ -158,6 +165,7 @@ public class DigitalButton extends VirtualControllerElement {
         } else {
             paint.setStyle(Paint.Style.FILL_AND_STROKE);
             paint.setStrokeWidth(getDefaultStrokeWidth()/2);
+            if (labelColor != 0 && !isPressed()) paint.setColor(labelColor); // CloudDeck-Client
             canvas.drawText(text, getPercent(getWidth(), 50), getPercent(getHeight(), 63), paint);
         }
     }

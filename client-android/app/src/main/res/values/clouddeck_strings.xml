@@ -58,4 +58,12 @@
     <string name="cd_menu_nintendo">Nintendo button layout (swap A/B and X/Y)</string>
     <!-- controller profiles (docs/controller-profiles.md) -->
     <string name="cd_controllers">Controller profiles</string>
+    <string name="cd_osc_playstation">PlayStation button style (✕ ○ □ △)</string>
+    <string name="cd_osc_edit">Edit on-screen controller layout</string>
+    <string name="cd_osc_edit_hint">Drag buttons, tap the gear to switch to resizing, tap it again to finish.</string>
+    <string name="cd_osc_save">Save layout as…</string>
+    <string name="cd_osc_load">Load a saved layout…</string>
+    <string name="cd_osc_delete">Delete a saved layout…</string>
+    <string name="cd_osc_none">No saved layouts yet.</string>
+    <string name="cd_osc_name">Layout name</string>
 </resources>

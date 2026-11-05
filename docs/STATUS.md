@@ -47,6 +47,6 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | UX | Tray icon | not planned | not planned | n/a | Skipped by the owner on 2026-11-05 |
 | Controllers | Extended controller support (rumble, gyro, DualSense features, hot-plug) | not started | not started | not started | Phase 6 (scope addition) |
 | Controllers | Button/axis remapping with profiles | partial | partial | not started | docs/controller-profiles.md: buttons (incl. disable), stick deadzone/sensitivity/invert, trigger deadzone, swap sticks; default + per-controller; shared fixture tests. Xbox/Nintendo toggle in both in-stream menus. Desktop and Android, not yet verified |
-| Controllers | On-screen controller with layout editor | not started | not started | partial | Phase 6. Android has Moonlight's on-screen controls; editor/profiles to come. Desktop touchscreens optional. |
+| Controllers | On-screen controller with layout editor | n/a | n/a | partial | Android: Moonlight's editor (move/resize/colour) plus Xbox or PlayStation button style (labels and colours) and named layout profiles (save/load/delete), all from the in-stream menu. Not yet verified. Desktop touchscreens: not planned unless wanted |
 | Controllers | On-screen keyboard (Android, handhelds) | not started | not started | not started | Phase 6 (owner addition, 2026-11-05) |
 | UX | UI overhaul (less cluttered, modern) | not started | not started | not started | Phase 7 (owner addition, 2026-11-05), after everything else |

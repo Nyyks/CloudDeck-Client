@@ -54,3 +54,18 @@ Values are clamped: deadzones to 0–0.5, sensitivity to 0.5–2.0.
 `shared/fixtures/controller/profile-v1.json` with the expected results in
 `cases-v1.json`. Those were computed by an independent implementation, and both
 clients' unit tests must reproduce them exactly.
+
+## On-screen controller (Android)
+Moonlight's on-screen controller already has a layout editor: tap the gear to
+move buttons, tap again to resize, then again to finish. CloudDeck adds, in the
+in-stream menu (`clouddeck/OnScreenController.java`):
+- **Button style: Xbox or PlayStation.**
+  - Xbox: A/B/X/Y in green/red/blue/yellow, LB/RB, LT/RT, View/Menu/Guide.
+  - PlayStation: ✕ ○ □ △ in their colours, L1/R1, L2/R2, Share/Options/PS.
+
+  Labels follow the button a key *sends*, so they stay correct with the
+  Nintendo layout switch, which also rebuilds the layout.
+- **Layout profiles:** *Save layout as…*, *Load a saved layout…* and *Delete…*.
+  A profile is a copy of Moonlight's `OSC` preferences (positions, sizes,
+  colours) under `OSC_profile_<name>`.
+- *Edit on-screen controller layout* starts Moonlight's editor.
