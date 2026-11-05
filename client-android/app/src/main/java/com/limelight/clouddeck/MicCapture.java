@@ -72,6 +72,10 @@ public final class MicCapture {
         }
     }
 
+    // In-stream menu (docs/adr/0009-quick-menu.md)
+    public static synchronized boolean isActive() { return active != null; }
+    public static synchronized boolean isMuted() { return active != null && active.muted; }
+
     public static synchronized boolean toggleMute() {
         if (active == null) return false;
         active.muted = !active.muted;

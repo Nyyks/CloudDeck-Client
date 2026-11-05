@@ -45,4 +45,14 @@
     <string name="cd_err_pin_submit">Could not submit the pairing PIN through CloudDeck: %1$s</string>
     <string name="cd_err_no_app">No app named \"%1$s\" on your CloudDeck.</string>
     <string name="cd_err_session_expired">Your CloudDeck session expired. Please sign in again.</string>
+    <!-- in-stream menu (docs/adr/0009-quick-menu.md) -->
+    <string name="cd_menu_button">CloudDeck menu</string>
+    <string name="cd_menu_mic_mute">Mute my microphone</string>
+    <string name="cd_menu_stats">Performance stats</string>
+    <string name="cd_menu_keyboard">Keyboard</string>
+    <string name="cd_menu_disconnect">Disconnect</string>
+    <string name="cd_menu_shutdown">Shut down my CloudDeck</string>
+    <string name="cd_menu_shutdown_confirm">Tap again to shut down your CloudDeck</string>
+    <string name="cd_menu_hide_button">Hide the menu button (Back opens this menu)</string>
+    <string name="cd_menu_close">Close</string>
 </resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CloudDeck-Client: the CloudDeck mark (traced from clouddeck.app's favicon; see THIRD_PARTY_NOTICES.md) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="267" android:viewportHeight="267">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M32,0 L108,0 L108,66 L66,66 L66,200 L108,200 L108,267 L33,267 L0,234 L0,33 Z"/>
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M164,0 L234,0 L267,33 L267,234 L233,267 L164,267 L164,200 L200,200 L200,66 L164,66 Z"/>
+</vector>

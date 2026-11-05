@@ -236,6 +236,16 @@ The phase extends that baseline:
    - Sends keys to the CloudDeck (not text-only), so shortcuts and games work.
    - Opened from the in-stream menu or a gamepad combo.
 
+**Owner decisions (2026-11-05):** everything above is in scope, in this order.
+1. Test standard **Xbox** and **PlayStation** pads and **8BitDo**. **Built-in
+   controllers of handhelds** (Steam Deck, ROG Ally, Legion Go and similar,
+   running the desktop client) are a must. Other pads working is a bonus.
+2. Remapping as proposed, plus a **toggle between Xbox and Nintendo button
+   layout** (A/B and X/Y swapped).
+3. On-screen controller: selectable **button style, Xbox or PlayStation**
+   (labels and colours).
+4. On-screen keyboard as described.
+
 *AC:* each listed pad works with rumble on each client. A remap profile applies
 in-game and survives restart. A custom on-screen layout can be created, saved,
 and used in a stream. The on-screen keyboard can type, use shortcuts

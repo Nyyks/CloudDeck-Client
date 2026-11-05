@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CloudDeck-Client: in-stream menu button (docs/adr/0009-quick-menu.md) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="#CC1D222B"/>
+    <stroke android:width="1dp" android:color="#553B5BDB"/>
+</shape>

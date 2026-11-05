@@ -114,6 +114,47 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private VirtualController virtualController;
 
     private PreferenceConfiguration prefConfig;
+
+    // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
+    private com.limelight.clouddeck.StreamMenu cdcMenu;
+    private final com.limelight.clouddeck.StreamMenu.Host cdcMenuHost = new com.limelight.clouddeck.StreamMenu.Host() {
+        @Override
+        public boolean isPerfOverlayVisible() {
+            return prefConfig.enablePerfOverlay;
+        }
+
+        @Override
+        public void setPerfOverlayVisible(boolean visible) {
+            // The decoder reads this flag for every frame, so stats start and stop live.
+            prefConfig.enablePerfOverlay = visible;
+            performanceOverlayView.setVisibility(visible && !isHidingOverlays ? View.VISIBLE : View.GONE);
+        }
+
+        @Override
+        public void toggleKeyboard() {
+            Game.this.toggleKeyboard();
+        }
+
+        @Override
+        public void disconnect() {
+            finish();
+        }
+
+        @Override
+        public String streamInfo() {
+            return prefConfig.width + " × " + prefConfig.height + " · " + prefConfig.fps + " FPS";
+        }
+    };
+
+    // CloudDeck-Client: Back opens the in-stream menu; "Disconnect" is in there.
+    @Override
+    public void onBackPressed() {
+        if (cdcMenu != null && !cdcMenu.isShowing()) {
+            cdcMenu.show();
+            return;
+        }
+        super.onBackPressed();
+    }
     private SharedPreferences tombstonePrefs;
 
     private NvConnection conn;
@@ -271,6 +312,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 
         performanceOverlayView = findViewById(R.id.performanceOverlay);
+
+        // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
+        cdcMenu = new com.limelight.clouddeck.StreamMenu(this, cdcMenuHost);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
 
@@ -597,6 +641,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 performanceOverlayView.setVisibility(View.GONE);
                 notificationOverlayView.setVisibility(View.GONE);
+                if (cdcMenu != null) cdcMenu.setOverlaysHidden(true); // CloudDeck-Client
 
                 // Disable sensors while in PiP mode
                 controllerHandler.disableSensors();
@@ -618,6 +663,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 }
 
                 notificationOverlayView.setVisibility(requestedNotificationOverlayVisibility);
+                if (cdcMenu != null) cdcMenu.setOverlaysHidden(false); // CloudDeck-Client
 
                 // Enable sensors again after exiting PiP
                 controllerHandler.enableSensors();

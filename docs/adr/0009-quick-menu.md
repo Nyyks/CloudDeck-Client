@@ -76,3 +76,20 @@
   Watch for frame-pacing effects at very high frame rates.
 - In game mouse mode the button is hidden (the cursor can't reach it). Use the
   hotkey.
+
+## Android (2026-11-05)
+- **Opening:** a 40 dp round button at the top centre with the CloudDeck mark,
+  or the **Back** gesture/button. Back used to end the stream; *Disconnect* is
+  now in the menu. Pressing Back again closes the menu.
+- **Contents:**
+  - mute my microphone (when the mic is streaming);
+  - performance stats (live: the decoder reads the flag every frame);
+  - hide the menu button (Back still opens the menu);
+  - keyboard (the system keyboard, as with the 3-finger tap);
+  - disconnect;
+  - shut down my CloudDeck (tap twice; only for streams started from the
+    CloudDeck screen).
+- The menu is a dark dialog built in code (`clouddeck/StreamMenu.java`) with
+  the CloudDeck header. The button hides in picture-in-picture.
+- Display, mouse and USB settings aren't on Android: the stream size is the
+  phone's screen and there's no USB forwarding.

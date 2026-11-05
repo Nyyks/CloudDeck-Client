@@ -53,6 +53,10 @@ public class CloudDeckActivity extends Activity {
 
     private CloudDeckApi.Machine machine = new CloudDeckApi.Machine();
     private boolean restoring, mfaRequired, streamLaunched, restartPending;
+    // In-stream menu (docs/adr/0009-quick-menu.md): set while a stream started here runs,
+    // and a one-shot "shut down my CloudDeck" request handled when it ends.
+    public static volatile boolean launchedFromCloudDeck;
+    public static volatile boolean stopAfterStream;
     private final AtomicBoolean connecting = new AtomicBoolean(false);
     private final AtomicBoolean cancel = new AtomicBoolean(false);
 
@@ -152,6 +156,13 @@ public class CloudDeckActivity extends Activity {
         super.onResume();
         if (streamLaunched) {
             streamLaunched = false;
+            launchedFromCloudDeck = false;
+            if (stopAfterStream) {
+                stopAfterStream = false;
+                LimeLog.info("CloudDeck: shutdown requested from the in-stream menu");
+                stopMachine();
+                return;
+            }
             if (autoStop.isChecked() && CloudDeckApi.STATUS_RUNNING.equals(machine.status)) {
                 LimeLog.info("CloudDeck: session ended, auto-stopping machine");
                 stopMachine();
@@ -498,6 +509,8 @@ public class CloudDeckActivity extends Activity {
         final ComputerDetails fReady = ready;
         ui.post(() -> {
             streamLaunched = true;
+            launchedFromCloudDeck = true;
+            stopAfterStream = false;
             ServerHelper.doStart(CloudDeckActivity.this, fApp, fReady, managerBinder);
         });
     }
