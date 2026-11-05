@@ -15,6 +15,7 @@ Download from the [latest release](../../releases/latest):
 |---|---|---|
 | Windows 10/11 (x64) | `…-windows-x64.msi` or `…-windows-x64-portable.zip` | The MSI adds Start menu and desktop shortcuts. |
 | Linux (x64) | `…-linux-x86_64.AppImage` | `chmod +x` it and run it. |
+| Raspberry Pi 4/5, ARM64 Linux | `…-linux-aarch64.AppImage` | Needs a 64-bit OS. Not verified on a Pi yet. |
 | Android 5+ (phones, handhelds, TV) | `…-android-arm64-x86_64-debug.apk` | Allow installs from unknown sources. |
 
 All clients install next to stock Moonlight and share nothing with it. Sign in with your CloudDeck

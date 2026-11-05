@@ -1,0 +1,83 @@
+---
+# Raspberry Pi / ARM64 Linux AppImage. Runs tools/build-linux-arm64.sh (an arm64 Ubuntu 22.04
+# container under QEMU, same recipe as the x86_64 AppImage) on a standard x86_64 runner, so it
+# is slow (about an hour). Tagged builds attach the AppImage to the GitHub Release; "Run
+# workflow" can attach it to an existing release instead (release_tag).
+name: Linux arm64
+permissions:
+  contents: read
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Attach to this existing release, e.g. v1.0.0 (empty: artifact only)'
+        required: false
+        default: ''
+
+concurrency:
+  group: arm64-${{ github.ref }}-${{ inputs.release_tag }}
+  cancel-in-progress: true
+
+jobs:
+  appimage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive, fetch-depth: 1 }
+      - id: v
+        name: Version
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          BASE=$(tr -d ' \r\n' < client-desktop/app/version.txt)
+          TAG=""
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then TAG="$GITHUB_REF_NAME"; elif [ -n "$INPUT_TAG" ]; then TAG="$INPUT_TAG"; fi
+          if [ -n "$TAG" ]; then
+            V="${TAG#v}"
+            [[ "${V%%-*}" == "$BASE" ]] || { echo "Tag $TAG does not match version.txt ($BASE)"; exit 1; }
+          else
+            V="$BASE-dev.${GITHUB_SHA::7}"
+          fi
+          echo "CI_VERSION=$V" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v3
+        with: { platforms: arm64 }
+      - name: Build the aarch64 AppImage
+        run: bash tools/build-linux-arm64.sh
+      - uses: actions/upload-artifact@v6
+        with:
+          name: linux-arm64-appimage
+          path: out/linux-arm64/*.AppImage
+          compression-level: 0
+          if-no-files-found: error
+
+  release:
+    needs: appimage
+    if: needs.appimage.outputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with: { name: linux-arm64-appimage, path: dist }
+      - name: Attach to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.appimage.outputs.tag }}
+        run: |
+          ls -l dist
+          PRE=""; [[ "$TAG" == *-* ]] && PRE="--prerelease"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" \
+              --title "CloudDeck-Client $TAG" --generate-notes $PRE \
+              || gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          fi

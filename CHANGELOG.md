@@ -13,7 +13,7 @@ against a local Sunshine. Linux, multiple monitors and the Raspberry Pi build ar
 ### Added
 - Resolution in the in-stream menu: desktop restarts the stream in place at the new size; Android
   reconnects at it. Also an on-screen controller tile in the Android menu.
-- Raspberry Pi / ARM64 Linux AppImage, built locally with `tools/build-linux-arm64.sh` (not verified yet).
+- Raspberry Pi / ARM64 Linux AppImage (CI: `linux-arm64.yml`; locally: `tools/build-linux-arm64.sh`). Not verified on a Pi yet.
 - Controller as mouse (docs/controller-mouse.md): Select+L1+R1+A switches a controller between gamepad
   and mouse, a menu tile does it for all controllers, and controllers can start as a mouse. Desktop and Android.
 - One settings menu: Moonlight's streaming settings are part of the CloudDeck settings (ADR-0013 amendment);

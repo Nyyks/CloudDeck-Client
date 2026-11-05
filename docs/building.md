@@ -108,9 +108,11 @@ GitHub secrets.
 Both suites replay `shared/fixtures/clouddeck/*.json`. Change a case there, and
 both implementations must agree.
 
-## Raspberry Pi / ARM64 Linux AppImage (local)
+## Raspberry Pi / ARM64 Linux AppImage
 
-`tools/build-linux-arm64.sh` (run in WSL or on Linux with Docker) builds
+Releases get it from `.github/workflows/linux-arm64.yml`, which runs the same script on an
+x86_64 runner. "Run workflow" with `release_tag` attaches a build to an existing release.
+Locally, `tools/build-linux-arm64.sh` (run in WSL or on Linux with Docker) builds
 `out/linux-arm64/CloudDeckClient-<version>-linux-aarch64.AppImage`.
 - It runs the x86_64 AppImage recipe inside an arm64 Ubuntu 22.04 container through QEMU,
   so it is slow: about an hour, less on later runs because the dependencies stay cached in
