@@ -37,3 +37,12 @@ as submodules, plus the prebuilt Windows dependencies from
 OpenSSL, Opus, etc.; each under its own license). moonlight-android's dependencies are
 listed in `client-android/app/build.gradle` (BouncyCastle MIT, OkHttp Apache-2.0,
 jmDNS Apache-2.0, jcodec BSD-2-Clause).
+
+## Trademarks
+The app icon and the in-stream menu button use the **CloudDeck mark**: the two brackets
+traced from clouddeck.app's favicon into `tools/icon-gen/icon.svg`,
+`tools/icon-gen/foreground.svg` and `client-desktop/app/res/clouddeck-glyph.svg`. The
+mark belongs to CloudDeck and is **not** covered by this project's GPL-3.0 license. It's
+used at the owner's request in this private, personal client. Replace it with the
+project's own icon before distributing builds publicly. The previous own icon is in the
+git history, commit `b2fda0ae`.

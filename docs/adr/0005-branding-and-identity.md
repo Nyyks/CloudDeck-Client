@@ -36,4 +36,8 @@ gain an `#include` or a path change, each marked `CloudDeck-Client`.
   the Android adaptive icon) by `tools/icon-gen`. It overwrites upstream's asset
   files in place (`moonlight.ico`, `res/moonlight.svg`, mipmaps), so no build file
   changes. Rerun it after an upstream merge that touches those assets.
+- *2026-11-05:* at the owner's request the icon is the official **CloudDeck
+  mark** (dark brackets on a white tile), traced from clouddeck.app's favicon.
+  It's a third-party trademark and not GPL material. It's fine for this private
+  client but must be replaced before any public release (THIRD_PARTY_NOTICES).
 - Still Moonlight's: the Android TV banner (`atv_banner`).

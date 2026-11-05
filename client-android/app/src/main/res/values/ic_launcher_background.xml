@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <color name="ic_launcher_background">#2A63B3</color> <!-- CloudDeck-Client: matches tools/icon-gen/icon.svg gradient midpoint -->
+  <color name="ic_launcher_background">#FFFFFF</color> <!-- CloudDeck-Client: white tile, as tools/icon-gen/icon.svg -->
 </resources>

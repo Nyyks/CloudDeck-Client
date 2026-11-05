@@ -14,8 +14,8 @@ Item {
 
         Image {
             anchors.centerIn: parent
-            width: parent.width * 0.6
-            height: width * 140 / 196
+            width: parent.width * 0.5
+            height: width
             source: "qrc:/res/clouddeck-glyph.svg"
             sourceSize.width: 96
             fillMode: Image.PreserveAspectFit

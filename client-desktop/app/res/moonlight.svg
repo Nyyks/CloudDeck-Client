@@ -1,14 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <!-- CloudDeck Client app icon (GPL-3.0, this project). Source of all generated icons. -->
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3b5bdb"/>
-      <stop offset="1" stop-color="#0b7285"/>
-    </linearGradient>
-  </defs>
-  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
-  <!-- cloud with the play triangle cut out (evenodd) -->
-  <path fill="#ffffff" fill-rule="evenodd"
-        d="M78 178c-22 0-40-17-40-38 0-19 14-35 33-38 6-25 28-43 55-43 25 0 46 16 53 39 22 2 39 20 39 42 0 21-17 38-39 38z
-           M113 105l44 27-44 27z"/>
+  <!-- CloudDeck Client app icon: the CloudDeck mark (traced from clouddeck.app's favicon,
+       see THIRD_PARTY_NOTICES.md) on a white tile. Source of all generated icons. -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#ffffff"/>
+  <g transform="scale(0.5)" fill="#1c1c1c">
+    <polygon points="155,123 231,123 231,189 189,189 189,323 231,323 231,390 156,390 123,357 123,156"/>
+    <polygon points="287,123 357,123 390,156 390,357 356,390 287,390 287,323 323,323 323,189 287,189"/>
+  </g>
 </svg>

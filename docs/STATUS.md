@@ -17,7 +17,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 |---|---|---|---|---|---|
 | Release | CI builds (MSI + portable zip, AppImage, APK); tagged releases | done | partial | done | |
 | Release | Side-by-side with stock Moonlight | done | partial | done | ADR-0005 |
-| Release | Own icons | done | partial | done | `tools/icon-gen`. The Android TV banner is still Moonlight's. |
+| Release | Icons | done | partial | done | `tools/icon-gen`; the official CloudDeck mark at the owner's request (private use, see THIRD_PARTY_NOTICES). The Android TV banner is still Moonlight's. |
 | Release | Own version number | done | partial | done | 0.1.0 from `client-desktop/app/version.txt` |
 | Account | Sign in, session restored from keychain | done | partial | done | Linux: Secret Service path untested on a real desktop |
 | Account | MFA challenge | partial | partial | partial | This account has no MFA, so it's untested |

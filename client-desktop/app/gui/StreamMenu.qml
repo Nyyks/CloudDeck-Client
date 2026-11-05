@@ -78,8 +78,8 @@ Pane {
                 Image {
                     source: "qrc:/res/clouddeck-glyph.svg"
                     sourceSize.width: 64
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 23
+                    Layout.preferredWidth: 26
+                    Layout.preferredHeight: 26
                     fillMode: Image.PreserveAspectFit
                 }
                 ColumnLayout {
