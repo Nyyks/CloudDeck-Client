@@ -12,7 +12,6 @@
 #include "video/decoder.h"
 #include "audio/renderers/renderer.h"
 #include "video/overlaymanager.h"
-#include "clouddeck/quickmenu.h" // CloudDeck-Client
 
 class SupportedVideoFormatList : public QList<int>
 {
@@ -99,7 +98,7 @@ class Session : public QObject
     friend class SdlInputHandler;
     friend class DeferredSessionCleanupTask;
     friend class AsyncConnectionStartThread;
-    friend class QuickMenu; // CloudDeck-Client
+    friend class StreamOverlay; // CloudDeck-Client
 
 public:
     explicit Session(NvComputer* computer, NvApp& app, StreamingPreferences *preferences = nullptr);
@@ -262,8 +261,9 @@ private:
     Uint32 m_ResizeCheckAt = 0;          // SDL ticks at which to compare window and stream size; 0 = none
     void maybeRestartForWindowSize();
     void restartStreamAt(int width, int height);
-    // CloudDeck-Client: in-stream Quick Menu (docs/adr/0009-quick-menu.md)
-    QuickMenu m_QuickMenu {this};
+    // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
+    class StreamOverlay* m_Overlay = nullptr;
+    bool m_UserAudioMuted = false; // "Mute the CloudDeck's sound" (separate from mute-on-focus-loss)
     // CloudDeck-Client: two-way text clipboard (docs/adr/0008-clipboard-sync.md)
     class ClipboardSync* m_Clipboard = nullptr;
     QString m_LastClipboard; // last text we sent or applied, to avoid echoes

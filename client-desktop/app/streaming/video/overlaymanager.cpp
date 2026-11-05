@@ -74,18 +74,6 @@ int OverlayManager::getOverlayFontSize(OverlayType type)
     return m_Overlays[type].fontSize;
 }
 
-void OverlayManager::setOverlayStyle(OverlayType type, SDL_Color color, int fontSize)
-{
-    m_Overlays[type].color = color;
-    if (m_Overlays[type].fontSize != fontSize) {
-        m_Overlays[type].fontSize = fontSize;
-        if (m_Overlays[type].font != nullptr) {
-            TTF_CloseFont(m_Overlays[type].font); // reopened at the new size on the next update
-            m_Overlays[type].font = nullptr;
-        }
-    }
-}
-
 SDL_Surface* OverlayManager::getUpdatedOverlaySurface(OverlayType type)
 {
     // If a new surface is available, return it. If not, return nullptr.

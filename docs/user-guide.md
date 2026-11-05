@@ -74,25 +74,26 @@ Needs the CloudDeck host update on the VM, plus:
    keyboard or mouse you're using. Webcams and USB audio may work poorly over
    the internet.
 
-## Quick Menu (desktop)
+## In-stream menu (desktop)
 
-During a stream, press **Ctrl+Alt+Shift+O** to open the menu. Choose with
-Up/Down and Enter, or press the item's number; Esc closes it. On a gamepad, use
-the D-pad, A to select and B to close.
+During a stream there are two ways to open the menu:
+- Click the round **CloudDeck button** at the top centre. It's shown while your
+  cursor is free: *Desktop* mouse mode, or after Ctrl+Alt+Shift+Z.
+- Press **Ctrl+Alt+Shift+O**, in any mode.
 
-| Item | Does |
+Click back into the stream, press Esc, or press the hotkey again to close it.
+
+| Section | What you can change |
 |---|---|
-| Switch to a window / fullscreen | Same as Ctrl+Alt+Shift+X |
-| Mute / unmute the microphone | Same as Ctrl+Alt+Shift+U (shown when the mic is on) |
-| Show / hide performance stats | Same as Ctrl+Alt+Shift+S |
-| Keep the mouse inside the window | Same as Ctrl+Alt+Shift+L |
-| Reconnect the stream | Reconnects in place, e.g. after a network hiccup |
-| Disconnect | Same as Ctrl+Alt+Shift+Q |
-| Shut down my CloudDeck | Disconnects and turns the VM off. Press Enter twice to confirm |
+| Display | Fullscreen; fit the CloudDeck's resolution to this window; performance stats |
+| Mouse | **Game**: captured by the stream, for games. **Desktop**: a free cursor that can leave the window, for working. Remembered for next time. |
+| Audio | Mute the CloudDeck's sound. Send my microphone (turning it on or off reconnects for a second). Mute my microphone. Choose the microphone. |
+| USB devices | Tick or untick devices. They move to or from the CloudDeck right away. |
+| Session | Reconnect; disconnect; shut down my CloudDeck (click twice) |
 
-While the menu is open, your key presses and clicks go to the menu, not the
-CloudDeck. USB devices and monitors are chosen on the CloudDeck screen before
-the stream.
+While the menu is open, your keys and clicks go to the menu, not the
+CloudDeck. You can hide the button at the bottom of the menu; the hotkey keeps
+working.
 
 ## Clipboard (desktop)
 

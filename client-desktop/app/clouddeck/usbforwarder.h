@@ -19,6 +19,7 @@ public slots:
     // Windows: tunnels to usbipd-win. Linux: starts clouddeck-usb-helper via pkexec
     // (one password prompt per stream), exports each busid, tunnels to its socket.
     void startForwarding(QString host, quint16 port, QSslCertificate cert, QStringList busids);
+    void stopOne(QString busid); // a device unticked during a stream
     void stopAll();
 signals:
     void tunnelState(QString busid, bool attached, QString error);
@@ -74,6 +75,11 @@ private:
     QVariantList m_Devices;
     QString m_Status;
     QHash<QString, bool> m_Attached;  // busid -> attached
+    // The running stream, so devices ticked or unticked during it apply at once.
+    bool m_Streaming = false;
+    QString m_StreamHost;
+    quint16 m_StreamPort = 0;
+    QSslCertificate m_StreamCert;
     QThread m_Thread;
     UsbWorker* m_Worker;
 };

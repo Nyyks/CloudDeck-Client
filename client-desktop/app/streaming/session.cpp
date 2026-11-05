@@ -5,6 +5,7 @@
 #include "clouddeck/displaysettings.h"
 #include "clouddeck/displaylease.h"
 #include "clouddeck/clipboardsync.h"
+#include "clouddeck/streamoverlay.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
 
@@ -2209,6 +2210,9 @@ void Session::exec()
     if (m_FitToWindow) {
         m_ResizeCheckAt = SDL_GetTicks() + 1500;
     }
+    // CloudDeck-Client: in-stream menu button and panel (docs/adr/0009-quick-menu.md)
+    m_Overlay = new StreamOverlay(this);
+
     // CloudDeck-Client: the local clipboard wins when a stream starts
     if (m_Clipboard != nullptr && SDL_HasClipboardText()) {
         char* c = SDL_GetClipboardText();
@@ -2221,6 +2225,9 @@ void Session::exec()
     SDL_Event event;
     for (;;) {
         maybeRestartForWindowSize(); // CloudDeck-Client
+        if (m_Overlay != nullptr) {
+            m_Overlay->pump(); // CloudDeck-Client: lets the in-stream menu's Qt windows work
+        }
 #if SDL_VERSION_ATLEAST(2, 0, 18) && !defined(STEAM_LINK)
         // SDL 2.0.18 has a proper wait event implementation that uses platform
         // support to block on events rather than polling on Windows, macOS, X11,
@@ -2231,7 +2238,11 @@ void Session::exec()
         // NB: This behavior was introduced in SDL 2.0.16, but had a few critical
         // issues that could cause indefinite timeouts, delayed joystick detection,
         // and other problems.
-        if (!SDL_WaitEventTimeout(&event, m_ResizeCheckAt ? 100 : 1000)) {
+        int waitMs = m_ResizeCheckAt ? 100 : 1000; // CloudDeck-Client: wake for resize checks and the menu
+        if (m_Overlay != nullptr) {
+            waitMs = SDL_min(waitMs, m_Overlay->maxWaitMs());
+        }
+        if (!SDL_WaitEventTimeout(&event, waitMs)) {
             presence.runCallbacks();
             continue;
         }
@@ -2272,8 +2283,9 @@ void Session::exec()
             }
         }
 
-        // CloudDeck-Client: the Quick Menu (Ctrl+Alt+Shift+O) takes keys and clicks while open
-        if (m_QuickMenu.handleEvent(event)) {
+        // CloudDeck-Client: the in-stream menu (button or Ctrl+Alt+Shift+O) takes keys and
+        // clicks while open, and follows the stream window
+        if (m_Overlay != nullptr && m_Overlay->handleEvent(event)) {
             continue;
         }
 
@@ -2610,6 +2622,10 @@ DispatchDeferredCleanup:
             SDL_Delay(10);
         }
     }
+
+    // CloudDeck-Client: the menu windows belong to the SDL window; remove them first
+    delete m_Overlay;
+    m_Overlay = nullptr;
 
     // Switch back to synchronous logging mode
     StreamUtils::exitAsyncLoggingMode();

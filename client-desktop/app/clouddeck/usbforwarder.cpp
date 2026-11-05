@@ -122,6 +122,16 @@ void UsbWorker::startTunnel(const QString& busid, const QString& localPath)
     t->start();
 }
 
+void UsbWorker::stopOne(QString busid)
+{
+    if (UsbTunnel* t = m_Tunnels.value(busid)) t->stop(); // the agent detaches it on the VM
+    m_Pending.removeAll(busid);
+    if (m_Helper) {
+        // Linux: hand the device back to its local driver.
+        m_Helper->write(("release " + busid + "\n").toUtf8());
+    }
+}
+
 void UsbWorker::stopAll()
 {
     const auto tunnels = m_Tunnels.values();
@@ -310,6 +320,23 @@ void UsbForwarder::setForward(const QString& instanceId, bool forward)
     }
     QSettings().setValue("clouddeck/usb/forward", fwd);
     refresh();
+
+    // During a stream (in-stream menu): attach or detach right away.
+    if (m_Streaming) {
+        for (const QVariant& v : m_Devices) {
+            const QVariantMap d = v.toMap();
+            if (d["instanceId"].toString() != instanceId) continue;
+            const QString busid = d["busid"].toString();
+            if (forward && d["shared"].toBool() && !m_Attached.value(busid)) {
+                QMetaObject::invokeMethod(m_Worker, "startForwarding", Qt::QueuedConnection,
+                                          Q_ARG(QString, m_StreamHost), Q_ARG(quint16, m_StreamPort),
+                                          Q_ARG(QSslCertificate, m_StreamCert), Q_ARG(QStringList, QStringList {busid}));
+            }
+            else if (!forward) {
+                QMetaObject::invokeMethod(m_Worker, "stopOne", Qt::QueuedConnection, Q_ARG(QString, busid));
+            }
+        }
+    }
 }
 
 void UsbForwarder::installServer()
@@ -325,6 +352,10 @@ void UsbForwarder::onConnectionStarted(const QString& host, quint16 httpsPort, c
 {
     // May run on the connection thread; hop to ours, then hand tunnels to the worker.
     QMetaObject::invokeMethod(this, [this, host, httpsPort, serverCert]() {
+        m_Streaming = true;
+        m_StreamHost = host;
+        m_StreamPort = httpsPort;
+        m_StreamCert = serverCert;
         refresh();
         QStringList busids;
         for (const QVariant& v : m_Devices) {
@@ -340,6 +371,7 @@ void UsbForwarder::onConnectionStarted(const QString& host, quint16 httpsPort, c
 
 void UsbForwarder::onConnectionStopping()
 {
+    QMetaObject::invokeMethod(this, [this]() { m_Streaming = false; }, Qt::QueuedConnection);
     QMetaObject::invokeMethod(m_Worker, "stopAll", Qt::QueuedConnection);
 }
 

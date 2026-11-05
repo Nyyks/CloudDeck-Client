@@ -37,7 +37,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Display | Fit the VM resolution to the window or screen, following resizes | done | partial | not started | ADR-0007 amendment: an in-place stream restart at the new size about 1 s after a resize settles, keeping USB and the running app. Verified by the owner on Windows on 2026-11-05 (windowed resizes, fullscreen toggle, reconnect). Off by default. |
 | Display | Multiple monitors as separate outputs (4b) | not started | not started | n/a | Needs kernel arguments (EDID overrides): owner approval first |
 | Display | Tablet as extra screen | not started | n/a | not started | Stretch goal |
-| UX | In-stream Quick Menu | partial | partial | not started | ADR-0009: Ctrl+Alt+Shift+O; fullscreen/window, mic mute, stats, mouse lock, reconnect, disconnect, shut down the VM. USB and monitor layout stay on the CloudDeck screen. Not yet verified |
+| UX | In-stream menu | partial | partial | not started | ADR-0009 rev. 2: round CloudDeck button at the top centre (when the cursor is free) or Ctrl+Alt+Shift+O. Panel with display, mouse mode (game/desktop), audio, mic, live USB device switching, reconnect, disconnect, shut down. Rev. 1 (text OSD) was replaced after the owner's feedback. Not yet verified |
 | UX | Network test, auto-recommended settings, low-bandwidth mode | not started | not started | not started | Phase 5 |
 | UX | Clipboard sync (text) | done | partial | not started | ADR-0008: two-way via the agent and Plasma's Klipper (busctl as the desktop user), on by default, up to 100 KiB of text. Verified by the owner on Windows on 2026-11-05 |
 | UX | File upload / drag-and-drop | not started | not started | not started | Phase 5 |

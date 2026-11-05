@@ -35,8 +35,6 @@ public:
     void setOverlayState(OverlayType type, bool enabled);
     SDL_Color getOverlayColor(OverlayType type);
     int getOverlayFontSize(OverlayType type);
-    // CloudDeck-Client: the Quick Menu reuses the status overlay with its own style
-    void setOverlayStyle(OverlayType type, SDL_Color color, int fontSize);
     SDL_Surface* getUpdatedOverlaySurface(OverlayType type);
 
     void setOverlayRenderer(IOverlayRenderer* renderer);

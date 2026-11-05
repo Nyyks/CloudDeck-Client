@@ -83,7 +83,7 @@ struct DualSenseOutputReport{
 
 class SdlInputHandler
 {
-    friend class QuickMenu; // CloudDeck-Client: in-stream menu triggers the same actions as the key combos
+    friend class StreamOverlay; // CloudDeck-Client: the in-stream menu drives mouse mode and capture
 
 public:
     explicit SdlInputHandler(StreamingPreferences& prefs, int streamWidth, int streamHeight);

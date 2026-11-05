@@ -2,6 +2,8 @@
     <qresource prefix="/">
         <file>gui/main.qml</file>
         <file>gui/CloudDeckView.qml</file>
+        <file>gui/StreamMenu.qml</file>
+        <file>gui/StreamMenuButton.qml</file>
         <file>gui/PcView.qml</file>
         <file>gui/AppView.qml</file>
         <file>gui/SettingsView.qml</file>

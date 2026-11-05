@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 50 196 140" width="196" height="140">
+  <!-- CloudDeck Client: the cloud from the app icon alone, for the in-stream menu button (GPL-3.0, this project) -->
+  <path fill="#ffffff" fill-rule="evenodd"
+        d="M78 178c-22 0-40-17-40-38 0-19 14-35 33-38 6-25 28-43 55-43 25 0 46 16 53 39 22 2 39 20 39 42 0 21-17 38-39 38z
+           M113 105l44 27-44 27z"/>
+</svg>
