@@ -399,7 +399,7 @@ Item {
                         }
                     }
 
-                    // ---- shortcuts and push-to-talk (docs/adr/0012-shortcuts-push-to-talk.md)
+                    // ---- shortcuts (docs/adr/0012-shortcuts.md)
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.topMargin: 8
@@ -409,26 +409,6 @@ Item {
                             flat: true
                             onClicked: shortcutsList.visible = !shortcutsList.visible
                         }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Label { text: qsTr("Push-to-talk:"); Layout.fillWidth: true }
-                        ComboBox {
-                            id: pttBox
-                            Layout.preferredWidth: 260
-                            textRole: "label"
-                            valueRole: "id"
-                            model: CloudDeckShortcuts.pttOptions
-                            Component.onCompleted: currentIndex = indexOfValue(CloudDeckShortcuts.pushToTalk)
-                            onActivated: CloudDeckShortcuts.pushToTalk = currentValue
-                        }
-                    }
-                    Label {
-                        visible: CloudDeckShortcuts.pushToTalk !== ""
-                        Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        opacity: 0.7
-                        text: qsTr("While streaming with the microphone on, it only sends while you hold this. The key or button doesn't reach the CloudDeck.")
                     }
                     ColumnLayout {
                         id: shortcutsList

@@ -29,41 +29,12 @@ const ActionDef kActions[] = {
     {"keyboardGrab", QT_TRANSLATE_NOOP("Shortcuts", "Capture system keys (Win, Alt+Tab)"), 'K'},
 };
 
-struct PttDef {
-    const char* id;
-    const char* label;
-    SDL_Scancode scancode;
-    Uint8 mouseButton;
-};
-
-const PttDef kPtt[] = {
-    {"", QT_TRANSLATE_NOOP("Shortcuts", "Off"), SDL_SCANCODE_UNKNOWN, 0},
-    {"mouse4", QT_TRANSLATE_NOOP("Shortcuts", "Mouse side button (back)"), SDL_SCANCODE_UNKNOWN, SDL_BUTTON_X1},
-    {"mouse5", QT_TRANSLATE_NOOP("Shortcuts", "Mouse side button (forward)"), SDL_SCANCODE_UNKNOWN, SDL_BUTTON_X2},
-    {"capslock", QT_TRANSLATE_NOOP("Shortcuts", "Caps Lock"), SDL_SCANCODE_CAPSLOCK, 0},
-    {"backquote", QT_TRANSLATE_NOOP("Shortcuts", "` / ^ (left of 1)"), SDL_SCANCODE_GRAVE, 0},
-    {"rightalt", QT_TRANSLATE_NOOP("Shortcuts", "Right Alt / AltGr"), SDL_SCANCODE_RALT, 0},
-    {"rightctrl", QT_TRANSLATE_NOOP("Shortcuts", "Right Ctrl"), SDL_SCANCODE_RCTRL, 0},
-    {"scrolllock", QT_TRANSLATE_NOOP("Shortcuts", "Scroll Lock"), SDL_SCANCODE_SCROLLLOCK, 0},
-    {"pause", QT_TRANSLATE_NOOP("Shortcuts", "Pause"), SDL_SCANCODE_PAUSE, 0},
-    {"f13", QT_TRANSLATE_NOOP("Shortcuts", "F13"), SDL_SCANCODE_F13, 0},
-};
-
 const ActionDef* findAction(const QString& id)
 {
     for (const ActionDef& a : kActions) {
         if (id == QLatin1String(a.id)) return &a;
     }
     return nullptr;
-}
-
-const PttDef& currentPtt()
-{
-    const QString id = QSettings().value("clouddeck/shortcuts/pushToTalk", "").toString();
-    for (const PttDef& p : kPtt) {
-        if (id == QLatin1String(p.id)) return p;
-    }
-    return kPtt[0];
 }
 
 bool validKey(const QString& k)
@@ -147,27 +118,3 @@ void Shortcuts::resetDefaults()
     emit changed();
 }
 
-QString Shortcuts::pushToTalk() const { return QString::fromLatin1(currentPtt().id); }
-
-void Shortcuts::setPushToTalk(const QString& id)
-{
-    QSettings().setValue("clouddeck/shortcuts/pushToTalk", id);
-    emit changed();
-}
-
-QVariantList Shortcuts::pttOptions() const
-{
-    QVariantList out;
-    for (const PttDef& p : kPtt) {
-        QVariantMap m;
-        m["id"] = QString::fromLatin1(p.id);
-        m["label"] = tr(p.label);
-        out << m;
-    }
-    return out;
-}
-
-bool Shortcuts::pushToTalkEnabled() { return currentPtt().id[0] != 0; }
-SDL_Scancode Shortcuts::pushToTalkScancode() { return currentPtt().scancode; }
-Uint8 Shortcuts::pushToTalkMouseButton() { return currentPtt().mouseButton; }
-QString Shortcuts::pushToTalkLabel() { return QCoreApplication::translate("Shortcuts", currentPtt().label); }

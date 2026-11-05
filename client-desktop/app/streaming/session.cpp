@@ -6,7 +6,6 @@
 #include "clouddeck/displaylease.h"
 #include "clouddeck/clipboardsync.h"
 #include "clouddeck/streamoverlay.h"
-#include "clouddeck/shortcuts.h"
 #include "clouddeck/cloudsession.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
@@ -2294,10 +2293,6 @@ void Session::exec()
     // CloudDeck-Client: in-stream menu button and panel (docs/adr/0009-quick-menu.md)
     m_Overlay = new StreamOverlay(this);
     m_StreamUpSince = SDL_GetTicks(); // CloudDeck-Client: auto-reconnect attempt counting
-    if (MicStreamer::get()->enabled() && Shortcuts::pushToTalkEnabled()) { // CloudDeck-Client
-        m_PttScancode = Shortcuts::pushToTalkScancode();
-        m_PttMouseButton = Shortcuts::pushToTalkMouseButton();
-    }
 
     // CloudDeck-Client: the local clipboard wins when a stream starts
     if (m_Clipboard != nullptr && SDL_HasClipboardText()) {
@@ -2371,24 +2366,6 @@ void Session::exec()
                 m_LastClipboard = text;
                 m_Clipboard->offer(text);
             }
-        }
-
-        // CloudDeck-Client: push-to-talk (docs/adr/0012). The key or button is consumed
-        // here and never reaches the CloudDeck.
-        if (m_PttScancode != SDL_SCANCODE_UNKNOWN && (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) &&
-            event.key.keysym.scancode == m_PttScancode) {
-            if (!event.key.repeat) {
-                MicStreamer::get()->setPushToTalkHeld(event.type == SDL_KEYDOWN);
-            }
-            continue;
-        }
-        if (m_PttMouseButton != 0 && (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) &&
-            event.button.button == m_PttMouseButton) {
-            MicStreamer::get()->setPushToTalkHeld(event.type == SDL_MOUSEBUTTONDOWN);
-            continue;
-        }
-        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-            MicStreamer::get()->setPushToTalkHeld(false); // a release outside the window is never seen
         }
 
         // CloudDeck-Client: the in-stream menu (button or Ctrl+Alt+Shift+O) takes keys and

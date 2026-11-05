@@ -57,7 +57,7 @@ Needs the CloudDeck host update on the VM ([host-setup.md](host-setup.md)).
 2. Start a stream. On the VM, the microphone appears as **CloudDeck Microphone**;
    choose it in Discord, Steam or the game if it isn't picked automatically.
 3. During a stream on desktop, **Ctrl+Alt+Shift+U** mutes and unmutes (the key is
-   configurable), or set up push-to-talk (see below).
+   configurable, see Shortcuts below).
 
 The audio is encrypted with the stream's session key. If the host doesn't
 have the update, the setting shows *Host does not support the microphone* and
@@ -102,7 +102,7 @@ While the menu is open, your keys and clicks go to the menu, not the
 CloudDeck. You can hide the button at the bottom of the menu; the hotkey keeps
 working.
 
-## Shortcuts and push-to-talk (desktop)
+## Shortcuts (desktop)
 
 All in-stream shortcuts are **Ctrl+Alt+Shift + a key**. On the CloudDeck screen,
 *Shortcuts during a stream → Change…* lets you pick the key for each one.
@@ -123,9 +123,7 @@ All in-stream shortcuts are **Ctrl+Alt+Shift + a key**. On the CloudDeck screen,
 | L | Keep the mouse in the window (desktop mode) |
 | K | Capture system keys (Win, Alt+Tab) |
 
-**Push-to-talk:** choose a key or a mouse side button. While streaming with the
-microphone on, your voice is only sent while you hold it, and the CloudDeck
-doesn't see the key. Changes apply to the next stream.
+Changes apply to the next stream.
 
 ## Network test (desktop)
 

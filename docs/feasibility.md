@@ -228,8 +228,26 @@ The phase extends that baseline:
      profiles
    - Windows/Linux touchscreens (tablets, 2-in-1s), if wanted
    - reachable from the Quick Menu
+4. **On-screen keyboard** *(added by the owner, 2026-11-05)*: for Android
+   phones and tablets, and for handhelds (Steam Deck-style PCs running the
+   desktop client) where no physical keyboard is at hand.
+   - Full layout with modifiers (Ctrl, Alt, Shift, Win) that can be held, plus
+     F-keys, Esc and arrows.
+   - Sends keys to the CloudDeck (not text-only), so shortcuts and games work.
+   - Opened from the in-stream menu or a gamepad combo.
 
 *AC:* each listed pad works with rumble on each client. A remap profile applies
 in-game and survives restart. A custom on-screen layout can be created, saved,
-and used in a stream. Detailed plan to be confirmed with you before the phase
-starts.
+and used in a stream. The on-screen keyboard can type, use shortcuts
+(e.g. Ctrl+C) and reach Esc and F-keys on Android and on a handheld. Detailed
+plan to be confirmed with you before the phase starts.
+
+**Phase 7: UI overhaul** *(added by the owner, 2026-11-05; after everything
+else)*. A complete redesign of the client's screens on desktop and Android:
+less cluttered, more modern and stylish. For example:
+- the CloudDeck screen as a clear home: VM status and one big action;
+- settings grouped into pages instead of one long list;
+- consistent visuals with the in-stream menu;
+- the remaining Moonlight screens restyled to match.
+
+*AC:* agreed with you on mock-ups first, then implemented on all clients.

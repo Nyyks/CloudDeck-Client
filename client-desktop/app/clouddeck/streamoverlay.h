@@ -39,7 +39,6 @@ class StreamOverlay : public QObject
     Q_PROPERTY(bool showButton READ showButton WRITE setShowButton NOTIFY changed)
     Q_PROPERTY(bool canShutDown READ canShutDown NOTIFY changed)
     Q_PROPERTY(QString menuKey READ menuKey NOTIFY changed)
-    Q_PROPERTY(QString pushToTalkHint READ pushToTalkHint NOTIFY changed)
 
 public:
     explicit StreamOverlay(Session* session);
@@ -73,7 +72,6 @@ public:
     void setShowButton(bool on);
     bool canShutDown() const;
     QString menuKey() const;
-    QString pushToTalkHint() const;
 
     // A small status pill under the button, e.g. while reconnecting. It works even
     // when the stream has no decoder to draw Moonlight's own overlay.

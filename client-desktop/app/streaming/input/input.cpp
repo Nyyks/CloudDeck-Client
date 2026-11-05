@@ -142,7 +142,7 @@ SdlInputHandler::SdlInputHandler(StreamingPreferences& prefs, int streamWidth, i
     m_SpecialKeyCombos[KeyComboToggleMicMute].scanCode = SDL_SCANCODE_U;
     m_SpecialKeyCombos[KeyComboToggleMicMute].enabled = true;
 
-    // CloudDeck-Client: the letters are configurable (docs/adr/0012-shortcuts-push-to-talk.md).
+    // CloudDeck-Client: the letters are configurable (docs/adr/0012-shortcuts.md).
     static_assert(KeyComboMax == 12, "update the shortcut ids below");
     static const char* const shortcutIds[KeyComboMax] = {
         "quit", "ungrab", "fullscreen", "stats", "mouseMode", "cursorHide", "minimize",

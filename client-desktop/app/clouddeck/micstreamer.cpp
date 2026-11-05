@@ -1,5 +1,4 @@
 #include "micstreamer.h"
-#include "shortcuts.h"
 
 #include <Limelight.h>
 #include <opus.h>
@@ -52,7 +51,6 @@ void MicStreamer::setMuted(bool v)
 
 QString MicStreamer::status() const
 {
-    if (m_Streaming && m_PttMode && !m_Muted) return tr("Push-to-talk: hold %1").arg(Shortcuts::pushToTalkLabel());
     if (m_Streaming) return m_Muted ? tr("Muted") : tr("Sending to your CloudDeck");
     if (m_HostUnsupported) return tr("Host does not support the microphone (install the CloudDeck host update)");
     if (m_Testing) return tr("Testing (not sent)");
@@ -154,7 +152,7 @@ void MicStreamer::onSamples(const int16_t* samples, int count)
         double db = rms > 0 ? 20.0 * std::log10(rms) : -100.0;
         m_Level = std::clamp((db + 60.0) / 60.0, 0.0, 1.0);  // -60 dBFS .. 0 dBFS
 
-        if (m_Streaming && !m_Muted && (!m_PttMode || m_PttHeld) && m_Encoder) {
+        if (m_Streaming && !m_Muted && m_Encoder) {
             int n = opus_encode(m_Encoder, m_Frame.data(), kFrameSamples, m_Packet.data(), kMaxPacket);
             if (n > 0) {
                 LiSendMicrophoneOpusData(m_Packet.data(), n, kFrameSamples);
@@ -185,8 +183,6 @@ void MicStreamer::onConnectionStarted()
 {
     QMutexLocker l(&m_Lock);
     m_HostUnsupported = enabled() && !LiIsMicrophoneSupportedByHost();
-    m_PttMode = Shortcuts::pushToTalkEnabled();
-    m_PttHeld = false;
     if (enabled() && LiIsMicrophoneStreamActive() && openCapture()) {
         m_Streaming = true;
         qInfo() << "Mic: streaming microphone to host";

@@ -177,10 +177,6 @@ Pane {
                     visible: !overlay.micEnabled
                     text: qsTr("Turning the microphone on or off reconnects the stream for a second.")
                 }
-                Hint {
-                    visible: overlay.micEnabled && overlay.pushToTalkHint !== ""
-                    text: overlay.pushToTalkHint
-                }
                 SwitchRow {
                     visible: overlay.micEnabled
                     text: qsTr("Mute my microphone")

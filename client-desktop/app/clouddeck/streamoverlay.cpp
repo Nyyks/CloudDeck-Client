@@ -355,8 +355,3 @@ void StreamOverlay::hideNotice()
 }
 
 QString StreamOverlay::menuKey() const { return Shortcuts::keyFor("menu"); }
-
-QString StreamOverlay::pushToTalkHint() const
-{
-    return Shortcuts::pushToTalkEnabled() ? tr("Push-to-talk: hold %1 to talk.").arg(Shortcuts::pushToTalkLabel()) : QString();
-}

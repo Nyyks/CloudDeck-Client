@@ -30,7 +30,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Stream | Codecs (H.264/HEVC/AV1), HDR, bitrate/fps | done | partial | done | Inherited from Moonlight |
 | Input | Gamepads, touch modes | done | partial | done | Inherited from Moonlight; extended in Phase 6 |
 | Audio | Microphone passthrough | done | partial | partial | Protocol v1 implemented end to end: common-c sender (19 tests + shared vector), Sunshine patch 0001 (host decoder tests the same vector), desktop SDL capture with mute hotkey Ctrl+Alt+Shift+U and level meter, Android `VOICE_COMMUNICATION` + AEC. Verified by the owner on Windows on 2026-11-04; Linux and Android capture still untested. An Android mute button isn't done yet. |
-| Audio | Push-to-talk | partial | partial | not started | ADR-0012: hold a chosen key (Caps Lock, Right Alt, …) or mouse side button to talk; consumed locally. Not yet verified |
+| Audio | Push-to-talk | not planned | not planned | not planned | Dropped by the owner on 2026-11-05: better handled inside the VM (games, Discord). A first version was removed |
 | Host | Patched Sunshine install with automatic fallback to stock | done | — | — | Installed on the VM by the owner (bundle -id4d49f); streams work through it. CloudDeck default app list preserved |
 | USB | USB device passthrough | done | partial | not planned | ADR-0006. Host: Go agent + Sunshine patch 0002 tunnel. Windows: usbipd-win, **verified by the owner on 2026-11-05**. Linux: pkexec helper on the kernel usbip-host (no network listener); agent and helper interop-tested with fake kernels, not yet run on a real Linux PC (owner tests later). Android not planned (owner doesn't need it). |
 | Display | Multiple monitors, one wide stream (4a) | partial | partial | n/a | ADR-0007. One borderless window over the chosen monitors; the host agent switches the VM to the combined resolution via kscreen-doctor and restores it when the stream ends. Agent and layout unit-tested; **not yet run on the VM**. Linux via XWayland. |
@@ -48,3 +48,5 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Controllers | Extended controller support (rumble, gyro, DualSense features, hot-plug) | not started | not started | not started | Phase 6 (scope addition) |
 | Controllers | Button/axis remapping with profiles | not started | not started | not started | Phase 6 (scope addition) |
 | Controllers | On-screen controller with layout editor | not started | not started | partial | Phase 6. Android has Moonlight's on-screen controls; editor/profiles to come. Desktop touchscreens optional. |
+| Controllers | On-screen keyboard (Android, handhelds) | not started | not started | not started | Phase 6 (owner addition, 2026-11-05) |
+| UX | UI overhaul (less cluttered, modern) | not started | not started | not started | Phase 7 (owner addition, 2026-11-05), after everything else |
