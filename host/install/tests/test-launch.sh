@@ -11,7 +11,7 @@ fails=0
 mk_stub() { printf '#!/bin/sh\necho "%s $*"\n' "$2" > "$1"; chmod +x "$1"; }
 
 setup() {
-    rm -rf "$T/base" "$T/home"
+    rm -rf "${T:?}/base" "${T:?}/home"
     mkdir -p "$T/base/sunshine/bin" "$T/home"
     mk_stub "$T/base/sunshine/bin/sunshine" PATCHED
     mk_stub "$T/stock" STOCK

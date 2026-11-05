@@ -11,9 +11,14 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Attach the bundle to this existing release, e.g. v1.0.0 (empty: artifact only)'
+        required: false
+        default: ''
 
 concurrency:
-  group: host-${{ github.ref }}
+  group: host-${{ github.ref }}-${{ inputs.release_tag }}
   cancel-in-progress: true
 
 jobs:
@@ -81,7 +86,7 @@ jobs:
 
   release:
     # Tagged builds attach the server bundle to the GitHub Release (build.yml adds the clients).
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
     needs: bundle
     runs-on: ubuntu-latest
     permissions:
@@ -92,13 +97,14 @@ jobs:
       - name: Attach to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           ls -l dist
-          PRE=""; [[ "$GITHUB_REF_NAME" == *-* ]] && PRE="--prerelease"
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          PRE=""; [[ "$TAG" == *-* ]] && PRE="--prerelease"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
-              --title "CloudDeck-Client $GITHUB_REF_NAME" --generate-notes $PRE \
-              || gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" \
+              --title "CloudDeck-Client $TAG" --generate-notes $PRE \
+              || gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
           fi

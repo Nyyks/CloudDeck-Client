@@ -12,7 +12,7 @@
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$REPO/out/linux-arm64"
-VERSION="${CI_VERSION:-$(cat "$REPO/client-desktop/app/version.txt")-dev.$(git -C "$REPO" rev-parse --short HEAD)}"
+VERSION="${CI_VERSION:-$(tr -d ' \r\n' < "$REPO/client-desktop/app/version.txt")-dev.$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo local)}"
 mkdir -p "$OUT"
 
 echo "== USB helper (static Go, arm64)"
@@ -70,6 +70,9 @@ if [ ! -f /b/deps-done ]; then
 else
   tar -C / -xf /b/deps-usr-local.tar
 fi
+# sdl2-compat only installs sdl2-compat.pc; the app looks up "sdl2" (the x86_64 CI image
+# happens to provide one from the distro).
+[ -e /usr/local/lib/pkgconfig/sdl2.pc ] || ln -s sdl2-compat.pc /usr/local/lib/pkgconfig/sdl2.pc
 ldconfig
 
 # linuxdeploy for aarch64 (run extracted: no FUSE in the container)
