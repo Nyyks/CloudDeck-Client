@@ -40,6 +40,7 @@ class StreamOverlay : public QObject
     Q_PROPERTY(bool canShutDown READ canShutDown NOTIFY changed)
     Q_PROPERTY(QString menuKey READ menuKey NOTIFY changed)
     Q_PROPERTY(bool nintendoLayout READ nintendoLayout WRITE setNintendoLayout NOTIFY changed)
+    Q_PROPERTY(bool keyboardVisible READ keyboardVisible NOTIFY changed)
 
 public:
     explicit StreamOverlay(Session* session);
@@ -51,7 +52,7 @@ public:
     // menu is open). Window events are only observed.
     bool handleEvent(const SDL_Event& event);
     // How long the SDL loop may block waiting for events.
-    int maxWaitMs() const { return m_MenuOpen ? 8 : 33; }
+    int maxWaitMs() const { return (m_MenuOpen || keyboardVisible()) ? 8 : 33; }
 
     bool menuOpen() const { return m_MenuOpen; }
     QString streamInfo() const;
@@ -86,6 +87,10 @@ public:
     Q_INVOKABLE void openMenu();
     Q_INVOKABLE void closeMenu();
     Q_INVOKABLE void toggleMenu() { m_MenuOpen ? closeMenu() : openMenu(); }
+    // On-screen keyboard (docs/on-screen-keyboard.md): sends real key presses.
+    Q_INVOKABLE void toggleKeyboard();
+    Q_INVOKABLE void sendKey(int vk, bool down, int modifiers);
+    bool keyboardVisible() const;
     Q_INVOKABLE void reconnect();
     Q_INVOKABLE void disconnectStream();
     Q_INVOKABLE void shutDown();
@@ -105,6 +110,7 @@ private:
     QQuickView* m_Button = nullptr;
     QQuickView* m_Menu = nullptr;
     QQuickView* m_Notice = nullptr;
+    QQuickView* m_Keyboard = nullptr;
     QString m_NoticeText;
     bool m_MenuOpen = false;
     bool m_RecaptureOnClose = false;

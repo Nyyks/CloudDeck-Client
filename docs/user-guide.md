@@ -102,6 +102,42 @@ While the menu is open, your keys and clicks go to the menu, not the
 CloudDeck. You can hide the button at the bottom of the menu; the hotkey keeps
 working.
 
+## Controllers
+
+- **Xbox/Nintendo layout:** in the in-stream menu, *Nintendo button layout*
+  swaps A/B and X/Y. It applies right away and is remembered.
+- **Remapping profiles:** on the desktop CloudDeck screen, *Controllers →
+  Remapping profiles…*; on Android, *Controller profiles*. You can:
+  - send any button as another one, or disable it;
+  - set the deadzone, sensitivity and invert up/down per stick;
+  - set a trigger deadzone and swap the sticks.
+
+  Choose one profile for all controllers, or a profile per controller. A
+  handheld's built-in controls count as a controller. Profiles apply from the
+  next stream.
+- **On-screen controller (Android):** in the stream menu, choose the
+  *PlayStation button style* (✕ ○ □ △) or keep Xbox (A B X Y). *Edit on-screen
+  controller layout*, then *Save layout as…*, keeps several layouts that you
+  can *Load*.
+- **Gamepad combos:**
+
+  | Combo | Does |
+  |---|---|
+  | Select + L1 + R1 + Y | On-screen keyboard |
+  | Select + L1 + R1 + B | CloudDeck menu |
+  | Select + L1 + R1 + X | Performance stats (Moonlight) |
+  | Start + Select + L1 + R1 | Disconnect (Moonlight) |
+
+## On-screen keyboard
+
+A full keyboard for touchscreens and handhelds, with Esc, F-keys, arrows, Ctrl,
+Alt, Win and Shift. Open it from the in-stream menu, or with **Select + L1 + R1
++ Y** on a gamepad.
+- Tap a modifier to hold it for the next key (Ctrl, then C = Ctrl+C).
+  Double-tap it to keep it held.
+- Keys are sent like a real keyboard, so they also work in games.
+- ✕ or Back closes it.
+
 ## Shortcuts (desktop)
 
 All in-stream shortcuts are **Ctrl+Alt+Shift + a key**. On the CloudDeck screen,

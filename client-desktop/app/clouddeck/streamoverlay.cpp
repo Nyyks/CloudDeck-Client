@@ -66,6 +66,7 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
     m_Button = createView("StreamMenuButton.qml", false);
     m_Menu = createView("StreamMenu.qml", true);
     m_Notice = createView("StreamNotice.qml", false);
+    m_Keyboard = createView("StreamKeyboard.qml", false); // doesn't take focus: keys go to the stream
     if (m_Menu) m_Menu->setOpacity(0.97);
     if (m_Button) m_Button->setOpacity(0.85);
     updateGeometry();
@@ -74,6 +75,7 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
 
 StreamOverlay::~StreamOverlay()
 {
+    delete m_Keyboard;
     delete m_Notice;
     delete m_Menu;
     delete m_Button;
@@ -129,6 +131,10 @@ void StreamOverlay::updateGeometry()
     if (m_Button) {
         place(m_Button, QRect(win.x() + (win.width() - button) / 2, win.y() + margin, button, button));
         m_Button->setMask(QRegion(0, 0, kButtonSize, kButtonSize, QRegion::Ellipse));
+    }
+    if (m_Keyboard) {
+        const int height = qMin(qRound(360 * dpr), win.height() * 45 / 100);
+        place(m_Keyboard, QRect(win.x(), win.y() + win.height() - height, win.width(), height));
     }
     if (m_Notice) {
         const int width = qMin(qRound(380 * dpr), win.width() - 2 * margin), height = qRound(40 * dpr);
@@ -190,6 +196,7 @@ bool StreamOverlay::handleEvent(const SDL_Event& event)
         case SDL_WINDOWEVENT_MINIMIZED:
         case SDL_WINDOWEVENT_HIDDEN:
             closeMenu();
+            if (m_Keyboard) m_Keyboard->hide();
             break;
         default:
             break;
@@ -365,4 +372,26 @@ void StreamOverlay::setNintendoLayout(bool on)
     m_Session->m_Preferences->swapFaceButtons = on;
     m_Session->m_Preferences->save();
     emit changed();
+}
+
+bool StreamOverlay::keyboardVisible() const { return m_Keyboard && m_Keyboard->isVisible(); }
+
+void StreamOverlay::toggleKeyboard()
+{
+    if (!m_Keyboard) return;
+    if (m_Keyboard->isVisible()) {
+        m_Keyboard->hide();
+    }
+    else {
+        updateGeometry();
+        m_Keyboard->show();
+        m_Keyboard->raise();
+    }
+    emit changed();
+}
+
+void StreamOverlay::sendKey(int vk, bool down, int modifiers)
+{
+    // Same encoding as Moonlight's own keyboard path (keyboard.cpp).
+    LiSendKeyboardEvent2((short)(0x8000 | (vk & 0xFF)), down ? KEY_ACTION_DOWN : KEY_ACTION_UP, (char)modifiers, 0);
 }

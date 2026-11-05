@@ -27,6 +27,9 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - Configurable Ctrl+Alt+Shift shortcuts on desktop (ADR-0012).
 - Controller remapping profiles on desktop and Android (docs/controller-profiles.md) and a live Xbox/Nintendo
   layout switch in the in-stream menus.
+- On-screen controller button style (Xbox or PlayStation) and saved layouts on Android.
+- Full on-screen keyboard on Android and desktop (docs/on-screen-keyboard.md); gamepad combos
+  Select+L1+R1+Y (keyboard) and Select+L1+R1+B (CloudDeck menu).
 - In-stream menu on Android: a CloudDeck button or Back opens mic mute, stats, keyboard,
   disconnect and shut down (ADR-0009).
 - The official CloudDeck mark as the app icon and the menu button (private use; see THIRD_PARTY_NOTICES).

@@ -2733,6 +2733,15 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
             return false;
         }
 
+        // CloudDeck-Client: Select+LB+RB+Y = on-screen keyboard, Select+LB+RB+B = CloudDeck menu
+        // (docs/on-screen-keyboard.md)
+        final int cdcBase = ControllerPacket.BACK_FLAG | ControllerPacket.LB_FLAG | ControllerPacket.RB_FLAG;
+        if (context.inputMap == (cdcBase | ControllerPacket.Y_FLAG) || context.inputMap == (cdcBase | ControllerPacket.B_FLAG)) {
+            if ((context.inputMap & ControllerPacket.Y_FLAG) != 0) gestures.cdcToggleFullKeyboard();
+            else gestures.cdcShowMenu();
+            context.inputMap = 0;
+        }
+
         // Start+Back+LB+RB is the quit combo
         if (context.inputMap == (ControllerPacket.BACK_FLAG | ControllerPacket.PLAY_FLAG |
                                  ControllerPacket.LB_FLAG | ControllerPacket.RB_FLAG)) {

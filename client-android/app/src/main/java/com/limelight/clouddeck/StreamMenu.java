@@ -36,6 +36,7 @@ public final class StreamMenu {
         boolean isNintendoLayout();
         void setNintendoLayout(boolean on);
         void toggleKeyboard();
+        void toggleFullKeyboard();
         void disconnect();
         String streamInfo();
         /** The on-screen controller, or null when it is off. */
@@ -158,6 +159,10 @@ public final class StreamMenu {
             dialog.dismiss();
             // Let the dialog's window go first, or the keyboard opens for it.
             button.postDelayed(host::toggleKeyboard, 200);
+        }));
+        body.addView(action(R.string.cd_menu_full_keyboard, false, b -> {
+            dialog.dismiss();
+            host.toggleFullKeyboard();
         }));
         body.addView(action(R.string.cd_menu_disconnect, false, b -> {
             dialog.dismiss();

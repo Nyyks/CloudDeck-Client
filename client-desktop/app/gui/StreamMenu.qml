@@ -169,6 +169,14 @@ Pane {
                     onToggled: overlay.nintendoLayout = checked
                 }
 
+                Button {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    Layout.rightMargin: 16
+                    text: overlay.keyboardVisible ? qsTr("Hide the on-screen keyboard") : qsTr("On-screen keyboard (Esc, F-keys, Ctrl, arrows)")
+                    onClicked: { overlay.toggleKeyboard(); overlay.closeMenu() }
+                }
+
                 // ---- audio
                 SectionLabel { text: qsTr("Audio") }
                 SwitchRow {

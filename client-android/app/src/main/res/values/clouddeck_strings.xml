@@ -49,7 +49,8 @@
     <string name="cd_menu_button">CloudDeck menu</string>
     <string name="cd_menu_mic_mute">Mute my microphone</string>
     <string name="cd_menu_stats">Performance stats</string>
-    <string name="cd_menu_keyboard">Keyboard</string>
+    <string name="cd_menu_keyboard">Keyboard (typing)</string>
+    <string name="cd_menu_full_keyboard">Full keyboard (Esc, F-keys, Ctrl, arrows)</string>
     <string name="cd_menu_disconnect">Disconnect</string>
     <string name="cd_menu_shutdown">Shut down my CloudDeck</string>
     <string name="cd_menu_shutdown_confirm">Tap again to shut down your CloudDeck</string>

@@ -21,6 +21,10 @@ Item {
         property bool canShutDown: true
         property string menuKey: "O"
         property bool nintendoLayout: false
+        property bool keyboardVisible: false
+        property int keys: 0
+        function toggleKeyboard() {}
+        function sendKey(vk, down, mods) { keys++ }
         property string noticeText: "Connection lost. Reconnecting (1 of 5)..."
         property int closes: 0
         property int shutdowns: 0
@@ -50,6 +54,16 @@ Item {
             var no = n.createObject(parent, { overlay: stub, width: 380, height: 40 })
             verify(no !== null)
             no.destroy()
+            var kc = Qt.createComponent("StreamKeyboard.qml")
+            compare(kc.status, Component.Ready, kc.errorString())
+            var kb = kc.createObject(parent, { overlay: stub, width: 800, height: 300 })
+            verify(kb !== null)
+            kb.tapMod(kb.modCtrl)
+            compare(kb.latched, kb.modCtrl)
+            kb.keyUp(67)
+            compare(kb.latched, 0)
+            verify(stub.keys >= 3) // ctrl down, c up, ctrl up
+            kb.destroy()
             var cp = Qt.createComponent("ControllerProfiles.qml")
             compare(cp.status, Component.Ready, cp.errorString())
             var dlgObj = cp.createObject(parent, {})

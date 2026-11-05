@@ -117,6 +117,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
     private com.limelight.clouddeck.StreamMenu cdcMenu;
+    private com.limelight.clouddeck.StreamKeyboard cdcKeyboard; // full on-screen keyboard (Phase 6)
     private final com.limelight.clouddeck.StreamMenu.Host cdcMenuHost = new com.limelight.clouddeck.StreamMenu.Host() {
         @Override
         public boolean isPerfOverlayVisible() {
@@ -157,6 +158,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
 
         @Override
+        public void toggleFullKeyboard() {
+            if (cdcKeyboard != null) cdcKeyboard.toggle();
+        }
+
+        @Override
         public void disconnect() {
             finish();
         }
@@ -167,9 +173,24 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
     };
 
+    // CloudDeck-Client: gamepad combos from ControllerHandler (docs/on-screen-keyboard.md)
+    @Override
+    public void cdcToggleFullKeyboard() {
+        if (cdcKeyboard != null) cdcKeyboard.toggle();
+    }
+
+    @Override
+    public void cdcShowMenu() {
+        if (cdcMenu != null && !cdcMenu.isShowing()) cdcMenu.show();
+    }
+
     // CloudDeck-Client: Back opens the in-stream menu; "Disconnect" is in there.
     @Override
     public void onBackPressed() {
+        if (cdcKeyboard != null && cdcKeyboard.isShowing()) {
+            cdcKeyboard.hide();
+            return;
+        }
         if (cdcMenu != null && !cdcMenu.isShowing()) {
             cdcMenu.show();
             return;
@@ -336,6 +357,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
         cdcMenu = new com.limelight.clouddeck.StreamMenu(this, cdcMenuHost);
+        cdcKeyboard = new com.limelight.clouddeck.StreamKeyboard(this, (vk, down, modifiers) -> {
+            if (conn != null) {
+                conn.sendKeyboardInput((short) (0x8000 | vk),
+                        down ? KeyboardPacket.KEY_DOWN : KeyboardPacket.KEY_UP, modifiers, (byte) 0);
+            }
+        });
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
 
@@ -663,6 +690,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 performanceOverlayView.setVisibility(View.GONE);
                 notificationOverlayView.setVisibility(View.GONE);
                 if (cdcMenu != null) cdcMenu.setOverlaysHidden(true); // CloudDeck-Client
+                if (cdcKeyboard != null) cdcKeyboard.hide();
 
                 // Disable sensors while in PiP mode
                 controllerHandler.disableSensors();

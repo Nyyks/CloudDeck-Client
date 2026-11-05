@@ -1,5 +1,6 @@
 #include "streaming/session.h"
 #include "clouddeck/controllerprofile.h" // CloudDeck-Client
+#include "clouddeck/streamoverlay.h" // CloudDeck-Client
 
 #include <Limelight.h>
 #include "SDL_compat.h"
@@ -425,6 +426,20 @@ void SdlInputHandler::handleControllerButtonEvent(SDL_ControllerButtonEvent* eve
         // Clear buttons down on this gamepad
         LiSendMultiControllerEvent(state->index, m_GamepadMask,
                                    0, 0, 0, 0, 0, 0, 0);
+        return;
+    }
+
+    // CloudDeck-Client: Select+L1+R1+Y = on-screen keyboard, Select+L1+R1+B = CloudDeck menu
+    // (next to Moonlight's Select+L1+R1+X stats combo; docs/on-screen-keyboard.md)
+    if ((state->buttons == (BACK_FLAG | LB_FLAG | RB_FLAG | Y_FLAG) ||
+         state->buttons == (BACK_FLAG | LB_FLAG | RB_FLAG | B_FLAG)) && Session::get()->m_Overlay != nullptr) {
+        if (state->buttons & Y_FLAG) {
+            Session::get()->m_Overlay->toggleKeyboard();
+        }
+        else {
+            Session::get()->m_Overlay->toggleMenu();
+        }
+        LiSendMultiControllerEvent(state->index, m_GamepadMask, 0, 0, 0, 0, 0, 0, 0);
         return;
     }
 

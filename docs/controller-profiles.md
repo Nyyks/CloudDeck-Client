@@ -48,7 +48,7 @@ Values are clamped: deadzones to 0–0.5, sensitivity to 0.5–2.0.
   - otherwise the default profile;
   - otherwise no remapping.
 - **Storage:** desktop settings `clouddeck/controller/{profiles,defaultProfile,assignments}`;
-  Android shared preferences with the same keys.
+  Android shared preferences `cdControllerProfiles`, `cdControllerDefaultProfile`, `cdControllerAssignments`.
 
 ## Tests
 `shared/fixtures/controller/profile-v1.json` with the expected results in
