@@ -11,7 +11,6 @@ package agent
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,7 +27,6 @@ import (
 
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/clipboard"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/display"
-	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/upload"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/usbip"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/vhci"
 )
@@ -43,11 +41,6 @@ type Controller interface {
 // Display is the part of display.Manager the server needs.
 type Display interface {
 	Set(width, height, fps int) (*display.Lease, error)
-}
-
-// Uploader is the part of upload.Saver the server needs.
-type Uploader interface {
-	Save(ctx context.Context, name string, size int64, r io.Reader) (string, error)
 }
 
 // Request is a parsed header line.
@@ -93,10 +86,8 @@ type Server struct {
 	// Clipboard is the VM's clipboard (nil: clipboard sync unavailable).
 	Clipboard     clipboard.Clipboard
 	ClipboardPoll time.Duration // 0 = 700 ms
-	// Uploads saves files into the user's Downloads/CloudDeck (nil: unavailable).
-	Uploads Uploader
-	Version string
-	Log     *log.Logger
+	Version       string
+	Log           *log.Logger
 
 	mu       sync.Mutex // guards attached and leases; serializes port selection + attach
 	attached []*Attachment
@@ -151,17 +142,12 @@ func (s *Server) handle(c net.Conn) {
 		if s.Clipboard != nil {
 			features = append(features, "clipboard")
 		}
-		if s.Uploads != nil {
-			features = append(features, "upload")
-		}
 		s.reply(c, map[string]any{"agent": "clouddeck-agent", "version": s.Version, "features": features})
 		c.Close()
 	case "/clouddeck/v1/display/set":
 		s.displaySet(req, c, br)
 	case "/clouddeck/v1/clipboard/sync":
 		s.clipboardSync(req, c, br)
-	case "/clouddeck/v1/file/upload":
-		s.fileUpload(req, c, br)
 	case "/clouddeck/v1/usb/list":
 		s.reply(c, map[string]any{"attached": s.List(req.Client)})
 		c.Close()
@@ -289,61 +275,6 @@ func (s *Server) clipboardSync(req Request, c net.Conn, r io.Reader) {
 	s.logf("clipboard sync started for client %s", short(req.Client))
 	_ = clipboard.Sync(s.Clipboard, r, c, poll, s.logf)
 	s.logf("clipboard sync ended for client %s", short(req.Client))
-}
-
-// fileUpload receives one file (docs/adr/0011-file-upload.md):
-//
-//	GET /clouddeck/v1/file/upload?name=<name>&size=<bytes>
-//
-// After "OK", the client sends exactly <size> bytes. The agent answers with one
-// JSON line, {"saved":"<path>"} or {"error":"<message>"}, and closes.
-func (s *Server) fileUpload(req Request, c net.Conn, r io.Reader) {
-	defer c.Close()
-	if s.Uploads == nil {
-		fmt.Fprintf(c, "ERR file upload is not configured on this host\n")
-		return
-	}
-	name, err := upload.SanitizeName(req.Query.Get("name"))
-	if err != nil {
-		fmt.Fprintf(c, "ERR %v\n", err)
-		return
-	}
-	size, err := strconv.ParseInt(req.Query.Get("size"), 10, 64)
-	if err != nil || size < 0 || size > upload.MaxSize {
-		fmt.Fprintf(c, "ERR invalid size\n")
-		return
-	}
-	s.active.Add(1)
-	defer s.active.Done()
-	s.mu.Lock()
-	s.leases = append(s.leases, c) // DetachAll aborts uploads on shutdown
-	if s.closing {
-		c.Close()
-	}
-	s.mu.Unlock()
-	defer func() {
-		s.mu.Lock()
-		for i, x := range s.leases {
-			if x == c {
-				s.leases = append(s.leases[:i], s.leases[i+1:]...)
-				break
-			}
-		}
-		s.mu.Unlock()
-	}()
-	if _, err := io.WriteString(c, "OK\n"); err != nil {
-		return
-	}
-	saved, err := s.Uploads.Save(context.Background(), name, size, r)
-	var reply []byte
-	if err != nil {
-		s.logf("upload %q (%d bytes) from client %s: %v", name, size, short(req.Client), err)
-		reply, _ = json.Marshal(map[string]string{"error": oneLine(err.Error())})
-	} else {
-		s.logf("upload from client %s saved to %s (%d bytes)", short(req.Client), saved, size)
-		reply, _ = json.Marshal(map[string]string{"saved": saved})
-	}
-	c.Write(append(reply, '\n'))
 }
 
 func oneLine(s string) string {

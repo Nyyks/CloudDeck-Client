@@ -25,7 +25,6 @@ each run to `/var/lib/clouddeck-client/changes.log`.
 | Display mode of `HDMI-A-1` (runtime, during streams) | Only while a CloudDeck-Client stream with multiple monitors or "match resolution" runs: the agent runs `kscreen-doctor` as the desktop user to switch modes, and switches back when the stream ends (ADR-0007) | Automatic at stream end, agent stop or uninstall; leftovers are restored at the next agent start | KWin persists the mode only if the VM is cut off mid-stream; the agent then restores it after boot |
 | KWin custom modes (e.g. 3840×1080@60) | Added by the agent when a stream needs a size the emulated monitor doesn't list. Stored by KWin in `~user/.local/share/kscreen/` | System Settings → Display → remove the custom mode | Yes (`/home`) |
 | Clipboard (runtime, during streams) | With clipboard sync on, the agent reads and sets the clipboard through Plasma's Klipper (`busctl --user` as the desktop user, ADR-0008). Nothing is written to disk by the agent; Klipper keeps its usual history | Turn the setting off in the client | — |
-| `~user/Downloads/CloudDeck/` | Files you upload from the client (ADR-0011), written by a transient user service (`systemd-run --user`) with your own permissions | Delete the files | Yes (`/home`) |
 | `/var/lib/clouddeck-client/display-restore.json` (only during streams) | The mode to switch back to, for crash recovery | Deleted after each restore | Yes |
 
 **Not touched:** the OS image (no rpm-ostree), `/usr/bin/sunshine`,

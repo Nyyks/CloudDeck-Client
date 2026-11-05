@@ -27,7 +27,6 @@ Item {
         function reconnect() {}
         function disconnectStream() {}
         function shutDown() { shutdowns++ }
-        function uploadFiles(urls) {}
     }
     TestCase {
         name: "StreamMenu"

@@ -9,7 +9,6 @@ SOURCES += \
     $$PWD/cloudsession.cpp \
     $$PWD/displaylease.cpp \
     $$PWD/displaysettings.cpp \
-    $$PWD/fileupload.cpp \
     $$PWD/micstreamer.cpp \
     $$PWD/streamoverlay.cpp \
     $$PWD/secretstore.cpp \
@@ -27,7 +26,6 @@ HEADERS += \
     $$PWD/cloudsession.h \
     $$PWD/displaylease.h \
     $$PWD/displaysettings.h \
-    $$PWD/fileupload.h \
     $$PWD/micstreamer.h \
     $$PWD/streamoverlay.h \
     $$PWD/secretstore.h \

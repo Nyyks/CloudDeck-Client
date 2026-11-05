@@ -18,8 +18,7 @@ Plus the **host agent** (`clouddeck-agent.service`, root). It handles:
 - USB passthrough (ADR-0006);
 - switching the display mode during multi-monitor or "fit to window" streams
   (ADR-0007), restored when the stream ends;
-- clipboard sync through Plasma's Klipper (ADR-0008);
-- file uploads into ~/Downloads/CloudDeck (ADR-0011).
+- clipboard sync through Plasma's Klipper (ADR-0008).
 
 Logs: `journalctl -u clouddeck-agent -b`.
 
@@ -43,7 +42,7 @@ launcher starts **stock** Sunshine instead when:
 
 1. In the VM's browser (signed in to GitHub), open the repo's **Releases** and
    download `clouddeck-host-*.tar.gz` and its `.sha256` from the newest
-   release that has them (currently *Phase 5 upload test 1*).
+   release that has them (currently *Phase 5 clipboard test 1*).
 2. In Konsole:
    ```sh
    cd ~/Downloads

@@ -188,7 +188,7 @@ returns locally.
 showing its half, with the cursor crossing seamlessly. **4b (A′, after your OK
 for kargs):** *AC:* 2 independent outputs.
 
-**Phase 5: Polish.** Quick Menu, network test, clipboard, file upload,
+**Phase 5: Polish.** Quick Menu, network test, clipboard, ~~file upload~~ (dropped by the owner, 2026-11-05),
 shortcuts, auto-reconnect, tray, Android virtual gamepad.
 
 **Windowed mode** *(scope addition requested by the owner, 2026-11-05; done

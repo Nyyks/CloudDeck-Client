@@ -2,7 +2,6 @@ package agent
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -173,54 +172,5 @@ func TestClipboardSyncOverServer(t *testing.T) {
 	io.WriteString(x, "CDC1 "+fp+" /clouddeck/v1/clipboard/sync\n")
 	if line, _ := bufio.NewReader(x).ReadString('\n'); !strings.HasPrefix(line, "ERR clipboard sync is not configured") {
 		t.Fatalf("no clipboard = %q", line)
-	}
-}
-
-type memUploads struct {
-	mu   sync.Mutex
-	name string
-	data []byte
-}
-
-func (m *memUploads) Save(_ context.Context, name string, size int64, r io.Reader) (string, error) {
-	b, err := io.ReadAll(io.LimitReader(r, size))
-	if err != nil {
-		return "", err
-	}
-	if int64(len(b)) < size {
-		return "", fmt.Errorf("short: %d of %d", len(b), size)
-	}
-	m.mu.Lock()
-	m.name, m.data = name, b
-	m.mu.Unlock()
-	return "/home/user/Downloads/CloudDeck/" + name, nil
-}
-
-func TestFileUploadOverServer(t *testing.T) {
-	up := &memUploads{}
-	s := &Server{VHCI: newFake(), Uploads: up}
-	a, b := net.Pipe()
-	go s.handle(b)
-	io.WriteString(a, "CDC1 "+fp+" /clouddeck/v1/file/upload?name=..%2F..%2Fevil.txt&size=5\n")
-	br := bufio.NewReader(a)
-	if line, _ := br.ReadString('\n'); line != "OK\n" {
-		t.Fatalf("reply = %q", line)
-	}
-	io.WriteString(a, "hello")
-	line, _ := br.ReadString('\n')
-	if line != `{"saved":"/home/user/Downloads/CloudDeck/evil.txt"}`+"\n" || up.name != "evil.txt" || string(up.data) != "hello" {
-		t.Fatalf("result = %q (name %q, data %q)", line, up.name, up.data)
-	}
-	a.Close()
-	s.Wait()
-
-	for _, q := range []string{"name=&size=1", "name=a&size=-1", "name=a&size=x"} {
-		x, y := net.Pipe()
-		go s.handle(y)
-		io.WriteString(x, "CDC1 "+fp+" /clouddeck/v1/file/upload?"+q+"\n")
-		if l, _ := bufio.NewReader(x).ReadString('\n'); !strings.HasPrefix(l, "ERR ") {
-			t.Fatalf("%s accepted: %q", q, l)
-		}
-		x.Close()
 	}
 }
