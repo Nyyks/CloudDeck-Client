@@ -270,6 +270,11 @@ Item {
                             onValueModified: CloudDeck.autoStopIdleMinutes = value
                         }
                     }
+                    Switch {
+                        text: qsTr("Reconnect automatically if the connection drops")
+                        checked: CloudDeck.autoReconnect
+                        onToggled: CloudDeck.autoReconnect = checked
+                    }
                     // ---- clipboard (docs/adr/0008-clipboard-sync.md)
                     Switch {
                         text: qsTr("Share the clipboard (text) with my CloudDeck while streaming")

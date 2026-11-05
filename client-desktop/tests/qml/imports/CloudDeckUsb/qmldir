@@ -1,0 +1,2 @@
+module CloudDeckUsb
+singleton CloudDeckUsb 1.0 CloudDeckUsb.qml

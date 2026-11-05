@@ -71,6 +71,13 @@ public:
     void setShowButton(bool on);
     bool canShutDown() const;
 
+    // A small status pill under the button, e.g. while reconnecting. It works even
+    // when the stream has no decoder to draw Moonlight's own overlay.
+    void showNotice(const QString& text);
+    void hideNotice();
+    Q_PROPERTY(QString noticeText READ noticeText NOTIFY changed)
+    QString noticeText() const { return m_NoticeText; }
+
     Q_INVOKABLE void openMenu();
     Q_INVOKABLE void closeMenu();
     Q_INVOKABLE void toggleMenu() { m_MenuOpen ? closeMenu() : openMenu(); }
@@ -92,6 +99,8 @@ private:
     QWindow* m_SdlParent = nullptr; // foreign wrapper of the SDL window (owner)
     QQuickView* m_Button = nullptr;
     QQuickView* m_Menu = nullptr;
+    QQuickView* m_Notice = nullptr;
+    QString m_NoticeText;
     bool m_MenuOpen = false;
     bool m_RecaptureOnClose = false;
     Uint32 m_LastPump = 0;

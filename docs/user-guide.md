@@ -39,6 +39,12 @@ request at all.
   leave the stream.
 - **Stop after idle minutes** (desktop): turns the VM off if you haven't
   streamed for N minutes. 0 = never.
+- **Reconnect automatically if the connection drops** (desktop, on by
+  default): after a network drop the stream reconnects in the same window.
+  - It makes up to 5 attempts over about 20 s, showing *Reconnecting (n of 5)*
+    under the menu button.
+  - Your app keeps running on the CloudDeck.
+  - Clipboard sync and forwarded USB devices come back with the stream.
 - **App to launch:** the Sunshine app name. The default is `CloudDeck`.
 
 ## Microphone

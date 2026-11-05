@@ -64,6 +64,7 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
 
     m_Button = createView("StreamMenuButton.qml", false);
     m_Menu = createView("StreamMenu.qml", true);
+    m_Notice = createView("StreamNotice.qml", false);
     if (m_Menu) m_Menu->setOpacity(0.97);
     if (m_Button) m_Button->setOpacity(0.85);
     updateGeometry();
@@ -72,6 +73,7 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
 
 StreamOverlay::~StreamOverlay()
 {
+    delete m_Notice;
     delete m_Menu;
     delete m_Button;
     delete m_SdlParent;
@@ -126,6 +128,10 @@ void StreamOverlay::updateGeometry()
     if (m_Button) {
         place(m_Button, QRect(win.x() + (win.width() - button) / 2, win.y() + margin, button, button));
         m_Button->setMask(QRegion(0, 0, kButtonSize, kButtonSize, QRegion::Ellipse));
+    }
+    if (m_Notice) {
+        const int width = qMin(qRound(380 * dpr), win.width() - 2 * margin), height = qRound(40 * dpr);
+        place(m_Notice, QRect(win.x() + (win.width() - width) / 2, win.y() + 2 * margin + button, width, height));
     }
     if (m_Menu) {
         const int width = qMin(qRound(kMenuWidth * dpr), win.width() - 2 * margin);
@@ -329,4 +335,20 @@ void StreamOverlay::shutDown()
 {
     CloudSession::requestStopAfterStream();
     disconnectStream();
+}
+
+void StreamOverlay::showNotice(const QString& text)
+{
+    m_NoticeText = text;
+    emit changed();
+    if (!m_Notice) return;
+    updateGeometry();
+    m_Notice->show();
+}
+
+void StreamOverlay::hideNotice()
+{
+    m_NoticeText.clear();
+    emit changed();
+    if (m_Notice) m_Notice->hide();
 }

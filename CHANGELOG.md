@@ -21,6 +21,9 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - In-stream menu on desktop (ADR-0009): a round CloudDeck button at the top centre or Ctrl+Alt+Shift+O
   opens a panel with display, mouse mode, audio and mic settings, live USB device switching,
   reconnect, disconnect, and shutting down the VM.
+- Auto-reconnect on desktop (ADR-0010): network drops reconnect in place (5 attempts), restoring
+  clipboard sync and USB devices.
+- The official CloudDeck mark as the app icon and the menu button (private use; see THIRD_PARTY_NOTICES).
 ### Fixed
 - Start and connect timed out when the host was already known under a new VM IP.
 - HTTP/2 errors with the CloudFront API endpoint (desktop now uses HTTP/1.1).

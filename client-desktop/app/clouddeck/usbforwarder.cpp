@@ -360,7 +360,8 @@ void UsbForwarder::onConnectionStarted(const QString& host, quint16 httpsPort, c
         QStringList busids;
         for (const QVariant& v : m_Devices) {
             const QVariantMap d = v.toMap();
-            if (d["forward"].toBool() && d["shared"].toBool()) busids << d["busid"].toString();
+            // Not yet attached: also re-attaches devices that dropped with the network after a reconnect.
+            if (d["forward"].toBool() && d["shared"].toBool() && !m_Attached.value(d["busid"].toString())) busids << d["busid"].toString();
         }
         if (busids.isEmpty()) return;  // nothing to forward: no helper, no password prompt
         QMetaObject::invokeMethod(m_Worker, "startForwarding", Qt::QueuedConnection,

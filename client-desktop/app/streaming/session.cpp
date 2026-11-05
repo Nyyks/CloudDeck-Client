@@ -6,6 +6,7 @@
 #include "clouddeck/displaylease.h"
 #include "clouddeck/clipboardsync.h"
 #include "clouddeck/streamoverlay.h"
+#include "clouddeck/cloudsession.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
 
@@ -94,6 +95,14 @@ void Session::clStageFailed(int stage, int errorCode)
 
 void Session::clConnectionTerminated(int errorCode)
 {
+    // CloudDeck-Client: a dropped connection reconnects in place instead of ending
+    // the session (the SDL loop picks this up; see maybeReconnect()).
+    if (s_ActiveSession->shouldAutoReconnect(errorCode)) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Connection lost (%d); reconnecting", errorCode);
+        s_ActiveSession->m_ReconnectAt = SDL_GetTicks() | 1;
+        return;
+    }
+
     unsigned int portFlags = LiGetPortFlagsFromTerminationErrorCode(errorCode);
     s_ActiveSession->m_PortTestResults = LiTestClientConnectivity(CONN_TEST_SERVER, 443, portFlags);
 
@@ -1649,10 +1658,12 @@ void Session::maybeRestartForWindowSize()
 // the running app, all in the same window. The blocking part runs on a worker thread
 // while the SDL loop keeps the window responsive (and drops input). USB devices stay
 // attached; the display lease is handed over without restoring in between.
-void Session::restartStreamAt(int width, int height)
+void Session::restartStreamAt(int width, int height, bool reconnecting)
 {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Restarting the stream at %dx%d to fit the window", width, height);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s the stream at %dx%d",
+                reconnecting ? "Reconnecting" : "Restarting", width, height);
     m_Restarting = true;
+    m_LastRestartWasReconnect = reconnecting;
 
     // Drop the decoder now; frames arriving until the stop are ignored (drSubmitDecodeUnit).
     SDL_LockMutex(m_DecoderLock);
@@ -1662,7 +1673,7 @@ void Session::restartStreamAt(int width, int height)
 
     m_InputHandler->setStreamSize(width, height);
 
-    QThread* t = QThread::create([this, width, height]() {
+    QThread* t = QThread::create([this, width, height, reconnecting]() {
         // Input is dropped from now on; give the input handler's batching timers
         // (mouse motion is flushed every few ms) time to send what they hold before
         // the input stream goes away.
@@ -1678,6 +1689,17 @@ void Session::restartStreamAt(int width, int height)
         }
         m_ForceResume = true;
         bool ok = startConnectionAsync();
+
+        if (!ok && reconnecting && m_ReconnectAttempts < kMaxReconnects) {
+            // Try again a little later (2, 4, 6, 8 s); the window stays as it is.
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Reconnect attempt %d failed", m_ReconnectAttempts.load());
+            m_ReconnectAt = (SDL_GetTicks() + 2000 * m_ReconnectAttempts) | 1;
+            m_Restarting = false;
+            return;
+        }
+        if (ok) {
+            m_RestartSucceeded = true;
+        }
         m_Restarting = false;
 
         SDL_Event event = {};
@@ -1685,16 +1707,74 @@ void Session::restartStreamAt(int width, int height)
             event.type = SDL_RENDER_DEVICE_RESET; // recreate the decoder for the new stream
         }
         else {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Restarting the stream at the new size failed");
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s the stream failed", reconnecting ? "Reconnecting" : "Restarting");
             m_UnexpectedTermination = true;
             event.type = SDL_QUIT;
             event.quit.timestamp = SDL_GetTicks();
         }
         SDL_PushEvent(&event);
     });
-    t->setObjectName("CloudDeck resize");
+    t->setObjectName("CloudDeck restart");
     QObject::connect(t, &QThread::finished, t, &QObject::deleteLater);
     t->start();
+}
+
+// CloudDeck-Client: reconnect after network-type failures; host-side errors (DRM,
+// encoder) and a graceful end still end the session.
+bool Session::shouldAutoReconnect(int errorCode)
+{
+    switch (errorCode) {
+    case ML_ERROR_GRACEFUL_TERMINATION:
+    case ML_ERROR_PROTECTED_CONTENT:
+    case ML_ERROR_UNEXPECTED_EARLY_TERMINATION:
+    case ML_ERROR_FRAME_CONVERSION:
+        return false;
+    default:
+        break;
+    }
+    if (!CloudSession::autoReconnectEnabled() || m_Restarting) {
+        return false;
+    }
+    // A stream that ran for a minute since the last attempt starts a fresh count.
+    if (SDL_TICKS_PASSED(SDL_GetTicks(), m_StreamUpSince + 60000)) {
+        m_ReconnectAttempts = 0;
+    }
+    return m_ReconnectAttempts < kMaxReconnects;
+}
+
+// CloudDeck-Client: called from the SDL loop.
+void Session::maybeReconnect()
+{
+    const Uint32 at = m_ReconnectAt;
+    if (at == 0 || m_Restarting || !SDL_TICKS_PASSED(SDL_GetTicks(), at)) {
+        return;
+    }
+    m_ReconnectAt = 0;
+    const int attempt = ++m_ReconnectAttempts;
+    if (m_Overlay != nullptr) {
+        m_Overlay->showNotice(tr("Connection lost. Reconnecting (%1 of %2)...").arg(attempt).arg(kMaxReconnects));
+    }
+    restartStreamAt(m_StreamConfig.width, m_StreamConfig.height, true);
+}
+
+// CloudDeck-Client: on the SDL thread after any successful in-place restart.
+void Session::onStreamRestarted()
+{
+    m_StreamUpSince = SDL_GetTicks();
+    if (m_LastRestartWasReconnect) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Reconnected");
+        if (m_Overlay != nullptr) {
+            m_Overlay->hideNotice();
+        }
+        emit displayLaunchError(QString()); // forget errors from failed attempts
+    }
+    // Side channels that may have dropped with the network come back.
+    if (m_Clipboard != nullptr && m_Clipboard->isFinished()) {
+        delete m_Clipboard;
+        m_Clipboard = new ClipboardSync(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert);
+        m_Clipboard->start();
+    }
+    UsbForwarder::get()->onConnectionStarted(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert);
 }
 
 void Session::toggleFullscreen()
@@ -2212,6 +2292,7 @@ void Session::exec()
     }
     // CloudDeck-Client: in-stream menu button and panel (docs/adr/0009-quick-menu.md)
     m_Overlay = new StreamOverlay(this);
+    m_StreamUpSince = SDL_GetTicks(); // CloudDeck-Client: auto-reconnect attempt counting
 
     // CloudDeck-Client: the local clipboard wins when a stream starts
     if (m_Clipboard != nullptr && SDL_HasClipboardText()) {
@@ -2225,6 +2306,10 @@ void Session::exec()
     SDL_Event event;
     for (;;) {
         maybeRestartForWindowSize(); // CloudDeck-Client
+        maybeReconnect();            // CloudDeck-Client
+        if (m_RestartSucceeded.exchange(false)) {
+            onStreamRestarted();     // CloudDeck-Client
+        }
         if (m_Overlay != nullptr) {
             m_Overlay->pump(); // CloudDeck-Client: lets the in-stream menu's Qt windows work
         }
@@ -2238,7 +2323,7 @@ void Session::exec()
         // NB: This behavior was introduced in SDL 2.0.16, but had a few critical
         // issues that could cause indefinite timeouts, delayed joystick detection,
         // and other problems.
-        int waitMs = m_ResizeCheckAt ? 100 : 1000; // CloudDeck-Client: wake for resize checks and the menu
+        int waitMs = (m_ResizeCheckAt || m_ReconnectAt || m_Restarting) ? 100 : 1000; // CloudDeck-Client: resize checks, reconnects, the menu
         if (m_Overlay != nullptr) {
             waitMs = SDL_min(waitMs, m_Overlay->maxWaitMs());
         }
@@ -2290,7 +2375,7 @@ void Session::exec()
         }
 
         // CloudDeck-Client: no input reaches the host while the stream restarts at a new size
-        if (m_Restarting && dropDuringRestart(event.type)) {
+        if ((m_Restarting || m_ReconnectAt) && dropDuringRestart(event.type)) {
             continue;
         }
         switch (event.type) {

@@ -260,7 +260,17 @@ private:
     std::atomic<bool> m_Restarting {false};
     Uint32 m_ResizeCheckAt = 0;          // SDL ticks at which to compare window and stream size; 0 = none
     void maybeRestartForWindowSize();
-    void restartStreamAt(int width, int height);
+    void restartStreamAt(int width, int height, bool reconnecting = false);
+    // CloudDeck-Client: auto-reconnect after a dropped connection
+    static constexpr int kMaxReconnects = 5;
+    std::atomic<Uint32> m_ReconnectAt {0};       // SDL ticks for the next attempt; 0 = none
+    std::atomic<int> m_ReconnectAttempts {0};
+    std::atomic<bool> m_RestartSucceeded {false};
+    bool m_LastRestartWasReconnect = false;
+    Uint32 m_StreamUpSince = 0;
+    bool shouldAutoReconnect(int errorCode);
+    void maybeReconnect();
+    void onStreamRestarted();
     // CloudDeck-Client: in-stream menu (docs/adr/0009-quick-menu.md)
     class StreamOverlay* m_Overlay = nullptr;
     bool m_UserAudioMuted = false; // "Mute the CloudDeck's sound" (separate from mute-on-focus-loss)

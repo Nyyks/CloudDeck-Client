@@ -34,6 +34,7 @@ class CloudSession : public QObject
     Q_PROPERTY(bool autoStopOnSessionEnd READ autoStopOnSessionEnd WRITE setAutoStopOnSessionEnd NOTIFY settingsChanged)
     Q_PROPERTY(int autoStopIdleMinutes READ autoStopIdleMinutes WRITE setAutoStopIdleMinutes NOTIFY settingsChanged)
     Q_PROPERTY(bool clipboardSync READ clipboardSync WRITE setClipboardSync NOTIFY settingsChanged)
+    Q_PROPERTY(bool autoReconnect READ autoReconnect WRITE setAutoReconnect NOTIFY settingsChanged)
 
 public:
     explicit CloudSession(QObject* parent = nullptr);
@@ -79,6 +80,9 @@ public:
 
     bool clipboardSync() const;
     void setClipboardSync(bool v);
+    bool autoReconnect() const { return autoReconnectEnabled(); }
+    void setAutoReconnect(bool v);
+    static bool autoReconnectEnabled(); // any thread; default on
 
 signals:
     void signedInChanged();

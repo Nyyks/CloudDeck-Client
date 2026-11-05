@@ -78,6 +78,8 @@ int CloudSession::autoStopIdleMinutes() const { return QSettings().value("cloudd
 void CloudSession::setAutoStopIdleMinutes(int v) { QSettings().setValue("clouddeck/autoStopIdleMinutes", qMax(0, v)); emit settingsChanged(); }
 bool CloudSession::clipboardSync() const { return ClipboardSync::enabled(); }
 void CloudSession::setClipboardSync(bool v) { ClipboardSync::setEnabled(v); emit settingsChanged(); }
+bool CloudSession::autoReconnectEnabled() { return QSettings().value("clouddeck/autoReconnect", true).toBool(); }
+void CloudSession::setAutoReconnect(bool v) { QSettings().setValue("clouddeck/autoReconnect", v); emit settingsChanged(); }
 
 // ------------------------------------------------------------------ state helpers
 

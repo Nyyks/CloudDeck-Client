@@ -1,0 +1,2 @@
+module CloudDeckMic
+singleton CloudDeckMic 1.0 CloudDeckMic.qml
