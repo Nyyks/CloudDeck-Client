@@ -99,6 +99,7 @@ class Session : public QObject
     friend class DeferredSessionCleanupTask;
     friend class AsyncConnectionStartThread;
     friend class StreamOverlay; // CloudDeck-Client
+    friend class OnScreenController; // CloudDeck-Client
 
 public:
     explicit Session(NvComputer* computer, NvApp& app, StreamingPreferences *preferences = nullptr);

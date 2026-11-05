@@ -1774,6 +1774,9 @@ void Session::onStreamRestarted()
         m_Clipboard = new ClipboardSync(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert);
         m_Clipboard->start();
     }
+    if (m_Overlay != nullptr) {
+        m_Overlay->onStreamRestarted(); // the virtual on-screen pad arrives again
+    }
     UsbForwarder::get()->onConnectionStarted(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert);
 }
 

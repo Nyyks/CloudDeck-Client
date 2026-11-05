@@ -90,6 +90,7 @@ struct DualSenseOutputReport{
 class SdlInputHandler
 {
     friend class StreamOverlay; // CloudDeck-Client: the in-stream menu drives mouse mode and capture
+    friend class OnScreenController; // CloudDeck-Client: the on-screen controller claims a gamepad slot
 
 public:
     explicit SdlInputHandler(StreamingPreferences& prefs, int streamWidth, int streamHeight);

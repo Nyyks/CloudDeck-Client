@@ -2,6 +2,7 @@
 
 #include "cloudsession.h"
 #include "displaysettings.h"
+#include "onscreencontroller.h"
 #include "micstreamer.h"
 #include "shortcuts.h"
 #include "streaming/session.h"
@@ -67,14 +68,20 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
     m_Menu = createView("StreamMenu.qml", true);
     m_Notice = createView("StreamNotice.qml", false);
     m_Keyboard = createView("StreamKeyboard.qml", false); // doesn't take focus: keys go to the stream
+    m_Osc = new OnScreenController(m_Session, m_SdlParent, m_Session->m_QtWindow ? qmlEngine(m_Session->m_QtWindow) : nullptr);
     if (m_Menu) m_Menu->setOpacity(0.97);
     if (m_Button) m_Button->setOpacity(0.85);
     updateGeometry();
+    if (m_Osc && OnScreenController::enabledSetting()) { // left on last time
+        m_OscWanted = true;
+        m_Osc->setVisible(true);
+    }
     updateButtonVisibility();
 }
 
 StreamOverlay::~StreamOverlay()
 {
+    delete m_Osc; // removes the virtual pad from the CloudDeck
     delete m_Keyboard;
     delete m_Notice;
     delete m_Menu;
@@ -132,6 +139,7 @@ void StreamOverlay::updateGeometry()
         place(m_Button, QRect(win.x() + (win.width() - button) / 2, win.y() + margin, button, button));
         m_Button->setMask(QRegion(0, 0, kButtonSize, kButtonSize, QRegion::Ellipse));
     }
+    if (m_Osc) m_Osc->updateGeometry(win, dpr);
     if (m_Keyboard) {
         const int height = qMin(qRound(360 * dpr), win.height() * 45 / 100);
         place(m_Keyboard, QRect(win.x(), win.y() + win.height() - height, win.width(), height));
@@ -192,11 +200,13 @@ bool StreamOverlay::handleEvent(const SDL_Event& event)
         case SDL_WINDOWEVENT_RESTORED:
         case SDL_WINDOWEVENT_SHOWN:
             updateGeometry();
+            if (m_Osc && m_OscWanted && !m_Osc->isVisible()) m_Osc->setVisible(true); // back from minimized
             break;
         case SDL_WINDOWEVENT_MINIMIZED:
         case SDL_WINDOWEVENT_HIDDEN:
             closeMenu();
             if (m_Keyboard) m_Keyboard->hide();
+            if (m_Osc) m_Osc->setVisible(false);
             break;
         default:
             break;
@@ -394,4 +404,33 @@ void StreamOverlay::sendKey(int vk, bool down, int modifiers)
 {
     // Same encoding as Moonlight's own keyboard path (keyboard.cpp).
     LiSendKeyboardEvent2((short)(0x8000 | (vk & 0xFF)), down ? KEY_ACTION_DOWN : KEY_ACTION_UP, (char)modifiers, 0);
+}
+
+bool StreamOverlay::controllerVisible() const { return m_Osc && m_Osc->isVisible(); }
+
+void StreamOverlay::toggleController()
+{
+    if (!m_Osc) return;
+    m_OscWanted = !m_Osc->isVisible();
+    OnScreenController::setEnabledSetting(m_OscWanted); // remembered for the next stream
+    if (m_OscWanted) updateGeometry();
+    m_Osc->setVisible(m_OscWanted);
+    emit changed();
+}
+
+bool StreamOverlay::controllerPlaystation() const { return OnScreenController::styleSetting() == QLatin1String("playstation"); }
+
+void StreamOverlay::setControllerPlaystation(bool on)
+{
+    OnScreenController::setStyleSetting(on ? "playstation" : "xbox");
+    if (m_Osc) m_Osc->refreshStyle();
+    emit changed();
+}
+
+void StreamOverlay::onStreamRestarted()
+{
+    if (m_Osc && m_Osc->isVisible()) {
+        m_Osc->setVisible(false);
+        m_Osc->setVisible(true);
+    }
 }

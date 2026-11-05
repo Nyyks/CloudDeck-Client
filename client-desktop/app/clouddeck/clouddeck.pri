@@ -14,6 +14,7 @@ SOURCES += \
     $$PWD/micstreamer.cpp \
     $$PWD/netrecommend.cpp \
     $$PWD/nettest.cpp \
+    $$PWD/onscreencontroller.cpp \
     $$PWD/streamoverlay.cpp \
     $$PWD/secretstore.cpp \
     $$PWD/shortcuts.cpp \
@@ -36,6 +37,7 @@ HEADERS += \
     $$PWD/micstreamer.h \
     $$PWD/netrecommend.h \
     $$PWD/nettest.h \
+    $$PWD/onscreencontroller.h \
     $$PWD/streamoverlay.h \
     $$PWD/secretstore.h \
     $$PWD/shortcuts.h \

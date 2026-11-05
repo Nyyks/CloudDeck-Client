@@ -22,6 +22,9 @@ Item {
         property string menuKey: "O"
         property bool nintendoLayout: false
         property bool keyboardVisible: false
+        property bool controllerVisible: false
+        property bool controllerPlaystation: false
+        function toggleController() {}
         property int keys: 0
         function toggleKeyboard() {}
         function sendKey(vk, down, mods) { keys++ }
@@ -64,6 +67,16 @@ Item {
             compare(kb.latched, 0)
             verify(stub.keys >= 3) // ctrl down, c up, ctrl up
             kb.destroy()
+            var gc = Qt.createComponent("StreamGamepad.qml")
+            compare(gc.status, Component.Ready, gc.errorString())
+            var oscStub = Qt.createQmlObject('import QtQuick 2.15; QtObject { property bool playstation: true; property int last: 0; function button(f, d) { last = f } function stick(w, x, y) {} function trigger(w, v) {} }', parent)
+            var gp = gc.createObject(parent, { osc: oscStub, unit: 4,
+                shapes: [{type: "button", id: "a", flag: 4096, round: true, x: 0, y: 0, w: 9, h: 9},
+                         {type: "stick", which: 0, x: 10, y: 0, w: 26, h: 26}, {type: "dpad", x: 0, y: 30, w: 26, h: 26},
+                         {type: "trigger", which: 0, x: 0, y: 60, w: 22, h: 9}] })
+            verify(gp !== null)
+            wait(30)
+            gp.destroy()
             var cp = Qt.createComponent("ControllerProfiles.qml")
             compare(cp.status, Component.Ready, cp.errorString())
             var dlgObj = cp.createObject(parent, {})

@@ -28,6 +28,7 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - Controller remapping profiles on desktop and Android (docs/controller-profiles.md) and a live Xbox/Nintendo
   layout switch in the in-stream menus.
 - On-screen controller button style (Xbox or PlayStation) and saved layouts on Android.
+- On-screen controller on desktop too (docs/on-screen-controller.md), for touchscreen devices.
 - Full on-screen keyboard on Android and desktop (docs/on-screen-keyboard.md); gamepad combos
   Select+L1+R1+Y (keyboard) and Select+L1+R1+B (CloudDeck menu).
 - In-stream menu on Android: a CloudDeck button or Back opens mic mute, stats, keyboard,

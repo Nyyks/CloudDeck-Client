@@ -169,6 +169,17 @@ Pane {
                     onToggled: overlay.nintendoLayout = checked
                 }
 
+                SwitchRow {
+                    text: qsTr("On-screen controller (touchscreens)")
+                    checked: overlay.controllerVisible
+                    onToggled: overlay.toggleController()
+                }
+                SwitchRow {
+                    visible: overlay.controllerVisible
+                    text: qsTr("PlayStation button style")
+                    checked: overlay.controllerPlaystation
+                    onToggled: overlay.controllerPlaystation = checked
+                }
                 Button {
                     Layout.fillWidth: true
                     Layout.leftMargin: 16

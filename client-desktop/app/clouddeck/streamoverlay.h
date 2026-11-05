@@ -41,6 +41,8 @@ class StreamOverlay : public QObject
     Q_PROPERTY(QString menuKey READ menuKey NOTIFY changed)
     Q_PROPERTY(bool nintendoLayout READ nintendoLayout WRITE setNintendoLayout NOTIFY changed)
     Q_PROPERTY(bool keyboardVisible READ keyboardVisible NOTIFY changed)
+    Q_PROPERTY(bool controllerVisible READ controllerVisible NOTIFY changed)
+    Q_PROPERTY(bool controllerPlaystation READ controllerPlaystation WRITE setControllerPlaystation NOTIFY changed)
 
 public:
     explicit StreamOverlay(Session* session);
@@ -89,6 +91,13 @@ public:
     Q_INVOKABLE void toggleMenu() { m_MenuOpen ? closeMenu() : openMenu(); }
     // On-screen keyboard (docs/on-screen-keyboard.md): sends real key presses.
     Q_INVOKABLE void toggleKeyboard();
+    // On-screen controller (docs/on-screen-controller.md)
+    Q_INVOKABLE void toggleController();
+    bool controllerVisible() const;
+    bool controllerPlaystation() const;
+    void setControllerPlaystation(bool on);
+    // After an in-place restart: the new connection must see the virtual pad arrive again.
+    void onStreamRestarted();
     Q_INVOKABLE void sendKey(int vk, bool down, int modifiers);
     bool keyboardVisible() const;
     Q_INVOKABLE void reconnect();
@@ -111,6 +120,8 @@ private:
     QQuickView* m_Menu = nullptr;
     QQuickView* m_Notice = nullptr;
     QQuickView* m_Keyboard = nullptr;
+    class OnScreenController* m_Osc = nullptr;
+    bool m_OscWanted = false; // shown unless the stream window is minimized
     QString m_NoticeText;
     bool m_MenuOpen = false;
     bool m_RecaptureOnClose = false;

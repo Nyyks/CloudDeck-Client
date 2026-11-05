@@ -115,10 +115,12 @@ working.
   Choose one profile for all controllers, or a profile per controller. A
   handheld's built-in controls count as a controller. Profiles apply from the
   next stream.
-- **On-screen controller (Android):** in the stream menu, choose the
-  *PlayStation button style* (✕ ○ □ △) or keep Xbox (A B X Y). *Edit on-screen
+- **On-screen controller:** on Android, choose the *PlayStation button style*
+  (✕ ○ □ △) or keep Xbox (A B X Y) in the stream menu. *Edit on-screen
   controller layout*, then *Save layout as…*, keeps several layouts that you
-  can *Load*.
+  can *Load*. On desktop (tablets, 2-in-1s, Linux phones), switch on
+  *On-screen controller (touchscreens)* in the stream menu; it has the same
+  Xbox/PlayStation style switch.
 - **Gamepad combos:**
 
   | Combo | Does |
