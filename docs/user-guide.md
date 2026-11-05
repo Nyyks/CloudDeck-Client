@@ -101,6 +101,20 @@ While the menu is open, your keys and clicks go to the menu, not the
 CloudDeck. You can hide the button at the bottom of the menu; the hotkey keeps
 working.
 
+## Network test (desktop)
+
+On the CloudDeck screen under **Network**, with your CloudDeck running:
+- **Test my connection** measures the latency and the speed from your
+  CloudDeck to this PC, in a few seconds and a few tens of MB.
+- **Apply recommended settings** then sets the resolution, frame rate and
+  bitrate that fit your connection and screen. Example: 1080p at 60 FPS and
+  20 Mbit/s on a 1920×1200 laptop with a fast line.
+- **Low-bandwidth mode** sets 1280×720 at 30 FPS and 3 Mbit/s, for hotel Wi-Fi
+  or mobile hotspots.
+
+You can change everything afterwards in Settings. With *Fit the CloudDeck's
+resolution to the stream window* on, the window decides the resolution.
+
 ## Clipboard (desktop)
 
 Needs the CloudDeck host update on the VM.

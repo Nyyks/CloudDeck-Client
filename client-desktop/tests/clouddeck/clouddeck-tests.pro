@@ -10,9 +10,11 @@ INCLUDEPATH += $$PWD/../../app
 SOURCES += \
     tst_clouddeckapi.cpp \
     $$PWD/../../app/clouddeck/clouddeckapi.cpp \
-    $$PWD/../../app/clouddeck/spanlayout.cpp
+    $$PWD/../../app/clouddeck/spanlayout.cpp \
+    $$PWD/../../app/clouddeck/netrecommend.cpp
 HEADERS += \
     $$PWD/../../app/clouddeck/clouddeckapi.h \
-    $$PWD/../../app/clouddeck/spanlayout.h
+    $$PWD/../../app/clouddeck/spanlayout.h \
+    $$PWD/../../app/clouddeck/netrecommend.h
 
 DEFINES += FIXTURE_DIR=\\\"$$clean_path($$PWD/../../../shared/fixtures/clouddeck)\\\"

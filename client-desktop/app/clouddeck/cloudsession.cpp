@@ -2,6 +2,7 @@
 #include "clouddeckprovider.h"
 #include "secretstore.h"
 #include "clipboardsync.h"
+#include "nettest.h"
 
 #include "backend/computermanager.h"
 #include "backend/computerseeker.h"
@@ -9,6 +10,8 @@
 #include "settings/streamingpreferences.h"
 
 #include <QDebug>
+#include <QGuiApplication>
+#include <QScreen>
 #include <atomic>
 #include <QHostAddress>
 #include <QHostInfo>
@@ -570,4 +573,108 @@ void CloudSession::armIdleTimer()
     if (minutes > 0) {
         m_IdleTimer.start(minutes * 60 * 1000);
     }
+}
+
+// ---------------------------------------------------------------- network test
+
+void CloudSession::runNetworkTest(ComputerManager* computerManager)
+{
+    if (m_NetTest) return;
+    if (m_Machine.status != QLatin1String(Status::Running)) {
+        m_NetTestStatus = tr("Start your CloudDeck first, then run the test.");
+        emit netTestChanged();
+        return;
+    }
+    // The paired host (known from an earlier connection, also from earlier runs).
+    NvComputer* host = nullptr;
+    const QString addr = hostAddress();
+    if (computerManager) {
+        for (NvComputer* c : computerManager->getComputers()) {
+            QReadLocker lock(&c->lock);
+            const bool sameUuid = !m_HostUuid.isEmpty() && c->uuid.compare(m_HostUuid, Qt::CaseInsensitive) == 0;
+            const bool sameName = c->manualAddress.address().compare(addr, Qt::CaseInsensitive) == 0 ||
+                                  c->activeAddress.address().compare(addr, Qt::CaseInsensitive) == 0;
+            if ((sameUuid || sameName) && c->pairState == NvComputer::PS_PAIRED && !c->serverCert.isNull()) {
+                host = c;
+                break;
+            }
+        }
+    }
+    if (!host) {
+        m_NetTestStatus = tr("Connect to your CloudDeck once first, so this PC is paired with it.");
+        emit netTestChanged();
+        return;
+    }
+    QSslCertificate cert;
+    quint16 port;
+    {
+        QReadLocker lock(&host->lock);
+        cert = host->serverCert;
+        port = host->activeHttpsPort ? host->activeHttpsPort : 47984;
+    }
+    m_HasRecommendation = false;
+    m_NetTestStatus = tr("Starting the network test...");
+    m_NetTest = new NetTest(addr, port, cert);
+    connect(m_NetTest, &NetTest::progress, this, [this](const QString& t) {
+        m_NetTestStatus = t;
+        emit netTestChanged();
+    });
+    connect(m_NetTest, &NetTest::finished, this, [this](double rtt, double mbps, const QString& error) {
+        m_NetTest->deleteLater();
+        m_NetTest = nullptr;
+        if (!error.isEmpty()) {
+            m_NetTestStatus = tr("Network test failed: %1").arg(error);
+            emit netTestChanged();
+            return;
+        }
+        QScreen* screen = QGuiApplication::primaryScreen();
+        const QSize native = screen ? (QSizeF(screen->size()) * screen->devicePixelRatio()).toSize() : QSize(1920, 1080);
+        const int hz = screen ? qRound(screen->refreshRate()) : 60;
+        m_Recommendation = NetRecommend::recommend(mbps, rtt, native, hz, [](int w, int h, int fps) {
+            return StreamingPreferences::getDefaultBitrate(w, h, fps, false);
+        });
+        m_HasRecommendation = true;
+        m_NetTestStatus = tr("Latency %1 ms · Speed from your CloudDeck %2 Mbit/s").arg(qRound(rtt)).arg(qRound(mbps));
+        qInfo() << "CloudDeck network test:" << m_NetTestStatus;
+        emit netTestChanged();
+    });
+    emit netTestChanged();
+    m_NetTest->start();
+}
+
+QString CloudSession::netTestRecommendation() const
+{
+    if (!m_HasRecommendation) return QString();
+    const auto& r = m_Recommendation;
+    QString s = tr("Recommended: %1×%2 at %3 FPS, %4 Mbit/s").arg(r.width).arg(r.height).arg(r.fps)
+                    .arg(QString::number(r.bitrateKbps / 1000.0, 'f', r.bitrateKbps % 1000 ? 1 : 0));
+    if (!r.note.isEmpty()) s += "\n" + r.note;
+    return s;
+}
+
+void CloudSession::applySettings(const NetRecommend::Settings& s)
+{
+    StreamingPreferences* p = StreamingPreferences::get();
+    p->width = s.width;
+    p->height = s.height;
+    p->fps = s.fps;
+    p->bitrateKbps = s.bitrateKbps;
+    p->autoAdjustBitrate = false; // keep the measured bitrate
+    p->save();
+    qInfo() << "CloudDeck: applied stream settings" << s.width << "x" << s.height << "@" << s.fps << s.bitrateKbps << "kbps";
+}
+
+void CloudSession::applyRecommendation()
+{
+    if (!m_HasRecommendation) return;
+    applySettings(m_Recommendation);
+    m_NetTestStatus = tr("Recommended settings applied.");
+    emit netTestChanged();
+}
+
+void CloudSession::applyLowBandwidth()
+{
+    applySettings(NetRecommend::lowBandwidth());
+    m_NetTestStatus = tr("Low-bandwidth settings applied: 1280×720 at 30 FPS, 3 Mbit/s.");
+    emit netTestChanged();
 }

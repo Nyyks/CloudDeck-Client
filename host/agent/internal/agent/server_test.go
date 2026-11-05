@@ -227,7 +227,7 @@ func TestHelloAndUnknown(t *testing.T) {
 		r, _ := bufio.NewReader(c).ReadString('\n')
 		return r
 	}
-	if r := ask("CDC1 " + fp + " /clouddeck/v1/hello\n"); !strings.HasPrefix(r, `OK {"agent":"clouddeck-agent","features":["usb"],"version":"1.2.3"}`) {
+	if r := ask("CDC1 " + fp + " /clouddeck/v1/hello\n"); !strings.HasPrefix(r, `OK {"agent":"clouddeck-agent","features":["usb","nettest"],"version":"1.2.3"}`) {
 		t.Fatalf("hello = %q", r)
 	}
 	if r := ask("CDC1 " + fp + " /clouddeck/v1/nope\n"); r != "ERR unknown operation\n" {

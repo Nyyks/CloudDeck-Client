@@ -281,6 +281,36 @@ Item {
                         checked: CloudDeck.clipboardSync
                         onToggled: CloudDeck.clipboardSync = checked
                     }
+                    // ---- network test (docs/adr/0011-network-test.md)
+                    Label { text: qsTr("Network"); font.bold: true; Layout.topMargin: 8 }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Button {
+                            text: CloudDeck.netTestRunning ? qsTr("Testing...") : qsTr("Test my connection")
+                            enabled: !CloudDeck.netTestRunning
+                            onClicked: CloudDeck.runNetworkTest(ComputerManager)
+                        }
+                        Button {
+                            visible: CloudDeck.netTestHasRecommendation
+                            text: qsTr("Apply recommended settings")
+                            highlighted: true
+                            onClicked: CloudDeck.applyRecommendation()
+                        }
+                        Button {
+                            text: qsTr("Low-bandwidth mode")
+                            flat: true
+                            onClicked: CloudDeck.applyLowBandwidth()
+                        }
+                    }
+                    Label {
+                        visible: text !== ""
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        opacity: 0.8
+                        text: CloudDeck.netTestStatus +
+                              (CloudDeck.netTestHasRecommendation ? "\n" + CloudDeck.netTestRecommendation : "")
+                    }
+
                     // ---- microphone (docs/protocol-extensions.md §1)
                     Label { text: qsTr("Microphone"); font.bold: true; Layout.topMargin: 8 }
                     Switch {

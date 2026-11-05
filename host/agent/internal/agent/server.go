@@ -135,7 +135,7 @@ func (s *Server) handle(c net.Conn) {
 	}
 	switch req.Path {
 	case "/clouddeck/v1/hello":
-		features := []string{"usb"}
+		features := []string{"usb", "nettest"}
 		if s.Display != nil {
 			features = append(features, "display")
 		}
@@ -148,6 +148,8 @@ func (s *Server) handle(c net.Conn) {
 		s.displaySet(req, c, br)
 	case "/clouddeck/v1/clipboard/sync":
 		s.clipboardSync(req, c, br)
+	case "/clouddeck/v1/net/test":
+		s.netTest(c, br)
 	case "/clouddeck/v1/usb/list":
 		s.reply(c, map[string]any{"attached": s.List(req.Client)})
 		c.Close()
@@ -275,6 +277,64 @@ func (s *Server) clipboardSync(req Request, c net.Conn, r io.Reader) {
 	s.logf("clipboard sync started for client %s", short(req.Client))
 	_ = clipboard.Sync(s.Clipboard, r, c, poll, s.logf)
 	s.logf("clipboard sync ended for client %s", short(req.Client))
+}
+
+// Network test limits: one request at most 128 MiB, one connection at most 512 MiB.
+const (
+	netTestMaxRequest = 128 << 20
+	netTestMaxTotal   = 512 << 20
+	netTestIdle       = 30 * time.Second
+)
+
+// netTest measures the path between the client and the VM (docs/adr/0011-network-test.md).
+// After "OK" the client sends lines:
+//
+//	ping\n       -> pong\n                    (latency)
+//	down <n>\n   -> exactly n bytes of zeros  (download throughput)
+//
+// TLS doesn't compress, so zeros measure the real throughput.
+func (s *Server) netTest(c net.Conn, r *bufio.Reader) {
+	defer c.Close()
+	if _, err := io.WriteString(c, "OK\n"); err != nil {
+		return
+	}
+	zeros := make([]byte, 64<<10)
+	var total int64
+	for {
+		c.SetReadDeadline(time.Now().Add(netTestIdle))
+		line, err := r.ReadString('\n')
+		if err != nil {
+			return
+		}
+		f := strings.Fields(line)
+		switch {
+		case len(f) == 1 && f[0] == "ping":
+			if _, err := io.WriteString(c, "pong\n"); err != nil {
+				return
+			}
+		case len(f) == 2 && f[0] == "down":
+			n, err := strconv.ParseInt(f[1], 10, 64)
+			if err != nil || n < 0 || n > netTestMaxRequest || total+n > netTestMaxTotal {
+				io.WriteString(c, "ERR too much\n")
+				return
+			}
+			total += n
+			c.SetWriteDeadline(time.Now().Add(2 * time.Minute))
+			for n > 0 {
+				chunk := zeros
+				if n < int64(len(chunk)) {
+					chunk = chunk[:n]
+				}
+				w, err := c.Write(chunk)
+				if err != nil {
+					return
+				}
+				n -= int64(w)
+			}
+		default:
+			return
+		}
+	}
 }
 
 func oneLine(s string) string {

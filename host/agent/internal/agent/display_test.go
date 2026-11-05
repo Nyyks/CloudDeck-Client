@@ -99,7 +99,7 @@ func TestDisplaySetErrors(t *testing.T) {
 	if r := ask(s, "CDC1 "+fp+" /clouddeck/v1/display/set?width=abc&height=1080&fps=60\n"); !strings.HasPrefix(r, "ERR size") {
 		t.Fatalf("bad width = %q", r)
 	}
-	if r := ask(s, "CDC1 "+fp+" /clouddeck/v1/hello\n"); !strings.Contains(r, `"features":["usb","display"]`) {
+	if r := ask(s, "CDC1 "+fp+" /clouddeck/v1/hello\n"); !strings.Contains(r, `"features":["usb","nettest","display"]`) {
 		t.Fatalf("hello = %q", r)
 	}
 	s.Wait()
@@ -172,5 +172,36 @@ func TestClipboardSyncOverServer(t *testing.T) {
 	io.WriteString(x, "CDC1 "+fp+" /clouddeck/v1/clipboard/sync\n")
 	if line, _ := bufio.NewReader(x).ReadString('\n'); !strings.HasPrefix(line, "ERR clipboard sync is not configured") {
 		t.Fatalf("no clipboard = %q", line)
+	}
+}
+
+func TestNetTest(t *testing.T) {
+	s := &Server{VHCI: newFake()}
+	a, b := net.Pipe()
+	go s.handle(b)
+	defer a.Close()
+	io.WriteString(a, "CDC1 "+fp+" /clouddeck/v1/net/test\n")
+	br := bufio.NewReader(a)
+	if line, _ := br.ReadString('\n'); line != "OK\n" {
+		t.Fatalf("reply = %q", line)
+	}
+	for i := 0; i < 3; i++ {
+		io.WriteString(a, "ping\n")
+		if line, _ := br.ReadString('\n'); line != "pong\n" {
+			t.Fatalf("ping %d = %q", i, line)
+		}
+	}
+	io.WriteString(a, "down 200000\n")
+	buf := make([]byte, 200000)
+	if _, err := io.ReadFull(br, buf); err != nil {
+		t.Fatal(err)
+	}
+	io.WriteString(a, "ping\n") // the stream is back in line mode afterwards
+	if line, _ := br.ReadString('\n'); line != "pong\n" {
+		t.Fatalf("after down: %q", line)
+	}
+	io.WriteString(a, fmt.Sprintf("down %d\n", int64(netTestMaxRequest)+1))
+	if line, _ := br.ReadString('\n'); line != "ERR too much\n" {
+		t.Fatalf("oversized = %q", line)
 	}
 }

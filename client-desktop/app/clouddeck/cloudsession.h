@@ -4,6 +4,7 @@
 #pragma once
 
 #include "cloudprovider.h"
+#include "netrecommend.h"
 
 #include <QElapsedTimer>
 #include <QObject>
@@ -35,6 +36,11 @@ class CloudSession : public QObject
     Q_PROPERTY(int autoStopIdleMinutes READ autoStopIdleMinutes WRITE setAutoStopIdleMinutes NOTIFY settingsChanged)
     Q_PROPERTY(bool clipboardSync READ clipboardSync WRITE setClipboardSync NOTIFY settingsChanged)
     Q_PROPERTY(bool autoReconnect READ autoReconnect WRITE setAutoReconnect NOTIFY settingsChanged)
+    // Network test (docs/adr/0011-network-test.md)
+    Q_PROPERTY(bool netTestRunning READ netTestRunning NOTIFY netTestChanged)
+    Q_PROPERTY(QString netTestStatus READ netTestStatus NOTIFY netTestChanged)
+    Q_PROPERTY(QString netTestRecommendation READ netTestRecommendation NOTIFY netTestChanged)
+    Q_PROPERTY(bool netTestHasRecommendation READ netTestHasRecommendation NOTIFY netTestChanged)
 
 public:
     explicit CloudSession(QObject* parent = nullptr);
@@ -51,6 +57,14 @@ public:
     // Called by the UI when a stream that we launched has ended.
     Q_INVOKABLE void streamEnded();
     Q_INVOKABLE void clearError();
+    // Network test: latency and CloudDeck -> PC speed, then recommended settings.
+    Q_INVOKABLE void runNetworkTest(ComputerManager* computerManager);
+    Q_INVOKABLE void applyRecommendation();
+    Q_INVOKABLE void applyLowBandwidth();
+    bool netTestRunning() const { return m_NetTest != nullptr; }
+    QString netTestStatus() const { return m_NetTestStatus; }
+    QString netTestRecommendation() const;
+    bool netTestHasRecommendation() const { return m_HasRecommendation; }
 
     bool signedIn() const { return m_Provider->isSignedIn(); }
     bool restoring() const { return m_Restoring; }
@@ -85,6 +99,7 @@ public:
     static bool autoReconnectEnabled(); // any thread; default on
 
 signals:
+    void netTestChanged();
     void signedInChanged();
     void mfaRequiredChanged();
     void machineChanged();
@@ -116,7 +131,12 @@ private:
     void submitPinWithRetry(const QString& pin, int attempt);
     void launchStream();
     void armIdleTimer();
+    void applySettings(const NetRecommend::Settings& s);
 
+    class NetTest* m_NetTest = nullptr;
+    QString m_NetTestStatus;
+    NetRecommend::Settings m_Recommendation;
+    bool m_HasRecommendation = false;
     CloudProvider* m_Provider;
     QNetworkAccessManager* m_ProbeNam;
     CloudProvider::Machine m_Machine;

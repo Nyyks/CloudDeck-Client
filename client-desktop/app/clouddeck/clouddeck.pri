@@ -10,6 +10,8 @@ SOURCES += \
     $$PWD/displaylease.cpp \
     $$PWD/displaysettings.cpp \
     $$PWD/micstreamer.cpp \
+    $$PWD/netrecommend.cpp \
+    $$PWD/nettest.cpp \
     $$PWD/streamoverlay.cpp \
     $$PWD/secretstore.cpp \
     $$PWD/spanlayout.cpp \
@@ -27,6 +29,8 @@ HEADERS += \
     $$PWD/displaylease.h \
     $$PWD/displaysettings.h \
     $$PWD/micstreamer.h \
+    $$PWD/netrecommend.h \
+    $$PWD/nettest.h \
     $$PWD/streamoverlay.h \
     $$PWD/secretstore.h \
     $$PWD/spanlayout.h \

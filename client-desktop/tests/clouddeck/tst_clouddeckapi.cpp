@@ -8,6 +8,9 @@
 
 #include "clouddeck/clouddeckapi.h"
 #include "clouddeck/spanlayout.h"
+#include "clouddeck/netrecommend.h"
+
+#include <cmath>
 
 using namespace CloudDeckApi;
 
@@ -162,6 +165,51 @@ private slots:
         QVERIFY(r.ok);
         QCOMPARE(r.stream, QSize(4480, 1440));
         QVERIFY(!r.warning.isEmpty());
+    }
+
+    // ---- network test recommendations (clouddeck/netrecommend.h)
+    static int moonlightDefault(int w, int h, int fps)
+    {
+        // StreamingPreferences::getDefaultBitrate for the standard modes
+        int factor = w * h >= 3840 * 2160 ? 40 : w * h >= 2560 * 1440 ? 20 : w * h >= 1920 * 1080 ? 10 : 5;
+        double fpsFactor = (fps <= 60 ? fps : std::sqrt(fps / 60.0) * 60.0) / 30.0;
+        return int(factor * fpsFactor * 1000 + 0.5);
+    }
+
+    void recommendFastLine()
+    {
+        auto s = NetRecommend::recommend(300, 15, QSize(3840, 2160), 60, moonlightDefault);
+        QCOMPARE(QSize(s.width, s.height), QSize(3840, 2160));
+        QCOMPARE(s.fps, 60);
+        QCOMPARE(s.bitrateKbps, 80000);
+        QVERIFY(s.note.isEmpty());
+    }
+
+    void recommendCappedByScreenAndRefresh()
+    {
+        // 16:10 laptop at 60 Hz with a good line: 1080p60, Moonlight's default bitrate.
+        auto s = NetRecommend::recommend(187, 23, QSize(1920, 1200), 60, moonlightDefault);
+        QCOMPARE(QSize(s.width, s.height), QSize(1920, 1080));
+        QCOMPARE(s.fps, 60);
+        QCOMPARE(s.bitrateKbps, 20000);
+        // Same with a 144 Hz screen: 120 FPS fits.
+        auto hz = NetRecommend::recommend(187, 23, QSize(1920, 1080), 144, moonlightDefault);
+        QCOMPARE(hz.fps, 120);
+    }
+
+    void recommendSlowLines()
+    {
+        auto mid = NetRecommend::recommend(25, 30, QSize(2560, 1440), 60, moonlightDefault);
+        QCOMPARE(QSize(mid.width, mid.height), QSize(1920, 1080)); // 1440p needs ~34 Mbit/s
+        QCOMPARE(mid.bitrateKbps, 17500);                          // 70 % of 25 Mbit/s
+        auto slow = NetRecommend::recommend(4, 120, QSize(1920, 1080), 60, moonlightDefault);
+        QCOMPARE(QSize(slow.width, slow.height), QSize(1280, 720));
+        QCOMPARE(slow.fps, 30);
+        QCOMPARE(slow.bitrateKbps, 2800);
+        QVERIFY(slow.note.contains("High latency"));
+        auto low = NetRecommend::lowBandwidth();
+        QCOMPARE(low.fps, 30);
+        QCOMPARE(low.bitrateKbps, 3000);
     }
 
     void fitStreamSize()
