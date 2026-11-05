@@ -12,6 +12,18 @@ Current patches:
 | Patch | Adds |
 |---|---|
 | 0001 | Encrypted microphone stream. The first stream with the mic on creates the PipeWire source **CloudDeck Microphone**, which then persists until reboot. Disable with `systemctl --user set-environment CLOUDDECK_MIC=0` followed by a Sunshine restart. |
+| 0002 | Tunnel from Sunshine's HTTPS port to the host agent, for paired clients only. |
+
+Plus the **host agent** (`clouddeck-agent.service`, root). It handles:
+- USB passthrough (ADR-0006);
+- switching the display mode during multi-monitor or "match resolution"
+  streams (ADR-0007), restored when the stream ends. Logs:
+  `journalctl -u clouddeck-agent -b`.
+
+To check by hand that KWin accepts a wide mode, run `./display-test.sh 3840 1080 60`
+(as yourself, not with sudo) in Konsole inside a stream, from the unpacked
+bundle. You don't need to install anything first. It switches for 15 seconds
+and always switches back.
 
 Nothing in the read-only OS image changes, and stock Sunshine, its config, and
 your pairings stay as they are. The full list is in
@@ -28,7 +40,7 @@ launcher starts **stock** Sunshine instead when:
 
 1. In the VM's browser (signed in to GitHub), open the repo's **Releases** and
    download `clouddeck-host-*.tar.gz` and its `.sha256` from the newest
-   release that has them (currently *Phase 2 mic test 1*).
+   release that has them (currently *Phase 4 display test 1*).
 2. In Konsole:
    ```sh
    cd ~/Downloads

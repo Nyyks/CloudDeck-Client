@@ -2,6 +2,8 @@
 #include "settings/streamingpreferences.h"
 #include "clouddeck/micstreamer.h"
 #include "clouddeck/usbforwarder.h"
+#include "clouddeck/displaysettings.h"
+#include "clouddeck/displaylease.h"
 #include "streaming/streamutils.h"
 #include "backend/richpresencemanager.h"
 
@@ -662,6 +664,29 @@ bool Session::initialize(QQuickWindow* qtWindow)
     m_StreamConfig.width = m_Preferences->width;
     m_StreamConfig.height = m_Preferences->height;
 
+    // CloudDeck-Client: multiple monitors = one wide stream in a borderless window
+    // covering the chosen monitors (docs/adr/0007-multi-monitor.md).
+    m_Spanning = false;
+    if (DisplaySettings::get()->spanRequested()) {
+        SpanLayout::Result span = DisplaySettings::get()->sdlSpan(m_Preferences->fps);
+        if (!span.ok) {
+            emitLaunchWarning(tr("Multiple monitors: %1 Streaming to one monitor instead.").arg(span.error));
+        }
+        else {
+            m_Spanning = true;
+            m_SpanWindow = span.window;
+            m_StreamConfig.width = span.stream.width();
+            m_StreamConfig.height = span.stream.height();
+            if (!span.warning.isEmpty()) {
+                emitLaunchWarning(span.warning);
+            }
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                        "Spanning %dx%d stream over (%d,%d %dx%d)",
+                        m_StreamConfig.width, m_StreamConfig.height,
+                        m_SpanWindow.x(), m_SpanWindow.y(), m_SpanWindow.width(), m_SpanWindow.height());
+        }
+    }
+
     int x, y, width, height;
     getWindowDimensions(x, y, width, height);
 
@@ -683,6 +708,15 @@ bool Session::initialize(QQuickWindow* qtWindow)
 
     m_StreamConfig.fps = m_Preferences->fps;
     m_StreamConfig.bitrate = m_Preferences->bitrateKbps;
+
+    // CloudDeck-Client: a default bitrate was chosen for the single-monitor size;
+    // scale it to the span (a custom bitrate is kept).
+    if (m_Spanning &&
+        m_StreamConfig.bitrate == StreamingPreferences::getDefaultBitrate(m_Preferences->width, m_Preferences->height,
+                                                                          m_StreamConfig.fps, m_Preferences->enableYUV444)) {
+        m_StreamConfig.bitrate = StreamingPreferences::getDefaultBitrate(m_StreamConfig.width, m_StreamConfig.height,
+                                                                         m_StreamConfig.fps, m_Preferences->enableYUV444);
+    }
 
 #ifndef STEAM_LINK
     // Opt-in to all encryption features if we detect that the platform
@@ -927,6 +961,14 @@ bool Session::initialize(QQuickWindow* qtWindow)
         m_FullScreenFlag = SDL_WINDOW_FULLSCREEN;
 #endif
         break;
+    }
+
+    // CloudDeck-Client: the span window is borderless and positioned by hand, never
+    // SDL-fullscreen (that is limited to one display). It still behaves like
+    // fullscreen for mouse capture.
+    if (m_Spanning) {
+        m_IsFullScreen = true;
+        m_FullScreenFlag = 0;
     }
 
 #if !SDL_VERSION_ATLEAST(2, 0, 11)
@@ -1231,6 +1273,16 @@ bool Session::validateLaunch(SDL_Window* testWindow)
         }
     }
 
+    // CloudDeck-Client: the CloudDeck's AMD encoder (and most decoders) can't do
+    // H.264 beyond 4096 pixels, which a multi-monitor span easily exceeds.
+    if ((m_StreamConfig.width > 4096 || m_StreamConfig.height > 4096) && !m_Computer->isNvidiaServerSoftware) {
+        if ((m_SupportedVideoFormats & ~VIDEO_FORMAT_MASK_H264) == 0) {
+            emit displayLaunchError(tr("Streams wider than 4096 pixels need HEVC or AV1. Choose one of them as the video codec."));
+            return false;
+        }
+        m_SupportedVideoFormats.removeByMask(VIDEO_FORMAT_MASK_H264);
+    }
+
     if (m_Preferences->videoDecoderSelection == StreamingPreferences::VDS_FORCE_HARDWARE &&
             !(m_SupportedVideoFormats & VIDEO_FORMAT_MASK_10BIT) && // HDR was already checked for hardware decode support above
             getDecoderAvailability(testWindow,
@@ -1295,6 +1347,8 @@ private:
         MicStreamer::get()->onConnectionStopping(); // CloudDeck-Client
         UsbForwarder::get()->onConnectionStopping(); // CloudDeck-Client: detach forwarded USB
         LiStopConnection();
+        delete m_Session->m_DisplayLease; // CloudDeck-Client: the host restores its display mode
+        m_Session->m_DisplayLease = nullptr;
 
         // Perform a best-effort app quit
         if (shouldQuit) {
@@ -1324,6 +1378,14 @@ void Session::getWindowDimensions(int& x, int& y,
                                   int& width, int& height)
 {
     int displayIndex = 0;
+
+    if (m_Spanning) { // CloudDeck-Client: cover the chosen monitors exactly
+        x = m_SpanWindow.x();
+        y = m_SpanWindow.y();
+        width = m_SpanWindow.width();
+        height = m_SpanWindow.height();
+        return;
+    }
 
     if (m_Window != nullptr) {
         displayIndex = SDL_GetWindowDisplayIndex(m_Window);
@@ -1509,6 +1571,11 @@ void Session::updateOptimalWindowDisplayMode()
 
 void Session::toggleFullscreen()
 {
+    if (m_Spanning) {
+        // CloudDeck-Client: the span window has no windowed/fullscreen state to toggle
+        return;
+    }
+
     bool fullScreen = !(SDL_GetWindowFlags(m_Window) & m_FullScreenFlag);
 
 #if defined(Q_OS_WIN32) || defined(Q_OS_DARWIN)
@@ -1610,6 +1677,28 @@ bool Session::startConnectionAsync()
         // Always send SOPS to Sunshine because we may repurpose the
         // option to control whether the display mode is adjusted
         enableGameOptimizations = m_Preferences->gameOptimizations;
+    }
+
+    // CloudDeck-Client: switch the CloudDeck's desktop to the stream size before
+    // Sunshine starts capturing (docs/adr/0007-multi-monitor.md). Held until the
+    // stream ends; the host agent restores the previous mode when it's released.
+    if (m_Spanning || DisplaySettings::get()->matchResolution()) {
+        auto* lease = new DisplayLease(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort,
+                                       m_Computer->serverCert, m_StreamConfig.width, m_StreamConfig.height,
+                                       m_StreamConfig.fps);
+        QString error = lease->acquire();
+        if (error.isEmpty()) {
+            m_DisplayLease = lease;
+        }
+        else {
+            delete lease;
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "CloudDeck display change failed: %s", qPrintable(error));
+            if (m_Spanning) {
+                emit displayLaunchError(tr("The CloudDeck could not switch to %1×%2 for your monitors: %3")
+                                            .arg(m_StreamConfig.width).arg(m_StreamConfig.height).arg(error));
+                return false;
+            }
+        }
     }
 
     QString rtspSessionUrl;
@@ -1822,6 +1911,10 @@ void Session::exec()
 
     // We always want a resizable window with High DPI enabled
     Uint32 defaultWindowFlags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
+    if (m_Spanning) {
+        // CloudDeck-Client: one borderless window over all chosen monitors
+        defaultWindowFlags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS;
+    }
 
     // If we're starting in windowed mode and the Moonlight GUI is maximized or
     // minimized, match that with the streaming window.

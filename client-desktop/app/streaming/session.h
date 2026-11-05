@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QRect>
 #include <QSemaphore>
 #include <QQuickWindow>
 
@@ -245,6 +246,10 @@ private:
 
     StreamingPreferences* m_Preferences;
     bool m_IsFullScreen;
+    // CloudDeck-Client: multi-monitor span (docs/adr/0007-multi-monitor.md)
+    bool m_Spanning = false;
+    QRect m_SpanWindow;
+    class DisplayLease* m_DisplayLease = nullptr;
     SupportedVideoFormatList m_SupportedVideoFormats; // Sorted in order of descending priority
     STREAM_CONFIGURATION m_StreamConfig;
     DECODER_RENDERER_CALLBACKS m_VideoCallbacks;

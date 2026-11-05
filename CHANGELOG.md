@@ -3,6 +3,21 @@
 All notable changes are recorded here, following [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
+### Added
+- Host install (`host/install/`): patched Sunshine with an automatic fallback to stock,
+  plus the Go host agent as a system unit. The CloudDeck default app list is kept.
+- Microphone passthrough (protocol v1, docs/protocol-extensions.md): desktop and Android
+  capture, plus host Sunshine patch 0001. Verified on Windows.
+- USB passthrough (ADR-0006): agent tunnel (Sunshine patch 0002) and vhci attach.
+  - Windows uses usbipd-win (verified).
+  - Linux uses a pkexec helper on usbip-host (tested with fake kernels only).
+- Multiple monitors as one wide stream, and matching the VM's resolution to the stream
+  (ADR-0007). The agent switches KWin's mode for the stream and restores it afterwards.
+  Not yet verified on the VM.
+- `host/tools/display-test.sh`: a 15-second, self-reverting check of KWin custom modes.
+### Fixed
+- Start and connect timed out when the host was already known under a new VM IP.
+- HTTP/2 errors with the CloudFront API endpoint (desktop now uses HTTP/1.1).
 
 ## [0.1.0] - 2026-11-04
 Phase 1 MVP. Verified end-to-end on Windows and Android against the real CloudDeck VM.

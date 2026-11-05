@@ -9,7 +9,10 @@ TARGET = tst_clouddeckapi
 INCLUDEPATH += $$PWD/../../app
 SOURCES += \
     tst_clouddeckapi.cpp \
-    $$PWD/../../app/clouddeck/clouddeckapi.cpp
-HEADERS += $$PWD/../../app/clouddeck/clouddeckapi.h
+    $$PWD/../../app/clouddeck/clouddeckapi.cpp \
+    $$PWD/../../app/clouddeck/spanlayout.cpp
+HEADERS += \
+    $$PWD/../../app/clouddeck/clouddeckapi.h \
+    $$PWD/../../app/clouddeck/spanlayout.h
 
 DEFINES += FIXTURE_DIR=\\\"$$clean_path($$PWD/../../../shared/fixtures/clouddeck)\\\"

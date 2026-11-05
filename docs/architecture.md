@@ -52,7 +52,12 @@ flowchart LR
   codecs, input and HDR are upstream code.
 - **Host side** (Phase 2+): the patched Sunshine (ADR-0003) and the Go agent
   (ADR-0002), reached through Sunshine's HTTPS port because no other port
-  gets past the filter (ADR-0004).
+  gets past the filter (ADR-0004). The agent's operations:
+  - `usb/attach`: USB/IP into `vhci_hcd` (ADR-0006).
+  - `display/set`: the VM's display mode for a stream, through `kscreen-doctor`
+    (ADR-0007).
+
+  Each holds its tunnel open for as long as the effect lasts.
 
 ## Decisions
 

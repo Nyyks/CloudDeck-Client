@@ -9,7 +9,7 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-04 (Phase 3 starting). Phase 1 verified by the owner on real devices with
+Last updated: 2026-11-05 (Phase 4a implemented). Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
 explicitly confirmed, so Linux stays *partial* where it differs.
 
@@ -31,8 +31,10 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Input | Gamepads, touch modes | done | partial | done | Inherited from Moonlight; extended in Phase 6 |
 | Audio | Microphone passthrough | done | partial | partial | Protocol v1 implemented end to end: common-c sender (19 tests + shared vector), Sunshine patch 0001 (host decoder tests the same vector), desktop SDL capture with mute hotkey Ctrl+Alt+Shift+U and level meter, Android `VOICE_COMMUNICATION` + AEC. Verified by the owner on Windows on 2026-11-04; Linux and Android capture still untested. Push-to-talk and an Android mute button aren't done yet (planned with the Quick Menu). |
 | Host | Patched Sunshine install with automatic fallback to stock | done | — | — | Installed on the VM by the owner (bundle -id4d49f); streams work through it. CloudDeck default app list preserved |
-| USB | USB device passthrough | partial | partial | not planned | ADR-0006. Host: Go agent + Sunshine patch 0002 tunnel. Windows: usbipd-win. Linux: pkexec helper on the kernel usbip-host (no network listener). Agent and Linux helper interop-tested together with fake kernels. **Not yet tested on the VM.** Android not planned (owner doesn't need it). |
-| Display | Multiple monitors | not started | not started | n/a | Phase 4, design: feasibility §3.3 |
+| USB | USB device passthrough | done | partial | not planned | ADR-0006. Host: Go agent + Sunshine patch 0002 tunnel. Windows: usbipd-win, **verified by the owner on 2026-11-05**. Linux: pkexec helper on the kernel usbip-host (no network listener); agent and helper interop-tested with fake kernels, not yet run on a real Linux PC (owner tests later). Android not planned (owner doesn't need it). |
+| Display | Multiple monitors, one wide stream (4a) | partial | partial | n/a | ADR-0007. One borderless window over the chosen monitors; the host agent switches the VM to the combined resolution via kscreen-doctor and restores it when the stream ends. Agent and layout unit-tested; **not yet run on the VM**. Linux via XWayland. |
+| Display | Match the VM resolution to the stream | partial | partial | not started | ADR-0007; the same agent lease for one monitor. Off by default until verified. |
+| Display | Multiple monitors as separate outputs (4b) | not started | not started | n/a | Needs kernel arguments (EDID overrides): owner approval first |
 | Display | Tablet as extra screen | not started | n/a | not started | Stretch goal |
 | UX | In-stream Quick Menu | not started | not started | not started | Phase 5 |
 | UX | Network test, auto-recommended settings, low-bandwidth mode | not started | not started | not started | Phase 5 |

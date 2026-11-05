@@ -53,6 +53,7 @@
 #include "clouddeck/cloudsession.h"
 #include "clouddeck/micstreamer.h"
 #include "clouddeck/usbforwarder.h"
+#include "clouddeck/displaysettings.h"
 #include "backend/computermanager.h"
 #include "backend/systemproperties.h"
 #include "streaming/session.h"
@@ -951,6 +952,7 @@ int main(int argc, char *argv[])
     // Created here, on the GUI thread, before any session can call MicStreamer::get().
     qmlRegisterSingletonInstance("CloudDeckMic", 1, 0, "CloudDeckMic", MicStreamer::get());
     qmlRegisterSingletonInstance("CloudDeckUsb", 1, 0, "CloudDeckUsb", UsbForwarder::get());
+    qmlRegisterSingletonInstance("CloudDeckDisplay", 1, 0, "CloudDeckDisplay", DisplaySettings::get());
     qmlRegisterSingletonType<AutoUpdateChecker>("AutoUpdateChecker", 1, 0,
                                                 "AutoUpdateChecker",
                                                 [](QQmlEngine*, QJSEngine*) -> QObject* {

@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: shellcheck
-        run: shellcheck -S warning host/install/*.sh host/install/files/sunshine-* host/install/tests/*.sh host/sunshine-patches/*.sh
+        run: shellcheck -S warning host/install/*.sh host/install/files/sunshine-* host/install/tests/*.sh host/sunshine-patches/*.sh host/tools/*.sh
       - name: launcher fail-safe tests
         run: bash host/install/tests/test-launch.sh
 
@@ -52,6 +52,13 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
         with: { name: clouddeck-sunshine-fc43-x86_64, path: sun }
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.27', cache: false }
+      - name: Test and build the host agent (static Go)
+        working-directory: host/agent
+        run: |
+          go vet ./... && go test -race -count=1 ./...
+          CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_SHA::7}" -o "$GITHUB_WORKSPACE/clouddeck-agent" ./cmd/clouddeck-agent
       - name: Assemble host bundle
         run: |
           NAME="$(basename sun/clouddeck-sunshine-*.tar.zst .tar.zst)"
@@ -61,7 +68,8 @@ jobs:
           cp host/install/files/* "$B/files/"
           cp sun/*.tar.zst sun/*.sha256 "$B/"
           cp LICENSE "$B/"
-          chmod +x "$B"/*.sh "$B"/files/sunshine-*
+          cp clouddeck-agent host/tools/display-test.sh "$B/"
+          chmod +x "$B"/*.sh "$B"/files/sunshine-* "$B/clouddeck-agent"
           tar -czf "$B.tar.gz" "$B"
           sha256sum "$B.tar.gz" > "$B.tar.gz.sha256"
           ls -l

@@ -7,6 +7,7 @@
 #include <QtTest>
 
 #include "clouddeck/clouddeckapi.h"
+#include "clouddeck/spanlayout.h"
 
 using namespace CloudDeckApi;
 
@@ -113,6 +114,75 @@ private slots:
         QVERIFY(isTransitional("stopping"));
         QVERIFY(!isTransitional("running"));
         QVERIFY(!isTransitional("off"));
+    }
+
+    // ---- multi-monitor span layout (clouddeck/spanlayout.h)
+    void spanTwoSideBySide()
+    {
+        auto r = SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)},
+                                      {"b", QRect(1920, 0, 1920, 1080), QSize(1920, 1080)}}, 60);
+        QVERIFY2(r.ok, qPrintable(r.error));
+        QCOMPARE(r.window, QRect(0, 0, 3840, 1080));
+        QCOMPARE(r.stream, QSize(3840, 1080));
+        QVERIFY(r.warning.isEmpty());
+    }
+
+    void spanNegativeOriginAndOrder()
+    {
+        // Second monitor left of the primary; selection order doesn't matter.
+        auto r = SpanLayout::compute({{"a", QRect(0, 0, 2560, 1440), QSize(2560, 1440)},
+                                      {"b", QRect(-2560, 0, 2560, 1440), QSize(2560, 1440)}}, 60);
+        QVERIFY(r.ok);
+        QCOMPARE(r.window, QRect(-2560, 0, 5120, 1440));
+        QCOMPARE(r.stream, QSize(5120, 1440));
+    }
+
+    void spanUniformScaling()
+    {
+        // macOS/X11-style logical coordinates at 2x: window in points, stream in pixels.
+        auto r = SpanLayout::compute({{"a", QRect(0, 0, 960, 540), QSize(1920, 1080)},
+                                      {"b", QRect(960, 0, 960, 540), QSize(1920, 1080)}}, 60);
+        QVERIFY(r.ok);
+        QCOMPARE(r.window, QRect(0, 0, 1920, 540));
+        QCOMPARE(r.stream, QSize(3840, 1080));
+    }
+
+    void spanMixedScalingRejected()
+    {
+        auto r = SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)},
+                                      {"b", QRect(1920, 0, 1280, 720), QSize(1920, 1080)}}, 60);
+        QVERIFY(!r.ok);
+        QVERIFY(r.error.contains("scaling"));
+    }
+
+    void spanNonRectangleWarns()
+    {
+        auto r = SpanLayout::compute({{"a", QRect(0, 0, 2560, 1440), QSize(2560, 1440)},
+                                      {"b", QRect(2560, 0, 1920, 1080), QSize(1920, 1080)}}, 60);
+        QVERIFY(r.ok);
+        QCOMPARE(r.stream, QSize(4480, 1440));
+        QVERIFY(!r.warning.isEmpty());
+    }
+
+    void spanLimits()
+    {
+        QVERIFY(!SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)}}, 60).ok);
+        auto mirrored = SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)},
+                                             {"b", QRect(0, 0, 1920, 1080), QSize(1920, 1080)}}, 60);
+        QVERIFY(!mirrored.ok);
+        QVERIFY(mirrored.error.contains("overlap"));
+        // 3x 4K is too wide for the host.
+        auto wide = SpanLayout::compute({{"a", QRect(0, 0, 3840, 2160), QSize(3840, 2160)},
+                                         {"b", QRect(3840, 0, 3840, 2160), QSize(3840, 2160)},
+                                         {"c", QRect(7680, 0, 3840, 2160), QSize(3840, 2160)}}, 60);
+        QVERIFY(!wide.ok);
+        // 2x 1440p at 144 FPS exceeds the pixel rate; the message offers 60.
+        auto fast = SpanLayout::compute({{"a", QRect(0, 0, 2560, 1440), QSize(2560, 1440)},
+                                         {"b", QRect(2560, 0, 2560, 1440), QSize(2560, 1440)}}, 144);
+        QVERIFY(!fast.ok);
+        QCOMPARE(SpanLayout::maxFpsFor(QSize(5120, 1440)), 67);
+        QVERIFY(SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)},
+                                     {"b", QRect(1920, 0, 1920, 1080), QSize(1920, 1080)}}, 120).ok);
     }
 };
 

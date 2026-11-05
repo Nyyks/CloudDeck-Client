@@ -74,6 +74,29 @@ Needs the CloudDeck host update on the VM, plus:
    keyboard or mouse you're using. Webcams and USB audio may work poorly over
    the internet.
 
+## Display and multiple monitors (desktop)
+
+Needs the CloudDeck host update on the VM.
+
+- **Set the CloudDeck's resolution to match the stream:** before each stream,
+  the CloudDeck switches its screen to your stream resolution and frame rate,
+  so nothing is scaled. When the stream ends it switches back.
+- **Use several monitors:** tick the monitors to use. The stream becomes one
+  wide desktop, e.g. 3840×1080 for two 1080p monitors side by side. It's shown
+  in one borderless window covering exactly those monitors, and the mouse moves
+  across them as on a local PC.
+  - The monitors need the same display scaling (e.g. all 100%).
+  - Monitors of different heights work, but the CloudDeck desktop then has
+    areas that are outside your screens.
+  - Above 4096 pixels wide, HEVC or AV1 is used (H.264 can't go that wide).
+  - Limit: about 5120×1440 at 60 FPS, or 3840×1080 at 120 FPS.
+
+  On the CloudDeck it's one ultrawide screen: the taskbar spans all monitors,
+  and *maximize* fills all of them (use window snapping instead). The
+  fullscreen toggle does nothing while streaming to several monitors; quit with
+  **Ctrl+Alt+Shift+Q**. To have Windows keys like Win or Alt+Tab go to the
+  CloudDeck, set *Capture system keyboard shortcuts* to *always* in Settings.
+
 ## Troubleshooting
 
 - *"streaming host is not reachable"*: CloudDeck only lets in the network the

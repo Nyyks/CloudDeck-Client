@@ -8,6 +8,7 @@ import ComputerManager 1.0
 import CloudDeck 1.0
 import CloudDeckMic 1.0
 import CloudDeckUsb 1.0
+import CloudDeckDisplay 1.0
 
 Item {
     id: root
@@ -348,6 +349,43 @@ Item {
                                 text: modelData.warning
                             }
                         }
+                    }
+
+                    // ---- Display (docs/adr/0007-multi-monitor.md)
+                    Label { text: qsTr("Display"); font.bold: true; Layout.topMargin: 8 }
+                    CheckBox {
+                        Layout.fillWidth: true
+                        text: qsTr("Set the CloudDeck's resolution to match the stream")
+                        checked: CloudDeckDisplay.matchResolution || CloudDeckDisplay.multiMonitor
+                        enabled: !CloudDeckDisplay.multiMonitor
+                        onToggled: CloudDeckDisplay.matchResolution = checked
+                    }
+                    CheckBox {
+                        Layout.fillWidth: true
+                        text: qsTr("Use several monitors")
+                        checked: CloudDeckDisplay.multiMonitor
+                        onToggled: CloudDeckDisplay.multiMonitor = checked
+                        Component.onCompleted: CloudDeckDisplay.refresh()
+                    }
+                    Repeater {
+                        model: CloudDeckDisplay.multiMonitor ? CloudDeckDisplay.screens : []
+                        delegate: CheckBox {
+                            Layout.leftMargin: 32
+                            Layout.fillWidth: true
+                            text: modelData.label
+                            checked: CloudDeckDisplay.monitors.indexOf(modelData.name) >= 0
+                            onToggled: CloudDeckDisplay.setMonitorChosen(modelData.name, checked)
+                        }
+                    }
+                    Label {
+                        visible: CloudDeckDisplay.multiMonitor
+                        Layout.leftMargin: 32
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: CloudDeckDisplay.summaryIsError ? "#ffd43b" : palette.text
+                        opacity: CloudDeckDisplay.summaryIsError ? 1 : 0.7
+                        text: CloudDeckDisplay.summary + (CloudDeckDisplay.summaryIsError ? "" :
+                              "  " + qsTr("The stream covers the chosen monitors as one window; the CloudDeck sees one wide screen."))
                     }
 
                     RowLayout {

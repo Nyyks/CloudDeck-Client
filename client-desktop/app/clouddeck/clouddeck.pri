@@ -5,8 +5,11 @@ SOURCES += \
     $$PWD/clouddeckapi.cpp \
     $$PWD/clouddeckprovider.cpp \
     $$PWD/cloudsession.cpp \
+    $$PWD/displaylease.cpp \
+    $$PWD/displaysettings.cpp \
     $$PWD/micstreamer.cpp \
     $$PWD/secretstore.cpp \
+    $$PWD/spanlayout.cpp \
     $$PWD/usbforwarder.cpp \
     $$PWD/usbtunnel.cpp
 
@@ -16,8 +19,11 @@ HEADERS += \
     $$PWD/cloudprovider.h \
     $$PWD/clouddeckprovider.h \
     $$PWD/cloudsession.h \
+    $$PWD/displaylease.h \
+    $$PWD/displaysettings.h \
     $$PWD/micstreamer.h \
     $$PWD/secretstore.h \
+    $$PWD/spanlayout.h \
     $$PWD/usbforwarder.h \
     $$PWD/usbtunnel.h
 

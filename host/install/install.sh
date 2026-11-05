@@ -158,7 +158,7 @@ if [ -f "$HERE/clouddeck-agent" ]; then
         install -m 0755 -o root -g root "$HERE/clouddeck-agent" "$BASE/bin/clouddeck-agent"
         agent_changed=1
     fi
-    env_line="CDC_SOCKET_GROUP=$(id -gn "$TARGET_USER")"
+    env_line="$(printf 'CDC_SOCKET_GROUP=%s\nCDC_DESKTOP_USER=%s' "$(id -gn "$TARGET_USER")" "$TARGET_USER")"
     if [ "$(cat /etc/clouddeck-client/agent.env 2>/dev/null)" != "$env_line" ]; then
         echo "$env_line" > /etc/clouddeck-client/agent.env
         agent_changed=1
