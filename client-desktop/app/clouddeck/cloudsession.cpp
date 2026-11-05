@@ -9,6 +9,7 @@
 #include "settings/streamingpreferences.h"
 
 #include <QDebug>
+#include <atomic>
 #include <QHostAddress>
 #include <QHostInfo>
 #include <QNetworkAccessManager>
@@ -505,11 +506,19 @@ void CloudSession::submitPinWithRetry(const QString& pin, int attempt)
     });
 }
 
+static std::atomic<bool> s_OwnsStream {false};
+static std::atomic<bool> s_StopAfterStream {false};
+
+bool CloudSession::ownsActiveStream() { return s_OwnsStream; }
+void CloudSession::requestStopAfterStream() { s_StopAfterStream = true; }
+
 void CloudSession::launchStream()
 {
     setStage(Stage::Idle);
     setProgress(QString());
     m_StreamActive = true;
+    s_OwnsStream = true;
+    s_StopAfterStream = false;
 
     // Use the configured app if the host has it; otherwise the host's first app
     // (e.g. a host whose app list isn't CloudDeck's default).
@@ -538,6 +547,13 @@ void CloudSession::launchStream()
 void CloudSession::streamEnded()
 {
     m_StreamActive = false;
+    s_OwnsStream = false;
+    const bool requested = s_StopAfterStream.exchange(false); // "Shut down my CloudDeck" in the Quick Menu
+    if (requested) {
+        qInfo() << "CloudDeck: shutdown requested from the Quick Menu";
+        stopMachine();
+        return;
+    }
     if (autoStopOnSessionEnd() && m_Machine.status == QLatin1String(Status::Running)) {
         qInfo() << "CloudDeck: session ended, auto-stopping machine";
         stopMachine();

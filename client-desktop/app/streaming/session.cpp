@@ -2272,6 +2272,11 @@ void Session::exec()
             }
         }
 
+        // CloudDeck-Client: the Quick Menu (Ctrl+Alt+Shift+O) takes keys and clicks while open
+        if (m_QuickMenu.handleEvent(event)) {
+            continue;
+        }
+
         // CloudDeck-Client: no input reaches the host while the stream restarts at a new size
         if (m_Restarting && dropDuringRestart(event.type)) {
             continue;

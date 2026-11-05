@@ -10,6 +10,7 @@ SOURCES += \
     $$PWD/displaylease.cpp \
     $$PWD/displaysettings.cpp \
     $$PWD/micstreamer.cpp \
+    $$PWD/quickmenu.cpp \
     $$PWD/secretstore.cpp \
     $$PWD/spanlayout.cpp \
     $$PWD/usbforwarder.cpp \
@@ -26,6 +27,7 @@ HEADERS += \
     $$PWD/displaylease.h \
     $$PWD/displaysettings.h \
     $$PWD/micstreamer.h \
+    $$PWD/quickmenu.h \
     $$PWD/secretstore.h \
     $$PWD/spanlayout.h \
     $$PWD/usbforwarder.h \

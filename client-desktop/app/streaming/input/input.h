@@ -83,6 +83,8 @@ struct DualSenseOutputReport{
 
 class SdlInputHandler
 {
+    friend class QuickMenu; // CloudDeck-Client: in-stream menu triggers the same actions as the key combos
+
 public:
     explicit SdlInputHandler(StreamingPreferences& prefs, int streamWidth, int streamHeight);
 

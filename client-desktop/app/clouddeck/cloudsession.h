@@ -72,6 +72,11 @@ public:
     void setAutoStopOnSessionEnd(bool v);
     int autoStopIdleMinutes() const;
     void setAutoStopIdleMinutes(int v);
+    // Quick Menu (any thread): whether the running stream was started from the CloudDeck
+    // screen, and a one-shot request to stop the VM when that stream ends.
+    static bool ownsActiveStream();
+    static void requestStopAfterStream();
+
     bool clipboardSync() const;
     void setClipboardSync(bool v);
 

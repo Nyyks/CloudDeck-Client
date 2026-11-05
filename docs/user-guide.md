@@ -74,6 +74,26 @@ Needs the CloudDeck host update on the VM, plus:
    keyboard or mouse you're using. Webcams and USB audio may work poorly over
    the internet.
 
+## Quick Menu (desktop)
+
+During a stream, press **Ctrl+Alt+Shift+O** to open the menu. Choose with
+Up/Down and Enter, or press the item's number; Esc closes it. On a gamepad, use
+the D-pad, A to select and B to close.
+
+| Item | Does |
+|---|---|
+| Switch to a window / fullscreen | Same as Ctrl+Alt+Shift+X |
+| Mute / unmute the microphone | Same as Ctrl+Alt+Shift+U (shown when the mic is on) |
+| Show / hide performance stats | Same as Ctrl+Alt+Shift+S |
+| Keep the mouse inside the window | Same as Ctrl+Alt+Shift+L |
+| Reconnect the stream | Reconnects in place, e.g. after a network hiccup |
+| Disconnect | Same as Ctrl+Alt+Shift+Q |
+| Shut down my CloudDeck | Disconnects and turns the VM off. Press Enter twice to confirm |
+
+While the menu is open, your key presses and clicks go to the menu, not the
+CloudDeck. USB devices and monitors are chosen on the CloudDeck screen before
+the stream.
+
 ## Clipboard (desktop)
 
 Needs the CloudDeck host update on the VM.

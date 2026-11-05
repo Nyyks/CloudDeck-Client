@@ -17,7 +17,9 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
   Fit to window is verified on Windows. Multiple monitors are not verified yet.
 - `host/tools/display-test.sh`: a 15-second, self-reverting check of KWin custom modes.
 - Two-way text clipboard sync during streams (ADR-0008), through the agent and Plasma's Klipper.
-  On by default. Not yet verified on the VM.
+  On by default. Verified on Windows.
+- In-stream Quick Menu on desktop (Ctrl+Alt+Shift+O, ADR-0009): window/fullscreen, mic mute, stats,
+  mouse lock, reconnect, disconnect, and shutting down the VM.
 ### Fixed
 - Start and connect timed out when the host was already known under a new VM IP.
 - HTTP/2 errors with the CloudFront API endpoint (desktop now uses HTTP/1.1).
