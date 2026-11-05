@@ -103,9 +103,11 @@ void SdlInputHandler::sendGamepadState(GamepadState* state)
         }
     }
 
-    // CloudDeck-Client: remapping profile (deadzones, sensitivity, invert, swap),
-    // after the single-controller merge so it isn't undone by raw values.
+    // CloudDeck-Client: remapping profile (buttons, deadzones, sensitivity, invert, swap)
+    // on the final values: after the single-controller merge so raw values can't undo
+    // it, and after Moonlight's gamepad combos, which keep seeing the real buttons.
     if (state->profile != nullptr) {
+        buttons = ControllerProfile::mapButtonMask(*state->profile, buttons);
         ControllerProfile::applySticks(*state->profile, lsX, lsY, rsX, rsY);
         lt = ControllerProfile::applyTrigger(*state->profile, lt);
         rt = ControllerProfile::applyTrigger(*state->profile, rt);
@@ -312,17 +314,6 @@ void SdlInputHandler::handleControllerButtonEvent(SDL_ControllerButtonEvent* eve
             event->button = SDL_CONTROLLER_BUTTON_X;
             break;
         }
-    }
-
-    // CloudDeck-Client: remapped buttons (SDL's button order matches
-    // ControllerProfile::buttonNames()). Releases map the same way as presses.
-    if (state->profile != nullptr && event->button < ControllerProfile::buttonNames().size()) {
-        const QString target = ControllerProfile::mapButton(*state->profile, ControllerProfile::buttonNames()[event->button]);
-        const int index = ControllerProfile::buttonNames().indexOf(target);
-        if (index < 0) {
-            return; // disabled
-        }
-        event->button = (Uint8)index;
     }
 
     if (event->state == SDL_PRESSED) {
@@ -1098,3 +1089,10 @@ int SdlInputHandler::getAttachedGamepadMask()
 
     return mask;
 }
+
+// CloudDeck-Client: ControllerProfile::buttonFlag() hard-codes these (it is QtCore-only).
+static_assert(A_FLAG == 0x1000 && B_FLAG == 0x2000 && X_FLAG == 0x4000 && Y_FLAG == 0x8000, "flags");
+static_assert(UP_FLAG == 0x1 && DOWN_FLAG == 0x2 && LEFT_FLAG == 0x4 && RIGHT_FLAG == 0x8, "flags");
+static_assert(PLAY_FLAG == 0x10 && BACK_FLAG == 0x20 && LS_CLK_FLAG == 0x40 && RS_CLK_FLAG == 0x80, "flags");
+static_assert(LB_FLAG == 0x100 && RB_FLAG == 0x200 && SPECIAL_FLAG == 0x400, "flags");
+static_assert(PADDLE1_FLAG == 0x10000 && PADDLE4_FLAG == 0x80000 && TOUCHPAD_FLAG == 0x100000 && MISC_FLAG == 0x200000, "flags");

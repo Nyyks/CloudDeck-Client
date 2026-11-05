@@ -77,6 +77,35 @@ QString mapButton(const Profile& p, const QString& source)
     return p.buttons.value(source, source);
 }
 
+int buttonFlag(const QString& name)
+{
+    // Same values as Limelight.h (static_assert in gamepad.cpp).
+    static const QHash<QString, int> flags = {
+        {"a", 0x1000}, {"b", 0x2000}, {"x", 0x4000}, {"y", 0x8000},
+        {"dpadUp", 0x0001}, {"dpadDown", 0x0002}, {"dpadLeft", 0x0004}, {"dpadRight", 0x0008},
+        {"start", 0x0010}, {"back", 0x0020}, {"leftStick", 0x0040}, {"rightStick", 0x0080},
+        {"leftShoulder", 0x0100}, {"rightShoulder", 0x0200}, {"guide", 0x0400},
+        {"paddle1", 0x010000}, {"paddle2", 0x020000}, {"paddle3", 0x040000}, {"paddle4", 0x080000},
+        {"touchpad", 0x100000}, {"misc", 0x200000},
+    };
+    return flags.value(name, 0);
+}
+
+int mapButtonMask(const Profile& p, int mask)
+{
+    if (p.buttons.isEmpty()) return mask;
+    int out = 0;
+    for (const QString& name : buttonNames()) {
+        const int flag = buttonFlag(name);
+        if (!(mask & flag)) continue;
+        out |= buttonFlag(mapButton(p, name)); // "none" has no flag
+    }
+    // Bits this table doesn't know pass through unchanged.
+    int known = 0;
+    for (const QString& name : buttonNames()) known |= buttonFlag(name);
+    return out | (mask & ~known);
+}
+
 static void applyStick(const Stick& s, short& x, short& y)
 {
     const double fx = x / 32767.0, fy = y / 32767.0;

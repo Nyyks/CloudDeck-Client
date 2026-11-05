@@ -34,6 +34,13 @@ struct Profile {
 // The button a press of `source` becomes ("none" = dropped).
 QString mapButton(const Profile& p, const QString& source);
 
+// Moonlight button flag (Limelight.h) of a button name, 0 if unknown.
+int buttonFlag(const QString& name);
+
+// The final button bitmask after remapping: stateless, so presses and releases stay
+// in step and several sources mapped to one target combine.
+int mapButtonMask(const Profile& p, int mask);
+
 // Sticks in Moonlight's convention (-32767..32767, +Y = up), applied in place:
 // deadzone, sensitivity, invert, then swap.
 void applySticks(const Profile& p, short& lx, short& ly, short& rx, short& ry);

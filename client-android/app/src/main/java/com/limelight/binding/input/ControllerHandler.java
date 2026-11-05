@@ -722,6 +722,8 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
 
         context.inputDevice = dev;
         context.name = devName;
+        context.profile = com.limelight.clouddeck.ControllerProfile.Store.profileFor(activityContext, devName); // CloudDeck-Client
+        if (context.profile != null) LimeLog.info("Controller profile '" + context.profile.name + "' for " + devName);
         context.id = dev.getId();
         context.external = isExternal(dev);
 
@@ -1308,6 +1310,16 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
                     (short)0, (byte)0, (byte)0, (short)0, (short)0, (short)0, (short)0);
         }
         else {
+            // CloudDeck-Client: remapping profile on the final values (docs/controller-profiles.md)
+            com.limelight.clouddeck.ControllerProfile profile = originalContext.profile;
+            if (profile != null) {
+                inputMap = profile.mapButtonMask(inputMap);
+                short[] sticks = {leftStickX, leftStickY, rightStickX, rightStickY};
+                profile.applySticks(sticks);
+                leftStickX = sticks[0]; leftStickY = sticks[1]; rightStickX = sticks[2]; rightStickY = sticks[3];
+                leftTrigger = (byte) profile.applyTrigger(leftTrigger & 0xFF);
+                rightTrigger = (byte) profile.applyTrigger(rightTrigger & 0xFF);
+            }
             conn.sendControllerInput(controllerNumber, getActiveControllerMask(),
                     inputMap,
                     leftTrigger, rightTrigger,
@@ -2864,6 +2876,8 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
 
     class GenericControllerContext {
         public int id;
+        // CloudDeck-Client: remapping profile (docs/controller-profiles.md), null = none
+        public com.limelight.clouddeck.ControllerProfile profile;
         public boolean external;
 
         public int vendorId;

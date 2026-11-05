@@ -99,6 +99,12 @@
             <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
             <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
         </activity>
+        <!-- CloudDeck-Client: controller remapping profiles (docs/controller-profiles.md) -->
+        <activity
+            android:name=".clouddeck.ControllerProfilesActivity"
+            android:exported="false"
+            android:label="@string/cd_controllers"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection" />
         <activity
             android:name=".clouddeck.CloudDeckActivity"
             android:exported="true"

@@ -46,7 +46,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | UX | Configurable shortcuts | partial | partial | n/a | ADR-0012: the letter of every Ctrl+Alt+Shift shortcut (Moonlight's and CloudDeck's), conflict check, reset. Not yet verified |
 | UX | Tray icon | not planned | not planned | n/a | Skipped by the owner on 2026-11-05 |
 | Controllers | Extended controller support (rumble, gyro, DualSense features, hot-plug) | not started | not started | not started | Phase 6 (scope addition) |
-| Controllers | Button/axis remapping with profiles | partial | partial | not started | docs/controller-profiles.md: buttons (incl. disable), stick deadzone/sensitivity/invert, trigger deadzone, swap sticks; default + per-controller; shared fixture tests. Xbox/Nintendo toggle in both in-stream menus. Desktop done, not yet verified; Android in progress |
+| Controllers | Button/axis remapping with profiles | partial | partial | not started | docs/controller-profiles.md: buttons (incl. disable), stick deadzone/sensitivity/invert, trigger deadzone, swap sticks; default + per-controller; shared fixture tests. Xbox/Nintendo toggle in both in-stream menus. Desktop and Android, not yet verified |
 | Controllers | On-screen controller with layout editor | not started | not started | partial | Phase 6. Android has Moonlight's on-screen controls; editor/profiles to come. Desktop touchscreens optional. |
 | Controllers | On-screen keyboard (Android, handhelds) | not started | not started | not started | Phase 6 (owner addition, 2026-11-05) |
 | UX | UI overhaul (less cluttered, modern) | not started | not started | not started | Phase 7 (owner addition, 2026-11-05), after everything else |

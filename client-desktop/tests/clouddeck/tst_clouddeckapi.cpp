@@ -187,6 +187,10 @@ private slots:
             const QJsonArray c = v.toArray();
             QCOMPARE(ControllerProfile::mapButton(p, c[0].toString()), c[1].toString());
         }
+        for (const QJsonValue& v : cases["masks"].toArray()) {
+            const QJsonArray c = v.toArray();
+            QCOMPARE(ControllerProfile::mapButtonMask(p, c[0].toInt()), c[1].toInt());
+        }
         for (const QJsonValue& v : cases["sticks"].toArray()) {
             const QJsonArray in = v.toObject()["in"].toArray(), out = v.toObject()["out"].toArray();
             short lx = in[0].toInt(), ly = in[1].toInt(), rx = in[2].toInt(), ry = in[3].toInt();

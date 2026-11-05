@@ -125,6 +125,7 @@ public class CloudDeckActivity extends Activity {
         restartButton.setOnClickListener(v -> confirm(R.string.cd_confirm_restart, () -> { restartPending = true; stopMachine(); }));
         findViewById(R.id.cd_cancel).setOnClickListener(v -> cancel.set(true));
         findViewById(R.id.cd_manage_pcs).setOnClickListener(v -> startActivity(new Intent(this, PcView.class)));
+        findViewById(R.id.cd_controllers).setOnClickListener(v -> startActivity(new Intent(this, ControllerProfilesActivity.class)));
         findViewById(R.id.cd_signout).setOnClickListener(v -> {
             cancel.set(true);
             worker.execute(() -> { provider.signOut(); ui.post(() -> { machine = new CloudDeckApi.Machine(); render(); }); });

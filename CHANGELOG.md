@@ -25,7 +25,7 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
   clipboard sync and USB devices.
 - Network test with recommended settings and a low-bandwidth preset (ADR-0011).
 - Configurable Ctrl+Alt+Shift shortcuts on desktop (ADR-0012).
-- Controller remapping profiles on desktop (docs/controller-profiles.md) and a live Xbox/Nintendo
+- Controller remapping profiles on desktop and Android (docs/controller-profiles.md) and a live Xbox/Nintendo
   layout switch in the in-stream menus.
 - In-stream menu on Android: a CloudDeck button or Back opens mic mute, stats, keyboard,
   disconnect and shut down (ADR-0009).

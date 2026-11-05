@@ -1,6 +1,8 @@
 {
   "_comment": "Expected results for profile-v1.json, computed independently (Go). Both clients must match exactly. Unknown buttons and targets in the profile are ignored.",
   "buttons": [["a", "b"], ["b", "a"], ["back", "none"], ["x", "x"], ["paddle1", "leftShoulder"], ["start", "start"]],
+  "_masks": "Moonlight button bitmasks (Limelight.h flags) before and after remapping; unknown bits pass through.",
+  "masks": [[4096, 8192], [12288, 12288], [48, 16], [65536, 256], [65792, 256], [4210688, 4210688], [0, 0]],
   "sticks": [
     {"in": [1000, 0, 0, 0], "out": [0, 0, 0, 0]},
     {"in": [32767, 0, 0, 0], "out": [32767, 0, 0, 0]},
