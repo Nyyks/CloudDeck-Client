@@ -20,6 +20,31 @@
    - pairs automatically the first time: no address to copy, no PIN to type,
    - launches the `CloudDeck` app and starts streaming.
 
+## Home screen: Console or Launcher
+
+The home screen comes in two layouts. Switch between them under **General → Appearance**
+(desktop) or **Account → Appearance** (Android) → **Home screen layout**.
+
+- **Console** (default): a sidebar with pages. On phones it becomes a strip of
+  chips under the header.
+  - Desktop pages: Home, Display, Audio & mic, Controllers, USB devices, Network, General.
+  - Android pages: Home, Stream, Devices, Account.
+  - Home has the round **Connect** button, quick toggles and tiles for
+    Restart, Stop and more.
+- **Launcher**: one big **Start and connect** button with a few quick toggles.
+  **Settings** (top right) opens a side panel with Stream, Devices and Account tabs.
+
+Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
+
+| Input | Does |
+|---|---|
+| D-pad or arrow keys | Move between controls. A ring shows where you are. |
+| A, Enter or Space | Press the control. |
+| B, Back or Escape | Close the settings panel, or go back to Home. |
+| Start, Menu or X | Open the settings. |
+
+On desktop with a sidebar, left and right move between the sidebar and the page.
+
 ## Buttons
 
 | Button | Does |
@@ -37,8 +62,8 @@ request at all.
 
 - **Stop my CloudDeck when the stream ends:** turns the VM off as soon as you
   leave the stream.
-- **Stop after idle minutes** (desktop): turns the VM off if you haven't
-  streamed for N minutes. 0 = never.
+- **Stop when idle** (desktop): turns the VM off if you haven't streamed for
+  the chosen time (Never, 15 minutes … 4 hours).
 - **Reconnect automatically if the connection drops** (desktop, on by
   default): after a network drop the stream reconnects in the same window.
   - It makes up to 5 attempts over about 20 s, showing *Reconnecting (n of 5)*

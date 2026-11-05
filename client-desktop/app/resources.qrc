@@ -14,6 +14,20 @@
         <file>res/question_mark.svg</file>
         <file>res/moonlight.svg</file>
         <file>res/clouddeck-glyph.svg</file>
+        <file>res/cd/account.svg</file>
+        <file>res/cd/close.svg</file>
+        <file>res/cd/display.svg</file>
+        <file>res/cd/gamepad.svg</file>
+        <file>res/cd/gear.svg</file>
+        <file>res/cd/home.svg</file>
+        <file>res/cd/mic.svg</file>
+        <file>res/cd/network.svg</file>
+        <file>res/cd/play-dark.svg</file>
+        <file>res/cd/play.svg</file>
+        <file>res/cd/power.svg</file>
+        <file>res/cd/restart.svg</file>
+        <file>res/cd/speed.svg</file>
+        <file>res/cd/usb.svg</file>
         <file>res/update.svg</file>
         <file>res/baseline-help_outline-24px.svg</file>
         <file>res/baseline-error_outline-24px.svg</file>

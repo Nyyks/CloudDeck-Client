@@ -9,7 +9,7 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-05 (Phase 4a implemented). Phase 1 verified by the owner on real devices with
+Last updated: 2026-11-05 (Phase 7 home layouts implemented). Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
 explicitly confirmed, so Linux stays *partial* where it differs.
 
@@ -49,4 +49,4 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Controllers | Button/axis remapping with profiles | partial | partial | not started | docs/controller-profiles.md: buttons (incl. disable), stick deadzone/sensitivity/invert, trigger deadzone, swap sticks; default + per-controller; shared fixture tests. Xbox/Nintendo toggle in both in-stream menus. Desktop and Android, not yet verified |
 | Controllers | On-screen controller with layout editor | partial | partial | partial | Android: Moonlight's editor (move/resize/colour) plus Xbox or PlayStation button style (labels and colours) and named layout profiles (save/load/delete), all from the in-stream menu. Not yet verified. Desktop (owner: in all builds, e.g. Linux phones): docs/on-screen-controller.md, a virtual Xbox-type pad drawn in masked windows, Xbox/PS style, multi-touch; no layout editor. Desktop: works per the owner on Windows (2026-11-05); Android parts not yet verified |
 | Controllers | On-screen keyboard (Android, handhelds) | partial | partial | partial | docs/on-screen-keyboard.md: full layout with latching/locking modifiers, F-keys, arrows; real key presses; from the in-stream menu or Select+L1+R1+Y (Select+L1+R1+B opens the menu). Not yet verified |
-| UX | UI overhaul (less cluttered, modern) | not started | not started | not started | Phase 7 (owner addition, 2026-11-05), after everything else |
+| UX | UI overhaul: two home layouts (Console, Launcher) with a switch | partial | partial | partial | Phase 7, ADR-0013. The owner picked mock-up directions A and C and asked for both. Shared settings pages; touch, keyboard, gamepad and TV-remote navigation with visible focus rings. Desktop: both layouts load and pass key-only navigation tests headlessly (tests/qml/tst_home.qml, screenshots checked at 1280×800 and 390×844); the app builds. Android: builds, not yet run on a device. Not yet verified by the owner. Moonlight's own screens (PC list, app grid, streaming settings) are not restyled yet |

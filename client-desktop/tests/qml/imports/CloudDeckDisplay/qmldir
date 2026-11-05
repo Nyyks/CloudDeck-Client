@@ -1,0 +1,2 @@
+module CloudDeckDisplay
+singleton CloudDeckDisplay 1.0 CloudDeckDisplay.qml

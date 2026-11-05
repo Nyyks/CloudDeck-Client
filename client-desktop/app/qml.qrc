@@ -2,6 +2,30 @@
     <qresource prefix="/">
         <file>gui/main.qml</file>
         <file>gui/CloudDeckView.qml</file>
+        <file>gui/CdTheme.js</file>
+        <file>gui/CdFocus.js</file>
+        <file>gui/CdFocusRing.qml</file>
+        <file>gui/CdButton.qml</file>
+        <file>gui/CdButtonRow.qml</file>
+        <file>gui/CdSwitch.qml</file>
+        <file>gui/CdTile.qml</file>
+        <file>gui/CdChip.qml</file>
+        <file>gui/CdNavItem.qml</file>
+        <file>gui/CdCard.qml</file>
+        <file>gui/CdText.qml</file>
+        <file>gui/CdSegmented.qml</file>
+        <file>gui/CdComboRow.qml</file>
+        <file>gui/CdStatusPill.qml</file>
+        <file>gui/CdProgress.qml</file>
+        <file>gui/CdSignIn.qml</file>
+        <file>gui/CdHomeConsole.qml</file>
+        <file>gui/CdHomeLauncher.qml</file>
+        <file>gui/CdPageDisplay.qml</file>
+        <file>gui/CdPageAudio.qml</file>
+        <file>gui/CdPageControllers.qml</file>
+        <file>gui/CdPageUsb.qml</file>
+        <file>gui/CdPageNetwork.qml</file>
+        <file>gui/CdPageGeneral.qml</file>
         <file>gui/ControllerProfiles.qml</file>
         <file>gui/StreamMenu.qml</file>
         <file>gui/StreamMenuButton.qml</file>

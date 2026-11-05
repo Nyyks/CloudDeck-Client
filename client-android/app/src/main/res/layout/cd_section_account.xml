@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CloudDeck settings section "Account": layout switch, account, other hosts (docs/adr/0013-home-layouts.md). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_appearance" />
+        <TextView style="@style/CdBody" android:paddingBottom="2dp" android:text="@string/cd_ui_style" />
+        <TextView style="@style/CdHint" android:text="@string/cd_ui_style_hint" />
+        <LinearLayout
+            style="@style/CdSegmentTrack"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="12dp">
+            <Button android:id="@+id/cd_style_console" style="@style/CdSegment" android:text="@string/cd_ui_console" />
+            <Button android:id="@+id/cd_style_launcher" style="@style/CdSegment" android:text="@string/cd_ui_launcher" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_account" />
+        <TextView
+            android:id="@+id/cd_account_email"
+            style="@style/CdBody"
+            android:drawableStart="@drawable/cd_ic_account"
+            android:drawablePadding="12dp"
+            android:gravity="center_vertical" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/cd_signout" style="@style/CdButton" android:layout_marginEnd="8dp" android:text="@string/cd_sign_out" />
+            <Button android:id="@+id/cd_manage_pcs" style="@style/CdButton.Ghost" android:text="@string/cd_manage_pcs" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

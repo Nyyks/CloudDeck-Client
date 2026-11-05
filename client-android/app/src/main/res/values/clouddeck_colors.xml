@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CloudDeck-Client home screen palette (Phase 7, docs/adr/0013-home-layouts.md); same as the desktop CdTheme.js. -->
+<resources>
+    <color name="cd_bg">#0f1115</color>
+    <color name="cd_bg_launcher">#0b0c0f</color>
+    <color name="cd_surface">#14171d</color>
+    <color name="cd_card">#181b22</color>
+    <color name="cd_drawer">#15171c</color>
+    <color name="cd_border">#23272f</color>
+    <color name="cd_border2">#2a2f39</color>
+    <color name="cd_control">#1d2129</color>
+    <color name="cd_control_down">#2b3240</color>
+    <color name="cd_row_hover">#1c2029</color>
+    <color name="cd_selected">#1f2430</color>
+    <color name="cd_inset">#0f1115</color>
+    <color name="cd_text">#e9ecf2</color>
+    <color name="cd_text2">#aeb5c2</color>
+    <color name="cd_muted">#8a93a3</color>
+    <color name="cd_accent">#4c6ef5</color>
+    <color name="cd_accent_down">#3d5bd9</color>
+    <color name="cd_accent_soft">#1a2140</color>
+    <color name="cd_accent_border">#2f3b66</color>
+    <color name="cd_accent_text">#9db4ff</color>
+    <color name="cd_launcher_accent">#e9ecf2</color>
+    <color name="cd_launcher_accent_down">#c9ced8</color>
+    <color name="cd_launcher_accent_text">#0b0c0f</color>
+    <color name="cd_focus">#9db4ff</color>
+    <color name="cd_warn">#ffd43b</color>
+    <color name="cd_error">#ff8787</color>
+    <color name="cd_scrim">#99000000</color>
+</resources>

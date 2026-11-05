@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CloudDeck settings section "Devices": microphone and controllers (docs/adr/0013-home-layouts.md). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_mic" />
+        <Switch android:id="@+id/cd_mic" style="@style/CdSwitchRow" android:text="@string/cd_mic" />
+        <TextView style="@style/CdHint" android:text="@string/cd_mic_hint" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_controllers" />
+        <Switch android:id="@+id/cd_nintendo" style="@style/CdSwitchRow" android:text="@string/cd_nintendo" />
+        <TextView style="@style/CdHint" android:text="@string/cd_nintendo_hint" />
+        <Switch android:id="@+id/cd_osc" style="@style/CdSwitchRow" android:text="@string/cd_osc_show" />
+        <TextView style="@style/CdHint" android:text="@string/cd_osc_show_hint" />
+        <TextView style="@style/CdBody" android:paddingTop="6dp" android:text="@string/cd_osc_style" />
+        <LinearLayout
+            style="@style/CdSegmentTrack"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="12dp">
+            <Button android:id="@+id/cd_osc_xbox" style="@style/CdSegment" android:text="@string/cd_style_xbox" />
+            <Button android:id="@+id/cd_osc_ps" style="@style/CdSegment" android:text="@string/cd_style_playstation" />
+        </LinearLayout>
+        <Button
+            android:id="@+id/cd_controllers"
+            style="@style/CdButton"
+            android:layout_marginStart="14dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/cd_controllers_more" />
+        <TextView style="@style/CdHint" android:text="@string/cd_combo_hint" />
+    </LinearLayout>
+</LinearLayout>

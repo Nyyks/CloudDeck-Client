@@ -1,0 +1,2 @@
+module CloudDeck
+singleton CloudDeck 1.0 CloudDeck.qml

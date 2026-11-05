@@ -4,6 +4,12 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 ### Added
+- Two home screen layouts with a switch in the settings (ADR-0013, Phase 7):
+  - **Console**: sidebar pages, a round Connect button and tiles.
+  - **Launcher**: one big button, with the settings in a side panel.
+  - Both have shared settings pages, at least 48 px touch targets and visible focus
+    rings, and work with D-pad, gamepad and TV remote on desktop and Android.
+  - Desktop has headless QML navigation tests with screenshots.
 - Host install (`host/install/`): patched Sunshine with an automatic fallback to stock,
   plus the Go host agent as a system unit. The CloudDeck default app list is kept.
 - Microphone passthrough (protocol v1, docs/protocol-extensions.md): desktop and Android

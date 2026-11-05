@@ -1,0 +1,2 @@
+module CloudDeckShortcuts
+singleton CloudDeckShortcuts 1.0 CloudDeckShortcuts.qml

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Console layout, Home page (phones and portrait). Wide screens: layout-w720dp/. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cd_your_clouddeck"
+        android:textColor="@color/cd_text"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/cd_host"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/cd_muted"
+        android:textSize="14sp" />
+    <TextView
+        android:id="@+id/cd_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:paddingStart="14dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="6dp"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/cd_bg_card"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp">
+        <Button
+            android:id="@+id/cd_connect"
+            android:layout_width="148dp"
+            android:layout_height="148dp"
+            android:background="@drawable/cd_bg_connect"
+            android:drawableTop="@drawable/cd_ic_play"
+            android:paddingTop="30dp"
+            android:stateListAnimator="@null"
+            android:text="@string/cd_connect"
+            android:textAllCaps="false"
+            android:textColor="#ffffff"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/cd_headline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/cd_text"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/cd_stream_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/cd_text2"
+            android:textSize="14sp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/cd_chip_mic" style="@style/CdChip" />
+            <Button android:id="@+id/cd_chip_osc" style="@style/CdChip" android:layout_marginEnd="0dp" android:text="@string/cd_chip_osc" />
+        </LinearLayout>
+        <include layout="@layout/cd_progress_block" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+        <LinearLayout android:id="@+id/cd_tile_power" style="@style/CdTile" android:layout_marginEnd="12dp">
+            <TextView android:id="@+id/cd_tile_power_title" style="@style/CdTileTitle" android:drawableStart="@drawable/cd_ic_restart" />
+            <TextView android:id="@+id/cd_tile_power_sub" style="@style/CdTileSub" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/cd_tile_stop" style="@style/CdTile">
+            <TextView style="@style/CdTileTitle" android:drawableStart="@drawable/cd_ic_power" android:text="@string/cd_stop" />
+            <TextView style="@style/CdTileSub" android:text="@string/cd_tile_stop_sub" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+        <LinearLayout android:id="@+id/cd_tile_mic" style="@style/CdTile" android:layout_marginEnd="12dp">
+            <TextView style="@style/CdTileTitle" android:drawableStart="@drawable/cd_ic_mic" android:text="@string/cd_card_mic" />
+            <TextView android:id="@+id/cd_tile_mic_sub" style="@style/CdTileSub" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/cd_tile_stream" style="@style/CdTile">
+            <TextView style="@style/CdTileTitle" android:drawableStart="@drawable/cd_ic_tune" android:text="@string/cd_tile_stream" />
+            <TextView style="@style/CdTileSub" android:text="@string/cd_tile_stream_sub" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

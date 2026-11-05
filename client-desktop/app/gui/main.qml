@@ -235,6 +235,8 @@ ApplicationWindow {
 
     header: ToolBar {
         id: toolBar
+        // CloudDeck-Client: the CloudDeck home screen draws its own chrome (docs/adr/0013-home-layouts.md)
+        visible: !(stackView.currentItem instanceof CloudDeckView)
         height: 60
         anchors.topMargin: 5
         anchors.bottomMargin: 5

@@ -36,6 +36,11 @@ class CloudSession : public QObject
     Q_PROPERTY(int autoStopIdleMinutes READ autoStopIdleMinutes WRITE setAutoStopIdleMinutes NOTIFY settingsChanged)
     Q_PROPERTY(bool clipboardSync READ clipboardSync WRITE setClipboardSync NOTIFY settingsChanged)
     Q_PROPERTY(bool autoReconnect READ autoReconnect WRITE setAutoReconnect NOTIFY settingsChanged)
+    // Phase 7: home screen layout, "console" (sidebar) or "launcher" (centred, settings drawer)
+    Q_PROPERTY(QString uiStyle READ uiStyle WRITE setUiStyle NOTIFY settingsChanged)
+    // On-screen controller (docs/on-screen-controller.md), same keys the stream overlay reads
+    Q_PROPERTY(QString controllerStyle READ controllerStyle WRITE setControllerStyle NOTIFY settingsChanged)
+    Q_PROPERTY(bool onScreenController READ onScreenController WRITE setOnScreenController NOTIFY settingsChanged)
     // Network test (docs/adr/0011-network-test.md)
     Q_PROPERTY(bool netTestRunning READ netTestRunning NOTIFY netTestChanged)
     Q_PROPERTY(QString netTestStatus READ netTestStatus NOTIFY netTestChanged)
@@ -97,6 +102,12 @@ public:
     bool autoReconnect() const { return autoReconnectEnabled(); }
     void setAutoReconnect(bool v);
     static bool autoReconnectEnabled(); // any thread; default on
+    QString uiStyle() const;
+    void setUiStyle(const QString& v);
+    QString controllerStyle() const;
+    void setControllerStyle(const QString& v);
+    bool onScreenController() const;
+    void setOnScreenController(bool v);
 
 signals:
     void netTestChanged();

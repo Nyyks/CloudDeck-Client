@@ -1,192 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- CloudDeck-Client home screen: sign-in form and VM card. -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- CloudDeck-Client home screen: sign-in, then the home layout picked in the settings
+     (cd_home_console.xml or cd_home_launcher.xml, inflated into cd_home).
+     docs/adr/0013-home-layouts.md -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cd_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="@color/cd_bg">
 
+    <!-- restoring -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/cd_restoring"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="560dp"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone">
+        <ProgressBar android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/cd_signing_in"
+            android:textColor="@color/cd_text"
+            android:textSize="18sp" />
+    </LinearLayout>
 
-        <!-- restoring -->
-        <LinearLayout
-            android:id="@+id/cd_restoring"
+    <!-- sign-in -->
+    <ScrollView
+        android:id="@+id/cd_signin"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:visibility="gone">
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone">
-            <ProgressBar android:layout_width="wrap_content" android:layout_height="wrap_content" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="@string/cd_signing_in"
-                android:textSize="18sp" />
-        </LinearLayout>
-
-        <!-- sign-in -->
-        <LinearLayout
-            android:id="@+id/cd_signin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/cd_sign_in_title"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-            <TextView
-                android:id="@+id/cd_signin_note"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:alpha="0.8" />
-            <EditText
-                android:id="@+id/cd_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:autofillHints="emailAddress"
-                android:hint="@string/cd_email"
-                android:inputType="textEmailAddress" />
-            <EditText
-                android:id="@+id/cd_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:autofillHints="password"
-                android:hint="@string/cd_password"
-                android:inputType="textPassword" />
-            <EditText
-                android:id="@+id/cd_mfa"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/cd_mfa_code"
-                android:inputType="number"
-                android:visibility="gone" />
-            <Button
-                android:id="@+id/cd_signin_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/cd_sign_in" />
-        </LinearLayout>
-
-        <!-- VM card -->
-        <LinearLayout
-            android:id="@+id/cd_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:padding="16dp">
             <LinearLayout
+                android:id="@+id/cd_signin_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_gravity="center"
+                android:background="@drawable/cd_bg_signin_card"
+                android:orientation="vertical"
+                android:padding="28dp">
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/cd_mark" />
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/cd_signin_title"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/cd_your_clouddeck"
-                    android:textSize="22sp"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/cd_sign_in_title"
+                    android:textColor="@color/cd_text"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
                 <TextView
-                    android:id="@+id/cd_status"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/cd_signin_note"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp" />
-            </LinearLayout>
-            <TextView
-                android:id="@+id/cd_host"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:alpha="0.7" />
-            <Button
-                android:id="@+id/cd_connect"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:layout_marginTop="16dp"
-                android:text="@string/cd_start_and_connect"
-                android:textSize="18sp" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button android:id="@+id/cd_start" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/cd_start" />
-                <Button android:id="@+id/cd_stop" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/cd_stop" />
-                <Button android:id="@+id/cd_restart" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/cd_restart" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/cd_progress_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:visibility="gone">
-                <ProgressBar android:layout_width="32dp" android:layout_height="32dp" />
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/cd_muted"
+                    android:textSize="14sp" />
+                <EditText
+                    android:id="@+id/cd_email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:autofillHints="emailAddress"
+                    android:hint="@string/cd_email"
+                    android:inputType="textEmailAddress"
+                    android:minHeight="52dp"
+                    android:textColor="@color/cd_text"
+                    android:textColorHint="@color/cd_muted" />
+                <EditText
+                    android:id="@+id/cd_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="password"
+                    android:hint="@string/cd_password"
+                    android:imeOptions="actionGo"
+                    android:inputType="textPassword"
+                    android:minHeight="52dp"
+                    android:textColor="@color/cd_text"
+                    android:textColorHint="@color/cd_muted" />
+                <EditText
+                    android:id="@+id/cd_mfa"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/cd_mfa_code"
+                    android:imeOptions="actionGo"
+                    android:inputType="number"
+                    android:minHeight="52dp"
+                    android:textColor="@color/cd_text"
+                    android:textColorHint="@color/cd_muted"
+                    android:visibility="gone" />
+                <Button
+                    android:id="@+id/cd_signin_button"
+                    style="@style/CdButton.Primary"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="52dp"
+                    android:text="@string/cd_sign_in" />
                 <TextView
-                    android:id="@+id/cd_progress"
-                    android:layout_width="0dp"
+                    android:id="@+id/cd_signin_error"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1" />
+                    android:layout_marginTop="12dp"
+                    android:textColor="@color/cd_error"
+                    android:visibility="gone" />
                 <Button
-                    android:id="@+id/cd_cancel"
-                    style="?android:attr/borderlessButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/cd_cancel" />
+                    android:id="@+id/cd_signin_pcs"
+                    style="@style/CdButton.Link"
+                    android:layout_marginStart="-12dp"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/cd_use_other_host" />
             </LinearLayout>
-            <CheckBox
-                android:id="@+id/cd_autostop"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/cd_auto_stop" />
-            <CheckBox
-                android:id="@+id/cd_mic"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/cd_mic" />
-            <Button
-                android:id="@+id/cd_controllers"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/cd_controllers" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button
-                    android:id="@+id/cd_manage_pcs"
-                    style="?android:attr/borderlessButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/cd_manage_pcs" />
-                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
-                <Button
-                    android:id="@+id/cd_signout"
-                    style="?android:attr/borderlessButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/cd_sign_out" />
-            </LinearLayout>
-        </LinearLayout>
+        </FrameLayout>
+    </ScrollView>
 
-        <TextView
-            android:id="@+id/cd_error"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textColor="#ff8787"
-            android:visibility="gone" />
-    </LinearLayout>
-</ScrollView>
+    <!-- home (layout from the settings) -->
+    <FrameLayout
+        android:id="@+id/cd_home"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+</FrameLayout>
