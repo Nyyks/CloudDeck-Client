@@ -115,6 +115,10 @@
     <string name="cd_tile_muted">Muted</string>
     <string name="cd_tile_stats">Stats</string>
     <string name="cd_tile_controller">Controller</string>
+    <string name="cd_tile_resolution">Resolution</string>
+    <string name="cd_res_this_screen">This screen (%1$d × %2$d)</string>
+    <string name="cd_res_reconnecting">Reconnecting at the new resolution…</string>
+    <string name="cd_progress_display">Switching your CloudDeck to %1$d × %2$d…</string>
     <string name="cd_tile_osc">On-screen pad</string>
     <string name="cd_tile_shown">Shown</string>
     <string name="cd_tile_as_mouse">As mouse</string>

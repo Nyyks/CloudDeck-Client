@@ -23,7 +23,7 @@ echo "== Sources"
 # Build on a Docker volume, not on the Windows file system (much faster under QEMU).
 docker volume create cdc-arm64-build >/dev/null
 tar -C "$REPO" --exclude='client-desktop/build' --exclude='client-desktop/libs' --exclude='client-desktop/deps*' \
-    --exclude='*.o' -cf - client-desktop .github/scripts | \
+    --exclude='*.o' -cf - client-desktop common shared .github/scripts | \
   docker run --rm -i --platform linux/arm64 -v cdc-arm64-build:/b ubuntu:22.04 \
     bash -c 'rm -rf /b/src && mkdir -p /b/src && tar -C /b/src -xf -'
 
@@ -64,7 +64,11 @@ if [ ! -f /b/deps-done ]; then
      --enable-libdrm --enable-v4l2-m2m --enable-decoder=h264_v4l2m2m --enable-decoder=hevc_v4l2m2m \
      --enable-libdav1d --enable-decoder=libdav1d && make -s -j$N && make -s install)
   ldconfig
+  # /usr/local lives in this throwaway container; keep a copy on the volume for later runs.
+  tar -C / -cf /b/deps-usr-local.tar usr/local
   touch /b/deps-done
+else
+  tar -C / -xf /b/deps-usr-local.tar
 fi
 ldconfig
 

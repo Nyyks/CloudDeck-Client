@@ -427,6 +427,58 @@ void StreamOverlay::setControllerPlaystation(bool on)
     emit changed();
 }
 
+// Stream resolution from the menu. Fixed sizes also become the default for the next stream.
+QString StreamOverlay::resolution() const
+{
+    if (m_Session->m_FitToWindow) return QStringLiteral("fit");
+    return QStringLiteral("%1x%2").arg(m_Session->m_StreamConfig.width).arg(m_Session->m_StreamConfig.height);
+}
+
+QVariantList StreamOverlay::resolutionChoices() const
+{
+    QVariantList list;
+    auto add = [&list](const QString& text, const QString& value) {
+        for (const QVariant& v : list) if (v.toMap().value("val") == value) return;
+        list.append(QVariantMap{{"text", text}, {"val", value}});
+    };
+    if (canFitToWindow()) add(tr("Fit to window"), QStringLiteral("fit"));
+    add(QStringLiteral("720p (1280 × 720)"), QStringLiteral("1280x720"));
+    add(QStringLiteral("1080p (1920 × 1080)"), QStringLiteral("1920x1080"));
+    add(QStringLiteral("1440p (2560 × 1440)"), QStringLiteral("2560x1440"));
+    add(QStringLiteral("4K (3840 × 2160)"), QStringLiteral("3840x2160"));
+    SDL_DisplayMode mode;
+    if (SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(m_Session->m_Window), &mode) == 0) {
+        const int w = mode.w & ~7;
+        add(tr("This screen (%1 × %2)").arg(w).arg(mode.h), QStringLiteral("%1x%2").arg(w).arg(mode.h));
+    }
+    if (!m_Session->m_FitToWindow) {
+        const QString cur = resolution();
+        add(tr("Current (%1 × %2)").arg(m_Session->m_StreamConfig.width).arg(m_Session->m_StreamConfig.height), cur);
+    }
+    return list;
+}
+
+void StreamOverlay::setResolution(const QString& value)
+{
+    if (m_Session->m_Spanning || m_Session->m_Restarting) return;
+    if (value == QLatin1String("fit")) {
+        setFitToWindow(true);
+        return;
+    }
+    const QStringList wh = value.split('x');
+    const int w = wh.value(0).toInt() & ~7, h = wh.value(1).toInt() & ~1;
+    if (w < 256 || h < 256) return;
+    if (m_Session->m_FitToWindow) setFitToWindow(false);
+    m_Session->m_Preferences->width = w; // remembered for the next stream
+    m_Session->m_Preferences->height = h;
+    m_Session->m_Preferences->save();
+    if (w != m_Session->m_StreamConfig.width || h != m_Session->m_StreamConfig.height) {
+        closeMenu();
+        m_Session->restartStreamAt(w, h);
+    }
+    emit changed();
+}
+
 // Controller mouse mode (docs/controller-mouse.md)
 bool StreamOverlay::hasGamepad() const { return m_Session->m_InputHandler && m_Session->m_InputHandler->hasGamepad(); }
 bool StreamOverlay::controllerMouse() const { return m_Session->m_InputHandler && m_Session->m_InputHandler->anyGamepadMouseMode(); }

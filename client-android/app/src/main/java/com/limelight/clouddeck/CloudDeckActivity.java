@@ -76,6 +76,8 @@ public class CloudDeckActivity extends Activity {
     // and a one-shot "shut down my CloudDeck" request handled when it ends.
     public static volatile boolean launchedFromCloudDeck;
     public static volatile boolean stopAfterStream;
+    // Set by the in-stream menu after a resolution change: reconnect right away at the new size.
+    public static volatile boolean reconnectAfterStream;
     private final AtomicBoolean connecting = new AtomicBoolean(false);
     private final AtomicBoolean cancel = new AtomicBoolean(false);
 
@@ -132,6 +134,24 @@ public class CloudDeckActivity extends Activity {
         provider = new CloudDeckProvider(this);
         prefs = getSharedPreferences("clouddeck", MODE_PRIVATE);
         previewHome = com.limelight.BuildConfig.DEBUG && getIntent().getBooleanExtra("cd_preview_home", false);
+        if (previewHome && getIntent().getBooleanExtra("cd_preview_stream", false)) {
+            // Debug only: run the stream hand-off against an unreachable test address (RFC 5737), so
+            // the return path after a stream (disconnect, failure) can be checked on an emulator.
+            ui.postDelayed(() -> {
+                Intent i = new Intent(this, com.limelight.Game.class);
+                i.putExtra(com.limelight.Game.EXTRA_HOST, "192.0.2.1");
+                i.putExtra(com.limelight.Game.EXTRA_PORT, 47989);
+                i.putExtra(com.limelight.Game.EXTRA_HTTPS_PORT, 47984);
+                i.putExtra(com.limelight.Game.EXTRA_APP_NAME, "Desktop");
+                i.putExtra(com.limelight.Game.EXTRA_APP_ID, 1);
+                i.putExtra(com.limelight.Game.EXTRA_UNIQUEID, "0123456789ABCDEF");
+                i.putExtra(com.limelight.Game.EXTRA_PC_UUID, "preview");
+                i.putExtra(com.limelight.Game.EXTRA_PC_NAME, "Preview");
+                streamLaunched = true;
+                launchedFromCloudDeck = true;
+                startActivity(i);
+            }, 10000);
+        }
 
         restoringView = findViewById(R.id.cd_restoring);
         signInView = findViewById(R.id.cd_signin);
@@ -187,6 +207,14 @@ public class CloudDeckActivity extends Activity {
         if (streamLaunched) {
             streamLaunched = false;
             launchedFromCloudDeck = false;
+            if (reconnectAfterStream) {
+                reconnectAfterStream = false;
+                LimeLog.info("CloudDeck: reconnecting at the new resolution");
+                ui.post(this::startAndConnect);
+                return;
+            }
+            // The CloudDeck goes back to its own display mode (a reconnect above hands the lease over instead).
+            worker.execute(DisplayLease::releaseActive);
             if (stopAfterStream) {
                 stopAfterStream = false;
                 LimeLog.info("CloudDeck: shutdown requested from the in-stream menu");
@@ -235,6 +263,7 @@ public class CloudDeckActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        DisplayLease.releaseActive();
         moonlightPrefs().unregisterOnSharedPreferenceChangeListener(languageListener);
         cancel.set(true);
         unbindService(serviceConnection);
@@ -865,6 +894,14 @@ public class CloudDeckActivity extends Activity {
             if (System.currentTimeMillis() - t1 > 30_000) throw new ConnectException(getString(R.string.cd_err_add_failed, host));
             sleep(500);
         }
+        // 6. Switch the CloudDeck's desktop to the stream resolution (docs/adr/0007-multi-monitor.md);
+        // without this Sunshine scales whatever mode the VM had. Not fatal: older hosts lack it.
+        PreferenceConfiguration streamPrefs = PreferenceConfiguration.readPreferences(this);
+        setProgress(getString(R.string.cd_progress_display, streamPrefs.width, streamPrefs.height));
+        String leaseError = DisplayLease.acquire(ready.activeAddress.address, ready.httpsPort, ready.serverCert,
+                PlatformBinding.getCryptoProvider(this), streamPrefs.width & ~7, streamPrefs.height, streamPrefs.fps);
+        if (leaseError != null) LimeLog.warning("CloudDeck: streaming without a display change: " + leaseError);
+
         final NvApp fApp = app;
         final ComputerDetails fReady = ready;
         ui.post(() -> {

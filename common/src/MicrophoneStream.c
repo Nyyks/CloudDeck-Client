@@ -120,7 +120,8 @@ int parseMicrophonePacket(PPLT_CRYPTO_CONTEXT cryptoContext, const unsigned char
 
 void startMicrophoneStream(void) {
     if (!micLockInitialized) {
-        PltCreateMutex(&micLock);
+        // Lives for the process: senders may call in around connection start and stop.
+        PltCreatePersistentMutex(&micLock);
         micLockInitialized = true;
     }
     PltLockMutex(&micLock);

@@ -48,6 +48,7 @@ typedef struct _PLT_EVENT {
 #endif
 
 int PltCreateMutex(PLT_MUTEX* mutex);
+int PltCreatePersistentMutex(PLT_MUTEX* mutex); // CloudDeck-Client: never deleted, not leak-checked
 void PltDeleteMutex(PLT_MUTEX* mutex);
 void PltLockMutex(PLT_MUTEX* mutex);
 void PltUnlockMutex(PLT_MUTEX* mutex);

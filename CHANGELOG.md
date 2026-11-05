@@ -4,6 +4,8 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 ### Added
+- Resolution in the in-stream menu: desktop restarts the stream in place at the new size; Android
+  reconnects at it. Also an on-screen controller tile in the Android menu.
 - Raspberry Pi / ARM64 Linux AppImage, built locally with `tools/build-linux-arm64.sh` (not verified yet).
 - Controller as mouse (docs/controller-mouse.md): Select+L1+R1+A switches a controller between gamepad
   and mouse, a menu tile does it for all controllers, and controllers can start as a mouse. Desktop and Android.
@@ -46,6 +48,12 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - The official CloudDeck mark as the app icon and the menu button (private use; see THIRD_PARTY_NOTICES).
 
 ### Fixed
+- Android: disconnecting from a stream crashed the app. moonlight-common-c's connection cleanup
+  asserted on the microphone lock, which lives for the whole process; it is now exempt from that
+  check (debug builds abort on it; reproduced and verified against a local Sunshine on an emulator).
+- The CloudDeck's desktop now switches to the stream resolution for every stream on desktop and
+  Android, not only with "Fit to window", so e.g. a 1280×720 handheld no longer gets a scaled
+  1920×1080 desktop (ADR-0007 amendment).
 - Windows: the .msi failed when run directly ("Could not write value DesktopShortcutInstallState");
   it now creates the desktop shortcut by default.
 - Android: opening the Stream settings crashed the app (Moonlight preferences that others depend on were

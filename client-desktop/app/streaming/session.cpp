@@ -1896,9 +1896,11 @@ bool Session::startConnectionAsync()
     }
 
     // CloudDeck-Client: switch the CloudDeck's desktop to the stream size before
-    // Sunshine starts capturing (docs/adr/0007-multi-monitor.md). Held until the
-    // stream ends; the host agent restores the previous mode when it's released.
-    if (m_Spanning || DisplaySettings::get()->matchResolution()) {
+    // Sunshine starts capturing (docs/adr/0007-multi-monitor.md), for every stream: with a
+    // fixed resolution too, otherwise Sunshine scales whatever mode the VM had. Held until
+    // the stream ends; the host agent restores the previous mode when it's released.
+    // Only fatal when spanning monitors; hosts without the agent stream as before.
+    {
         auto* lease = new DisplayLease(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort,
                                        m_Computer->serverCert, m_StreamConfig.width, m_StreamConfig.height,
                                        m_StreamConfig.fps);

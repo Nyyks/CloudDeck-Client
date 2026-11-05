@@ -139,6 +139,17 @@ int PltCreateMutex(PLT_MUTEX* mutex) {
     return 0;
 }
 
+// CloudDeck-Client: a mutex that lives for the whole process rather than one connection (the
+// microphone sender's lock, which a capture thread may touch at any time). It is never deleted,
+// so it is left out of the per-connection leak check in cleanupPlatform().
+int PltCreatePersistentMutex(PLT_MUTEX* mutex) {
+    int err = PltCreateMutex(mutex);
+    if (err == 0) {
+        activeMutexes--;
+    }
+    return err;
+}
+
 void PltDeleteMutex(PLT_MUTEX* mutex) {
     LC_ASSERT(activeMutexes > 0);
     activeMutexes--;

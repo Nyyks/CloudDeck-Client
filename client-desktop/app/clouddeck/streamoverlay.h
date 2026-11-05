@@ -14,6 +14,7 @@
 #pragma once
 
 #include <QObject>
+#include <QVariant>
 #include <QRect>
 #include <QString>
 
@@ -46,6 +47,9 @@ class StreamOverlay : public QObject
     // Controller mouse mode (Select+L1+R1+A), for every connected controller
     Q_PROPERTY(bool hasGamepad READ hasGamepad NOTIFY changed)
     Q_PROPERTY(bool controllerMouse READ controllerMouse WRITE setControllerMouse NOTIFY changed)
+    // Stream resolution from the menu: "fit" or "WxH", and the choices offered [{text, value}]
+    Q_PROPERTY(QString resolution READ resolution NOTIFY changed)
+    Q_PROPERTY(QVariantList resolutionChoices READ resolutionChoices NOTIFY changed)
 
 public:
     explicit StreamOverlay(Session* session);
@@ -100,6 +104,10 @@ public:
     bool controllerVisible() const;
     bool controllerPlaystation() const;
     void setControllerPlaystation(bool on);
+    QString resolution() const;
+    QVariantList resolutionChoices() const;
+    // "fit" turns on fit-to-window; "WxH" sets a fixed size; both restart the stream in place.
+    Q_INVOKABLE void setResolution(const QString& value);
     bool hasGamepad() const;
     bool controllerMouse() const;
     void setControllerMouse(bool on);

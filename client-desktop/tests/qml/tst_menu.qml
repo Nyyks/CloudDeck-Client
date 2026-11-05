@@ -26,6 +26,9 @@ Item {
         property bool controllerPlaystation: false
         property bool hasGamepad: true
         property bool controllerMouse: false
+        property string resolution: "fit"
+        property var resolutionChoices: [{ text: "Fit to window", val: "fit" }, { text: "1080p (1920 × 1080)", val: "1920x1080" }]
+        function setResolution(v) { resolution = v }
         function toggleController() {}
         property int keys: 0
         function toggleKeyboard() {}

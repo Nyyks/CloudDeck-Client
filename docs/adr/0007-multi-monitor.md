@@ -118,3 +118,17 @@ CloudDeck's resolution to the stream window"**. It applies to windowed mode
   uniform 2× scaling, mixed scaling, a non-rectangle, the limits and fps cap.
 - On the VM: `host/tools/display-test.sh` (switches for 15 s, always switches
   back), then a real two-monitor stream.
+
+## Amendment: every stream follows its resolution (2026-11-05)
+Testing on a 1280×720 handheld showed the stream picture was a scaled copy of whatever mode
+the VM had. So the display lease is now taken for every stream, not only for multiple monitors
+or fit-to-window:
+- Desktop: `Session` always acquires it before `/launch`. A failure is still only fatal when
+  spanning monitors.
+- Android: `clouddeck/DisplayLease.java` and `AgentTunnel.java` are ports of the desktop tunnel
+  (same mTLS identity, pinned host certificate, `display/set`, keepalive). `CloudDeckActivity`
+  acquires the lease before the stream and releases it when the stream ends.
+- Hosts without the agent (stock Sunshine, Manage PCs) answer 404 and stream as before.
+
+The in-stream menus also offer a resolution choice. Desktop restarts the stream in place;
+Android ends the stream and reconnects at once, keeping the lease.

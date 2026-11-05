@@ -154,6 +154,22 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
 
         @Override
+        public int[] streamResolution() { return new int[]{prefConfig.width, prefConfig.height}; }
+
+        @Override
+        public void setStreamResolution(int width, int height) {
+            // CloudDeck-Client: remember the new size (and its default bitrate, like the settings do),
+            // then leave; CloudDeckActivity reconnects at once when it started this stream.
+            android.content.SharedPreferences p = android.preference.PreferenceManager.getDefaultSharedPreferences(Game.this);
+            String res = width + "x" + height;
+            p.edit().putString("list_resolution", res)
+                    .putInt("seekbar_bitrate_kbps", PreferenceConfiguration.getDefaultBitrate(res, p.getString("list_fps", "60")))
+                    .commit();
+            com.limelight.clouddeck.CloudDeckActivity.reconnectAfterStream = com.limelight.clouddeck.CloudDeckActivity.launchedFromCloudDeck;
+            finish();
+        }
+
+        @Override
         public boolean isOnScreenController() { return virtualController != null; }
 
         @Override

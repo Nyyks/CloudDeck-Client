@@ -212,12 +212,13 @@ Pane {
                 // ---- display and mouse
                 CdCard {
                     title: qsTr("Display and mouse")
-                    CdSwitch {
-                        Layout.fillWidth: true
+                    CdChoiceRow {
                         visible: overlay.canFitToWindow
-                        text: qsTr("Fit the CloudDeck to this window")
-                        checked: overlay.fitToWindow
-                        onToggled: overlay.fitToWindow = checked
+                        text: qsTr("Resolution")
+                        description: qsTr("The stream restarts at the new size; your app keeps running.")
+                        options: overlay.resolutionChoices
+                        value: overlay.resolution
+                        onPicked: function(v) { overlay.setResolution(v) }
                     }
                     CdSegmented {
                         Layout.fillWidth: true

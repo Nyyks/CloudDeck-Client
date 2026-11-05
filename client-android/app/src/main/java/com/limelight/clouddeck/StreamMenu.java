@@ -53,6 +53,9 @@ public final class StreamMenu {
         // Show or hide the on-screen controller during the stream (remembered for the next one)
         default boolean isOnScreenController() { return false; }
         default void setOnScreenController(boolean on) {}
+        // Stream resolution: current size, and switching (reconnects at the new size)
+        default int[] streamResolution() { return new int[]{0, 0}; }
+        default void setStreamResolution(int width, int height) {}
     }
 
     private static final String PREF_HIDE_BUTTON = "cdMenuButtonHidden";
@@ -162,6 +165,8 @@ public final class StreamMenu {
         }
         tiles.add(tile(R.drawable.cd_ic_devices, R.string.cd_tile_osc, host.isOnScreenController(),
                 R.string.cd_tile_shown, R.string.cd_off, on -> { host.setOnScreenController(on); dialog.dismiss(); }));
+        final int[] res = host.streamResolution();
+        tiles.add(actionTileText(R.drawable.cd_ic_stream, R.string.cd_tile_resolution, res[0] + " × " + res[1], this::pickResolution));
         tiles.add(actionTile(R.drawable.cd_ic_keyboard, R.string.cd_tile_typing, R.string.cd_tile_typing_sub, () -> {
             dialog.dismiss();
             // Let the dialog's window go first, or the keyboard opens for it.
@@ -233,6 +238,25 @@ public final class StreamMenu {
         return root;
     }
 
+    /** Resolution choices; picking one reconnects the stream at that size. */
+    private void pickResolution() {
+        android.graphics.Point screen = new android.graphics.Point();
+        activity.getWindowManager().getDefaultDisplay().getRealSize(screen);
+        int sw = Math.max(screen.x, screen.y), sh = Math.min(screen.x, screen.y);
+        final int[][] sizes = {{1280, 720}, {1920, 1080}, {2560, 1440}, {3840, 2160}, {sw, sh}};
+        String[] labels = {"720p (1280 × 720)", "1080p (1920 × 1080)", "1440p (2560 × 1440)", "4K (3840 × 2160)",
+                activity.getString(R.string.cd_res_this_screen, sw, sh)};
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.cd_tile_resolution)
+                .setItems(labels, (d, which) -> {
+                    if (dialog != null) dialog.dismiss();
+                    android.widget.Toast.makeText(activity, R.string.cd_res_reconnecting, android.widget.Toast.LENGTH_SHORT).show();
+                    host.setStreamResolution(sizes[which][0], sizes[which][1]);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private void askLayoutName(com.limelight.binding.input.virtual_controller.VirtualController osc) {
         final android.widget.EditText name = new android.widget.EditText(activity);
         name.setHint(R.string.cd_osc_name);
@@ -287,6 +311,13 @@ public final class StreamMenu {
             onToggle.toggled(state[0]);
             paint.run();
         });
+        return t;
+    }
+
+    private View actionTileText(int icon, int name, String sub, Runnable onClick) {
+        LinearLayout t = tileBase(icon, name);
+        ((TextView) t.getChildAt(2)).setText(sub);
+        t.setOnClickListener(v -> onClick.run());
         return t;
     }
 
