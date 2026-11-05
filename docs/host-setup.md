@@ -16,9 +16,11 @@ Current patches:
 
 Plus the **host agent** (`clouddeck-agent.service`, root). It handles:
 - USB passthrough (ADR-0006);
-- switching the display mode during multi-monitor or "match resolution"
-  streams (ADR-0007), restored when the stream ends. Logs:
-  `journalctl -u clouddeck-agent -b`.
+- switching the display mode during multi-monitor or "fit to window" streams
+  (ADR-0007), restored when the stream ends;
+- clipboard sync through Plasma's Klipper (ADR-0008).
+
+Logs: `journalctl -u clouddeck-agent -b`.
 
 To check by hand that KWin accepts a wide mode, run `./display-test.sh 3840 1080 60`
 (as yourself, not with sudo) in Konsole inside a stream, from the unpacked
@@ -40,7 +42,7 @@ launcher starts **stock** Sunshine instead when:
 
 1. In the VM's browser (signed in to GitHub), open the repo's **Releases** and
    download `clouddeck-host-*.tar.gz` and its `.sha256` from the newest
-   release that has them (currently *Phase 4 display test 1*).
+   release that has them (currently *Phase 5 clipboard test 1*).
 2. In Konsole:
    ```sh
    cd ~/Downloads
