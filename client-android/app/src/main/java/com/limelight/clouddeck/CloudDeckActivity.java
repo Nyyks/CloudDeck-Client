@@ -13,9 +13,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,9 +60,6 @@ public class CloudDeckActivity extends Activity {
     private static final long HOST_TIMEOUT_MS = 2 * 60_000;
     private static final int SUNSHINE_HTTP_PORT = 47989;
 
-    public static final String PREF_UI_STYLE = "uiStyle";
-    public static final String UI_CONSOLE = "console";
-    public static final String UI_LAUNCHER = "launcher";
     // Moonlight's own preference keys (PreferenceConfiguration)
     private static final String PREF_FLIP_FACE_BUTTONS = "checkbox_flip_face_buttons";
     private static final String PREF_ONSCREEN_CONTROLLER = "checkbox_show_onscreen_controls";
@@ -103,7 +97,7 @@ public class CloudDeckActivity extends Activity {
 
     // home (re-bound each time a layout is inflated)
     private View homeRoot, progressRow;
-    private TextView statusView, hostView, statusLine, headlineView, progressView, errorView;
+    private TextView statusView, hostView, headlineView, progressView, errorView;
     private Button connectButton;
     private CompoundButton autoStop, micBox, nintendoBox, oscBox;
     private CompoundButton mouseStartBox, mouseHoldBox;
@@ -113,9 +107,7 @@ public class CloudDeckActivity extends Activity {
         // Android 13+ applies app languages itself; older versions need the activity rebuilt.
         if ("list_languages".equals(key) && Build.VERSION.SDK_INT < 33) recreate();
     };
-    private String uiStyle = UI_CONSOLE;
     private String page = "home";          // console page, or the launcher's settings tab
-    private boolean drawerOpen;            // launcher settings panel
     private boolean focusPending;          // give Connect the D-pad focus once the home shows
     private boolean binding;               // suppresses listeners while switches are refreshed
     private Object backCallback;           // android.window.OnBackInvokedCallback on API 33+
@@ -123,6 +115,13 @@ public class CloudDeckActivity extends Activity {
     private static final int REQ_MIC = 7;
 
     private final Runnable pollTask = this::refreshStatus;
+
+    // Debug builds only: "adb shell am start -n <pkg>/com.limelight.clouddeck.CloudDeckActivity --ez cd_preview_home true"
+    // shows the home without signing in, so the layouts can be checked on an emulator. No CloudDeck
+    // calls are made (status refreshes need a real session).
+    private boolean previewHome;
+
+    private boolean showHome() { return provider.isSignedIn() || previewHome; }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,6 +131,7 @@ public class CloudDeckActivity extends Activity {
         moonlightPrefs().registerOnSharedPreferenceChangeListener(languageListener);
         provider = new CloudDeckProvider(this);
         prefs = getSharedPreferences("clouddeck", MODE_PRIVATE);
+        previewHome = com.limelight.BuildConfig.DEBUG && getIntent().getBooleanExtra("cd_preview_home", false);
 
         restoringView = findViewById(R.id.cd_restoring);
         signInView = findViewById(R.id.cd_signin);
@@ -217,7 +217,6 @@ public class CloudDeckActivity extends Activity {
         // The activity handles rotation and resizing itself (configChanges), so pick the
         // phone or wide layout again and come back to the same page.
         String keepPage = page;
-        boolean keepDrawer = drawerOpen;
         View focused = getCurrentFocus();
         boolean hadFocus = focused != null && homeRoot != null && focused != connectButton;
         findViewById(R.id.cd_signin_card).getLayoutParams().width =
@@ -225,8 +224,7 @@ public class CloudDeckActivity extends Activity {
         inflateHome();
         focusPending = !hadFocus;
         render();
-        if (keepDrawer) openSettings(keepPage, false);
-        else if (!"home".equals(keepPage) && !isLauncher()) openSettings(keepPage, false);
+        if (!"home".equals(keepPage)) openSettings(keepPage);
     }
 
     @Override
@@ -264,20 +262,14 @@ public class CloudDeckActivity extends Activity {
         if (view != null) view.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
-    private boolean isLauncher() { return UI_LAUNCHER.equals(uiStyle); }
-
     private SharedPreferences moonlightPrefs() { return PreferenceManager.getDefaultSharedPreferences(this); }
 
-    /** (Re)builds the home screen in the layout chosen in the settings. */
+    /** (Re)builds the home screen: the phone or wide (layout-w720dp) arrangement. */
     private void inflateHome() {
-        uiStyle = UI_LAUNCHER.equals(prefs.getString(PREF_UI_STYLE, UI_CONSOLE)) ? UI_LAUNCHER : UI_CONSOLE;
         removePrefsFragment();
         homeContainer.removeAllViews();
-        homeRoot = getLayoutInflater().inflate(isLauncher() ? R.layout.cd_home_launcher : R.layout.cd_home_console,
-                homeContainer, false);
+        homeRoot = getLayoutInflater().inflate(R.layout.cd_home_console, homeContainer, false);
         homeContainer.addView(homeRoot);
-        findViewById(R.id.cd_root).setBackgroundColor(color(isLauncher() ? R.color.cd_bg_launcher : R.color.cd_bg));
-        drawerOpen = false;
         focusPending = true;
 
         progressRow = v(R.id.cd_progress_row);
@@ -285,7 +277,6 @@ public class CloudDeckActivity extends Activity {
         errorView = v(R.id.cd_error);
         statusView = v(R.id.cd_status);
         hostView = v(R.id.cd_host);
-        statusLine = v(R.id.cd_status_line);
         headlineView = v(R.id.cd_headline);
         connectButton = v(R.id.cd_connect);
         connectButton.setOnClickListener(x -> startAndConnect());
@@ -322,42 +313,25 @@ public class CloudDeckActivity extends Activity {
         click(R.id.cd_osc_xbox, () -> { OnScreenController.setStyle(this, OnScreenController.STYLE_XBOX); renderToggles(); });
         click(R.id.cd_osc_ps, () -> { OnScreenController.setStyle(this, OnScreenController.STYLE_PLAYSTATION); renderToggles(); });
         click(R.id.cd_controllers, () -> startActivity(new Intent(this, ControllerProfilesActivity.class)));
-        click(R.id.cd_style_console, () -> setUiStyle(UI_CONSOLE));
-        click(R.id.cd_style_launcher, () -> setUiStyle(UI_LAUNCHER));
         click(R.id.cd_signout, this::signOut);
         click(R.id.cd_side_signout, this::signOut);
         click(R.id.cd_manage_pcs, this::managePcs);
-        click(R.id.cd_link_pcs, this::managePcs);
 
         // quick actions on the home
         click(R.id.cd_chip_mic, () -> micBox.toggle());
         click(R.id.cd_tile_mic, () -> micBox.toggle());
         click(R.id.cd_chip_osc, () -> oscBox.toggle());
-        click(R.id.cd_chip_nintendo, () -> nintendoBox.toggle());
-        click(R.id.cd_tile_stream, () -> openSettings("stream", false));
+        click(R.id.cd_tile_stream, () -> openSettings("stream"));
         click(R.id.cd_tile_power, this::powerAction);
-        click(R.id.cd_link_power, this::powerAction);
         click(R.id.cd_tile_stop, this::confirmStop);
-        click(R.id.cd_link_stop, this::confirmStop);
 
-        // console pages / launcher tabs
+        // pages
         click(R.id.cd_nav_home, () -> showPage("home"));
         click(R.id.cd_nav_stream, () -> showPage("stream"));
         click(R.id.cd_nav_devices, () -> showPage("devices"));
         click(R.id.cd_nav_account, () -> showPage("account"));
-        click(R.id.cd_tab_stream, () -> showPage("stream"));
-        click(R.id.cd_tab_devices, () -> showPage("devices"));
-        click(R.id.cd_tab_account, () -> showPage("account"));
-        click(R.id.cd_settings, () -> openSettings("stream", false));
-        click(R.id.cd_drawer_close, this::closeDrawer);
-        click(R.id.cd_scrim, this::closeDrawer);
 
-        if (isLauncher()) {
-            int w = getResources().getConfiguration().screenWidthDp;
-            if (w < 600) v(R.id.cd_drawer).getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
-            if (w < 480) setVisible(R.id.cd_chip_nintendo, false);
-        }
-        showPage(isLauncher() ? "stream" : "home");
+        showPage("home");
         renderToggles();
         updateBackCallback();
     }
@@ -372,9 +346,9 @@ public class CloudDeckActivity extends Activity {
         setVisible(R.id.cd_page_account, "account".equals(p));
         int[][] marks = {
             {R.id.cd_nav_home, "home".equals(p) ? 1 : 0},
-            {R.id.cd_nav_stream, "stream".equals(p) ? 1 : 0}, {R.id.cd_tab_stream, "stream".equals(p) ? 1 : 0},
-            {R.id.cd_nav_devices, "devices".equals(p) ? 1 : 0}, {R.id.cd_tab_devices, "devices".equals(p) ? 1 : 0},
-            {R.id.cd_nav_account, "account".equals(p) ? 1 : 0}, {R.id.cd_tab_account, "account".equals(p) ? 1 : 0},
+            {R.id.cd_nav_stream, "stream".equals(p) ? 1 : 0},
+            {R.id.cd_nav_devices, "devices".equals(p) ? 1 : 0},
+            {R.id.cd_nav_account, "account".equals(p) ? 1 : 0},
         };
         for (int[] m : marks) {
             View b = v(m[0]);
@@ -391,61 +365,20 @@ public class CloudDeckActivity extends Activity {
     }
 
     private int navIdFor(String p) {
-        if (isLauncher()) {
-            return "devices".equals(p) ? R.id.cd_tab_devices : "account".equals(p) ? R.id.cd_tab_account : R.id.cd_tab_stream;
-        }
         return "stream".equals(p) ? R.id.cd_nav_stream : "devices".equals(p) ? R.id.cd_nav_devices
                 : "account".equals(p) ? R.id.cd_nav_account : R.id.cd_nav_home;
     }
 
-    /** Shows a settings section: a console page, or the launcher's panel on that tab. */
-    private void openSettings(String tab, boolean focusStyle) {
-        if (isLauncher()) openDrawer();
+    /** Shows a settings page and puts the D-pad focus on its entry in the navigation. */
+    private void openSettings(String tab) {
         showPage(tab);
-        View target = focusStyle ? v(isLauncher() ? R.id.cd_style_launcher : R.id.cd_style_console)
-                                 : v(navIdFor(tab));
+        View target = v(navIdFor(tab));
         if (target != null) target.requestFocus();
     }
 
-    private void openDrawer() {
-        View drawer = v(R.id.cd_drawer);
-        if (drawer == null || drawerOpen) return;
-        drawerOpen = true;
-        ((ViewGroup) v(R.id.cd_launcher_main)).setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        setVisible(R.id.cd_scrim, true);
-        drawer.setVisibility(View.VISIBLE);
-        drawer.setTranslationX(drawer.getWidth() > 0 ? drawer.getWidth() : dp(400));
-        drawer.animate().translationX(0).setDuration(180).start();
-        updateBackCallback();
-    }
-
-    private void closeDrawer() {
-        View drawer = v(R.id.cd_drawer);
-        if (drawer == null || !drawerOpen) return;
-        drawerOpen = false;
-        ((ViewGroup) v(R.id.cd_launcher_main)).setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
-        setVisible(R.id.cd_scrim, false);
-        drawer.animate().translationX(drawer.getWidth()).setDuration(160)
-                .withEndAction(() -> { if (!drawerOpen) drawer.setVisibility(View.GONE); }).start();
-        View settings = v(R.id.cd_settings);
-        if (settings != null) settings.requestFocus();
-        updateBackCallback();
-    }
-
-    private void setUiStyle(String style) {
-        if (style.equals(uiStyle)) return;
-        prefs.edit().putString(PREF_UI_STYLE, style).apply();
-        inflateHome();
-        focusPending = false;
-        render();
-        // Take the user straight back to the switch they used, now in the other layout.
-        ui.post(() -> openSettings("account", true));
-    }
-
-    /** Back (also gamepad B and the TV remote): close the panel, or go back to Home first. */
+    /** Back (also gamepad B and the TV remote): go back to Home first. */
     private boolean handleBack() {
-        if (drawerOpen) { closeDrawer(); return true; }
-        if (!isLauncher() && !"home".equals(page) && provider.isSignedIn()) {
+        if (!"home".equals(page) && showHome()) {
             showPage("home");
             View nav = v(R.id.cd_nav_home);
             if (nav != null) nav.requestFocus();
@@ -455,7 +388,7 @@ public class CloudDeckActivity extends Activity {
     }
 
     private boolean wantsBack() {
-        return drawerOpen || (!isLauncher() && !"home".equals(page));
+        return !"home".equals(page);
     }
 
     private void updateBackCallback() {
@@ -481,10 +414,9 @@ public class CloudDeckActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        // Menu / gamepad Start open the settings (and close the launcher's panel again).
-        if ((keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_BUTTON_START) && provider.isSignedIn()) {
-            if (drawerOpen) closeDrawer();
-            else openSettings("stream", false);
+        // Menu / gamepad Start open the settings.
+        if ((keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_BUTTON_START) && showHome()) {
+            openSettings("stream");
             return true;
         }
         return super.onKeyDown(keyCode, event);
@@ -524,7 +456,6 @@ public class CloudDeckActivity extends Activity {
 
     private void signOut() {
         cancel.set(true);
-        if (drawerOpen) closeDrawer();
         worker.execute(() -> { provider.signOut(); ui.post(() -> { machine = new CloudDeckApi.Machine(); render(); }); });
     }
 
@@ -585,7 +516,7 @@ public class CloudDeckActivity extends Activity {
     }
 
     private void render() {
-        boolean signedIn = provider.isSignedIn();
+        boolean signedIn = showHome();
         boolean busy = connecting.get();
         restoringView.setVisibility(restoring ? View.VISIBLE : View.GONE);
         signInView.setVisibility(!restoring && !signedIn ? View.VISIBLE : View.GONE);
@@ -610,13 +541,6 @@ public class CloudDeckActivity extends Activity {
         }
         String host = provider.hostAddress(machine);
         if (hostView != null) hostView.setText(machine.region.isEmpty() ? host : machine.region + "  ·  " + host);
-        if (statusLine != null) {
-            String line = off ? getString(R.string.cd_status_line_off)
-                    : statusLabel(s) + (running && !machine.region.isEmpty() ? "  ·  " + machine.region : "");
-            SpannableStringBuilder b = new SpannableStringBuilder("●  ").append(line);
-            b.setSpan(new ForegroundColorSpan(sc[0]), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            statusLine.setText(b);
-        }
         if (headlineView != null) {
             headlineView.setText(running ? R.string.cd_headline_running : off ? R.string.cd_headline_off
                     : CloudDeckApi.STATUS_STARTING.equals(s) ? R.string.cd_headline_starting
@@ -636,16 +560,12 @@ public class CloudDeckActivity extends Activity {
         if (powerTitle != null) powerTitle.setText(off ? R.string.cd_start : R.string.cd_restart);
         TextView powerSub = v(R.id.cd_tile_power_sub);
         if (powerSub != null) powerSub.setText(off ? R.string.cd_tile_start_sub : R.string.cd_tile_restart_sub);
-        Button powerLink = v(R.id.cd_link_power);
-        if (powerLink != null) powerLink.setText(off ? R.string.cd_start : R.string.cd_restart);
         boolean canPower = !busy && (off || running);
         setEnabledDim(v(R.id.cd_tile_power), canPower);
-        setEnabledDim(v(R.id.cd_link_power), canPower);
         setEnabledDim(v(R.id.cd_tile_stop), !busy && running);
-        setEnabledDim(v(R.id.cd_link_stop), !busy && running);
 
         String email = provider.getEmail();
-        for (int id : new int[]{R.id.cd_side_email, R.id.cd_top_email, R.id.cd_account_email}) {
+        for (int id : new int[]{R.id.cd_side_email, R.id.cd_account_email}) {
             TextView t = v(id);
             if (t != null) t.setText(email);
         }
@@ -678,8 +598,6 @@ public class CloudDeckActivity extends Activity {
         if (chipMic != null) { chipMic.setActivated(mic); chipMic.setText(mic ? R.string.cd_chip_mic_on : R.string.cd_chip_mic_off); }
         View chipOsc = v(R.id.cd_chip_osc);
         if (chipOsc != null) chipOsc.setActivated(osc);
-        View chipNintendo = v(R.id.cd_chip_nintendo);
-        if (chipNintendo != null) chipNintendo.setActivated(nintendo);
         View tileMic = v(R.id.cd_tile_mic);
         if (tileMic != null) tileMic.setActivated(mic);
         TextView tileMicSub = v(R.id.cd_tile_mic_sub);
@@ -687,9 +605,6 @@ public class CloudDeckActivity extends Activity {
         View xbox = v(R.id.cd_osc_xbox), psb = v(R.id.cd_osc_ps);
         if (xbox != null) xbox.setSelected(!ps);
         if (psb != null) psb.setSelected(ps);
-        View sc = v(R.id.cd_style_console), sl = v(R.id.cd_style_launcher);
-        if (sc != null) sc.setSelected(!isLauncher());
-        if (sl != null) sl.setSelected(isLauncher());
     }
 
     // ------------------------------------------------------------------ account

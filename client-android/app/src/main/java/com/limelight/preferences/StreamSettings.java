@@ -681,6 +681,18 @@ public class StreamSettings extends Activity {
         }
 
         private static void cdcRemove(PreferenceScreen screen, String key) {
+            // Entries that depend on this one would throw "Dependency not found" when the list is
+            // bound; detach them first (they stay usable: e.g. analog scrolling applies to the
+            // controller mouse mode however it is switched on).
+            for (int i = 0; i < screen.getPreferenceCount(); i++) {
+                Preference p = screen.getPreference(i);
+                if (!(p instanceof PreferenceCategory)) continue;
+                PreferenceCategory cat = (PreferenceCategory) p;
+                for (int j = 0; j < cat.getPreferenceCount(); j++) {
+                    Preference child = cat.getPreference(j);
+                    if (key.equals(child.getDependency())) child.setDependency(null);
+                }
+            }
             for (int i = 0; i < screen.getPreferenceCount(); i++) {
                 Preference p = screen.getPreference(i);
                 if (p instanceof PreferenceCategory) {

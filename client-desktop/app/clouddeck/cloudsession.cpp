@@ -83,9 +83,6 @@ bool CloudSession::clipboardSync() const { return ClipboardSync::enabled(); }
 void CloudSession::setClipboardSync(bool v) { ClipboardSync::setEnabled(v); emit settingsChanged(); }
 bool CloudSession::autoReconnectEnabled() { return QSettings().value("clouddeck/autoReconnect", true).toBool(); }
 void CloudSession::setAutoReconnect(bool v) { QSettings().setValue("clouddeck/autoReconnect", v); emit settingsChanged(); }
-// Phase 7 (docs/adr/0013-home-layouts.md). Unknown values fall back to the console layout.
-QString CloudSession::uiStyle() const { return QSettings().value("clouddeck/uiStyle", "console").toString() == QLatin1String("launcher") ? "launcher" : "console"; }
-void CloudSession::setUiStyle(const QString& v) { QSettings().setValue("clouddeck/uiStyle", v == QLatin1String("launcher") ? "launcher" : "console"); emit settingsChanged(); }
 // Same keys as OnScreenController::styleSetting/enabledSetting (kept here so the API tests need no overlay code).
 QString CloudSession::controllerStyle() const { return QSettings().value("clouddeck/osc/style", "xbox").toString() == QLatin1String("playstation") ? "playstation" : "xbox"; }
 void CloudSession::setControllerStyle(const QString& v) { QSettings().setValue("clouddeck/osc/style", v == QLatin1String("playstation") ? "playstation" : "xbox"); emit settingsChanged(); }

@@ -72,14 +72,12 @@
     <string name="cd_nav_stream">Stream</string>
     <string name="cd_nav_devices">Devices</string>
     <string name="cd_nav_account">Account</string>
-    <string name="cd_settings">Settings</string>
     <string name="cd_close">Close</string>
     <string name="cd_headline_running">Ready to stream</string>
     <string name="cd_headline_off">Your CloudDeck is off</string>
     <string name="cd_headline_starting">Your CloudDeck is starting</string>
     <string name="cd_headline_stopping">Your CloudDeck is stopping</string>
     <string name="cd_headline_unknown">Checking your CloudDeck…</string>
-    <string name="cd_status_line_off">Off · starts in about a minute</string>
     <string name="cd_starting_ellipsis">Starting…</string>
     <string name="cd_stopping_ellipsis">Stopping…</string>
     <string name="cd_stream_info">%1$d × %2$d · %3$d FPS · %4$s Mbit/s</string>
@@ -94,7 +92,6 @@
     <string name="cd_chip_mic_on">Mic on</string>
     <string name="cd_chip_mic_off">Mic off</string>
     <string name="cd_chip_osc">On-screen controller</string>
-    <string name="cd_chip_nintendo">Nintendo layout</string>
     <string name="cd_card_quality">Stream quality</string>
     <string name="cd_quality_hint">Resolution, frame rate, bitrate and codec are in the streaming settings.</string>
     <string name="cd_all_stream_settings">All streaming settings…</string>
@@ -112,20 +109,16 @@
     <string name="cd_style_playstation">PlayStation</string>
     <string name="cd_controllers_more">Controller profiles…</string>
     <string name="cd_combo_hint">On a controller: Select+L1+R1+B opens the CloudDeck menu, Select+L1+R1+Y the on-screen keyboard.</string>
-    <string name="cd_card_appearance">Appearance</string>
-    <string name="cd_ui_style">Home screen layout</string>
-    <string name="cd_ui_style_hint">Console: pages and tiles. Launcher: one big button, settings in a side panel.</string>
-    <string name="cd_ui_console">Console</string>
-    <string name="cd_ui_launcher">Launcher</string>
     <string name="cd_card_account">Account</string>
     <string name="cd_use_other_host">Use another streaming host (Manage PCs)</string>
     <!-- in-stream menu rev. 3 and controller mouse mode (docs/controller-mouse.md) -->
     <string name="cd_tile_muted">Muted</string>
     <string name="cd_tile_stats">Stats</string>
     <string name="cd_tile_controller">Controller</string>
+    <string name="cd_tile_osc">On-screen pad</string>
+    <string name="cd_tile_shown">Shown</string>
     <string name="cd_tile_as_mouse">As mouse</string>
     <string name="cd_tile_as_gamepad">As gamepad</string>
-    <string name="cd_tile_nintendo">Nintendo</string>
     <string name="cd_tile_typing">Keyboard</string>
     <string name="cd_tile_typing_sub">Typing</string>
     <string name="cd_tile_full_keyboard">Full keyboard</string>

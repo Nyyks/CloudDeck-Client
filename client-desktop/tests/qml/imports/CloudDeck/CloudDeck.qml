@@ -20,7 +20,6 @@ QtObject {
     property int autoStopIdleMinutes: 30
     property bool clipboardSync: true
     property bool autoReconnect: true
-    property string uiStyle: "console"
     property string controllerStyle: "xbox"
     property bool onScreenController: false
     property bool gamepadMouseAtStart: false

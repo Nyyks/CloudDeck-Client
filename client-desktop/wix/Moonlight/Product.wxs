@@ -20,6 +20,12 @@
 
     <Property Id="APPDATAFOLDER" Value="%LOCALAPPDATA%\CloudDeck-Client" />
 
+    <!-- CloudDeck-Client: we ship the .msi itself, not Moonlight's setup bundle, which is what
+         normally sets this. Without a default, DesktopShortcutInstallState is written as an empty
+         integer and the install fails ("Could not write value ..."). msiexec ADDDESKTOPSHORTCUT=0
+         still skips the desktop shortcut. -->
+    <Property Id="ADDDESKTOPSHORTCUT" Value="1" Secure="yes" />
+
     <!-- There's no way to delete a registry key on uninstall but not major upgrade, so
         we have to roll our own deletion via custom action -->
     <CustomAction Id="DeleteRegistryKey"

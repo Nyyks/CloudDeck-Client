@@ -6,20 +6,6 @@
     android:orientation="vertical">
 
     <LinearLayout style="@style/CdCard">
-        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_appearance" />
-        <TextView style="@style/CdBody" android:paddingBottom="2dp" android:text="@string/cd_ui_style" />
-        <TextView style="@style/CdHint" android:text="@string/cd_ui_style_hint" />
-        <LinearLayout
-            style="@style/CdSegmentTrack"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="14dp"
-            android:layout_marginBottom="12dp">
-            <Button android:id="@+id/cd_style_console" style="@style/CdSegment" android:text="@string/cd_ui_console" />
-            <Button android:id="@+id/cd_style_launcher" style="@style/CdSegment" android:text="@string/cd_ui_launcher" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout style="@style/CdCard">
         <TextView style="@style/CdCardTitle" android:text="@string/cd_card_vm" />
         <Switch android:id="@+id/cd_autostop" style="@style/CdSwitchRow" android:text="@string/cd_auto_stop" />
         <TextView style="@style/CdHint" android:text="@string/cd_auto_stop_hint" />

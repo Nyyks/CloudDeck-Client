@@ -46,11 +46,14 @@
             android:background="@drawable/cd_bg_connect"
             android:drawableTop="@drawable/cd_ic_play"
             android:paddingTop="30dp"
+            android:paddingStart="22dp"
+            android:paddingEnd="22dp"
+            android:maxLines="2"
             android:stateListAnimator="@null"
             android:text="@string/cd_connect"
             android:textAllCaps="false"
             android:textColor="#ffffff"
-            android:textSize="17sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/cd_headline"

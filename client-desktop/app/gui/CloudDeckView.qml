@@ -1,7 +1,6 @@
-// CloudDeck-Client: home screen. Sign in, then one of two layouts the user picks in the
-// settings: "console" (CdHomeConsole.qml) or "launcher" (CdHomeLauncher.qml). Both are built
-// from the same settings pages (CdPage*.qml) and work with touch, mouse, keyboard, gamepads
-// and TV remotes. See docs/adr/0013-home-layouts.md.
+// CloudDeck-Client: home screen. Sign in, then the home (CdHomeConsole.qml: sidebar pages, or a
+// header with page chips on phones), built from the settings pages (CdPage*.qml). Works with touch,
+// mouse, keyboard, gamepads and TV remotes. See docs/adr/0013-home-layouts.md.
 import QtQuick 2.9
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
@@ -95,12 +94,6 @@ FocusScope {
         var next = it.nextItemInFocusChain(forward)
         if (next) next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
     }
-    function setUiStyle(style) {
-        var reason = keyReason()
-        CloudDeck.uiStyle = style
-        // The other layout loads; take the user straight back to the switch they used.
-        Qt.callLater(function() { if (homeLoader.item) homeLoader.item.openSettings("style", reason) })
-    }
     function openSettings() {
         if (homeLoader.item) homeLoader.item.openSettings("", Qt.TabFocusReason)
     }
@@ -184,7 +177,7 @@ FocusScope {
     Keys.onMenuPressed: openSettings()
     Keys.onHangupPressed: openSettings()
 
-    Rectangle { anchors.fill: parent; color: CloudDeck.uiStyle === "launcher" ? T.bgLauncher : T.bg }
+    Rectangle { anchors.fill: parent; color: T.bg }
 
     // ---------------- restoring
     Row {
@@ -216,7 +209,7 @@ FocusScope {
         anchors.fill: parent
         focus: CloudDeck.signedIn
         active: CloudDeck.signedIn
-        source: CloudDeck.uiStyle === "launcher" ? "CdHomeLauncher.qml" : "CdHomeConsole.qml"
+        source: "CdHomeConsole.qml"
     }
 
     ControllerProfiles { id: controllerProfiles; parent: Overlay.overlay }

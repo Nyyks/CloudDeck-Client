@@ -15,7 +15,8 @@ ColumnLayout {
     id: page
     spacing: 16
 
-    function focusStyle(reason) { styleSwitch.focusCurrent(reason) }
+    // After a language change the home is rebuilt and focus returns to the language list.
+    function focusStyle(reason) { languageRow.combo.forceActiveFocus(reason) }
 
     readonly property var idleChoices: [0, 15, 30, 60, 120, 240]
     function idleLabel(m) { return m === 0 ? qsTr("Never") : (m < 60 ? qsTr("After %1 minutes").arg(m)
@@ -57,35 +58,6 @@ ColumnLayout {
 
     CdCard {
         title: qsTr("Appearance")
-        GridLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: 14
-            Layout.rightMargin: 14
-            Layout.topMargin: 6
-            Layout.bottomMargin: 8
-            columns: width < 520 ? 1 : 2
-            columnSpacing: 16
-            rowSpacing: 10
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 3
-                Text { Layout.fillWidth: true; text: qsTr("Home screen layout"); color: T.text; font.pixelSize: 15 }
-                Text {
-                    Layout.fillWidth: true
-                    wrapMode: Text.Wrap
-                    color: T.muted
-                    font.pixelSize: 13
-                    text: qsTr("Console: pages in a sidebar. Launcher: one big button, settings in a drawer.")
-                }
-            }
-            CdSegmented {
-                id: styleSwitch
-                Layout.preferredWidth: 260
-                options: [{ label: qsTr("Console"), value: "console" }, { label: qsTr("Launcher"), value: "launcher" }]
-                value: CloudDeck.uiStyle
-                onPicked: function(v) { cdView.setUiStyle(v) }
-            }
-        }
         CdChoiceRow {
             id: languageRow
             text: qsTr("Language")

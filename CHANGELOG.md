@@ -4,16 +4,15 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 ### Added
+- Raspberry Pi / ARM64 Linux AppImage, built locally with `tools/build-linux-arm64.sh` (not verified yet).
 - Controller as mouse (docs/controller-mouse.md): Select+L1+R1+A switches a controller between gamepad
   and mouse, a menu tile does it for all controllers, and controllers can start as a mouse. Desktop and Android.
 - One settings menu: Moonlight's streaming settings are part of the CloudDeck settings (ADR-0013 amendment);
   new Mouse & keyboard page on desktop; Moonlight's list is the Stream page on Android.
 - Tidier in-stream menus with quick toggle tiles on desktop and Android (ADR-0009 rev. 3).
-- Two home screen layouts with a switch in the settings (ADR-0013, Phase 7):
-  - **Console**: sidebar pages, a round Connect button and tiles.
-  - **Launcher**: one big button, with the settings in a side panel.
-  - Both have shared settings pages, at least 48 px touch targets and visible focus
-    rings, and work with D-pad, gamepad and TV remote on desktop and Android.
+- New home screen (ADR-0013, Phase 7): sidebar pages, a round Connect button and tiles, at least
+  48 px touch targets and visible focus rings; works with D-pad, gamepad and TV remote on desktop and
+  Android. (A second "Launcher" layout was tried and removed at the owner's request.)
   - Desktop has headless QML navigation tests with screenshots.
 - Host install (`host/install/`): patched Sunshine with an automatic fallback to stock,
   plus the Go host agent as a system unit. The CloudDeck default app list is kept.
@@ -45,7 +44,12 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - In-stream menu on Android: a CloudDeck button or Back opens mic mute, stats, keyboard,
   disconnect and shut down (ADR-0009).
 - The official CloudDeck mark as the app icon and the menu button (private use; see THIRD_PARTY_NOTICES).
+
 ### Fixed
+- Windows: the .msi failed when run directly ("Could not write value DesktopShortcutInstallState");
+  it now creates the desktop shortcut by default.
+- Android: opening the Stream settings crashed the app (Moonlight preferences that others depend on were
+  removed without detaching them).
 - Start and connect timed out when the host was already known under a new VM IP.
 - HTTP/2 errors with the CloudFront API endpoint (desktop now uses HTTP/1.1).
 - A second stream in the same client run hung on "Loading app list", then failed with

@@ -20,19 +20,13 @@
    - pairs automatically the first time: no address to copy, no PIN to type,
    - launches the `CloudDeck` app and starts streaming.
 
-## Home screen: Console or Launcher
+## Home screen
 
-The home screen comes in two layouts. Switch between them under **General → Appearance**
-(desktop) or **Account → Appearance** (Android) → **Home screen layout**.
-
-- **Console** (default): a sidebar with pages. On phones it becomes a strip of
-  chips under the header.
-  - Desktop pages: Home, Display, Audio & mic, Controllers, USB devices, Network, General.
-  - Android pages: Home, Stream, Devices, Account.
-  - Home has the round **Connect** button, quick toggles and tiles for
-    Restart, Stop and more.
-- **Launcher**: one big **Start and connect** button with a few quick toggles.
-  **Settings** (top right) opens a side panel with Stream, Devices and Account tabs.
+A sidebar with pages. On phones it becomes a strip of chips under the header.
+- Desktop pages: Home, Display, Audio & mic, Controllers, Mouse & keyboard, USB devices,
+  Network, General. They include all of Moonlight's streaming settings.
+- Android pages: Home, Stream (Moonlight's streaming settings), Devices, Account.
+- Home has the round **Connect** button, quick toggles and tiles for Restart, Stop and more.
 
 Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
 
@@ -40,7 +34,7 @@ Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
 |---|---|
 | D-pad or arrow keys | Move between controls. A ring shows where you are. |
 | A, Enter or Space | Press the control. |
-| B, Back or Escape | Close the settings panel, or go back to Home. |
+| B, Back or Escape | Go back to the sidebar, then to Home. |
 | Start, Menu or X | Open the settings. |
 | Select+L1+R1+A (in a stream) | Switch the controller between gamepad and mouse (docs/controller-mouse.md). |
 

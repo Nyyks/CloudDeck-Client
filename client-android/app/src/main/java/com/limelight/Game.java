@@ -154,6 +154,25 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
 
         @Override
+        public boolean isOnScreenController() { return virtualController != null; }
+
+        @Override
+        public void setOnScreenController(boolean on) {
+            // CloudDeck-Client: live toggle from the in-stream menu; also the default for the next stream
+            prefConfig.onscreenController = on; // ControllerHandler includes pad 1 in the mask while on
+            android.preference.PreferenceManager.getDefaultSharedPreferences(Game.this)
+                    .edit().putBoolean("checkbox_show_onscreen_controls", on).apply();
+            if (on && virtualController == null) {
+                virtualController = new VirtualController(controllerHandler, (FrameLayout) streamView.getParent(), Game.this);
+                virtualController.refreshLayout();
+                virtualController.show();
+            } else if (!on && virtualController != null) {
+                virtualController.hide();
+                virtualController = null;
+            }
+        }
+
+        @Override
         public VirtualController virtualController() {
             return virtualController;
         }

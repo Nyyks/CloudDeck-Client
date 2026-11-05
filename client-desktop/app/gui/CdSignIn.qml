@@ -1,4 +1,4 @@
-// Sign-in card, shared by both home layouts.
+// Sign-in card shown before the home screen.
 import QtQuick 2.9
 import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.3
@@ -30,7 +30,7 @@ FocusScope {
         function onMfaRequiredChanged() { signIn.focusDefault(Qt.OtherFocusReason) }
     }
 
-    Rectangle { anchors.fill: parent; color: CloudDeck.uiStyle === "launcher" ? T.bgLauncher : T.bg }
+    Rectangle { anchors.fill: parent; color: T.bg }
 
     Flickable {
         id: flick
@@ -117,9 +117,6 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.topMargin: 6
                     kind: "primary"
-                    fill: CloudDeck.uiStyle === "launcher" ? T.launcherAccent : T.accent
-                    fillText: CloudDeck.uiStyle === "launcher" ? T.launcherAccentText : "#ffffff"
-                    radius: CloudDeck.uiStyle === "launcher" ? 24 : 12
                     enabled: !CloudDeck.busy
                     text: CloudDeck.mfaRequired ? qsTr("Verify") : qsTr("Sign in")
                     onClicked: signIn.submit()

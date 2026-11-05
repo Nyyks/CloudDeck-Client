@@ -50,6 +50,9 @@ public final class StreamMenu {
         default boolean hasControllers() { return false; }
         default boolean isControllerMouse() { return false; }
         default void setControllerMouse(boolean on) {}
+        // Show or hide the on-screen controller during the stream (remembered for the next one)
+        default boolean isOnScreenController() { return false; }
+        default void setOnScreenController(boolean on) {}
     }
 
     private static final String PREF_HIDE_BUTTON = "cdMenuButtonHidden";
@@ -157,8 +160,8 @@ public final class StreamMenu {
             tiles.add(tile(R.drawable.cd_ic_mouse, R.string.cd_tile_controller, host.isControllerMouse(),
                     R.string.cd_tile_as_mouse, R.string.cd_tile_as_gamepad, host::setControllerMouse));
         }
-        tiles.add(tile(R.drawable.cd_ic_devices, R.string.cd_tile_nintendo, host.isNintendoLayout(),
-                R.string.cd_on, R.string.cd_off, host::setNintendoLayout));
+        tiles.add(tile(R.drawable.cd_ic_devices, R.string.cd_tile_osc, host.isOnScreenController(),
+                R.string.cd_tile_shown, R.string.cd_off, on -> { host.setOnScreenController(on); dialog.dismiss(); }));
         tiles.add(actionTile(R.drawable.cd_ic_keyboard, R.string.cd_tile_typing, R.string.cd_tile_typing_sub, () -> {
             dialog.dismiss();
             // Let the dialog's window go first, or the keyboard opens for it.

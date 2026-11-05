@@ -101,3 +101,9 @@ there is only one settings menu.
   and its checks. Options the CloudDeck pages already show (Nintendo layout,
   on-screen controller, hold Start for mouse) are hidden there to avoid two
   switches for one setting. Moonlight's PC list still opens its own settings activity.
+
+## Amendment 2: one layout (2026-11-05)
+After testing, the owner preferred the Console layout and asked to remove the Launcher.
+The Launcher is gone on both platforms (`CdHomeLauncher.qml`, `cd_home_launcher.xml`),
+along with the *Home screen layout* switch and the `uiStyle` setting. A stored "launcher"
+value is ignored. The touch, keyboard, gamepad and TV-remote rules above still apply.

@@ -43,7 +43,6 @@ Item {
         function cleanup() {
             if (view) { view.destroy(); view = null }
             wait(20)
-            CloudDeck.uiStyle = "console"
             CloudDeck.signedIn = true
             CloudDeck.machineStatus = "running"
         }
@@ -99,73 +98,12 @@ Item {
             compare(home().page, "home")
         }
 
-        function test_launcher() {
-            CloudDeck.uiStyle = "launcher"
-            make(1280, 800)
-            verify(home().pages === undefined, "launcher layout")
-            shot("launcher-home")
-            home().openSettings("", Qt.TabFocusReason)
-            shot("launcher-drawer-stream")
-            verify(focusedText() === "Stream", focusedText())
-            keyClick(Qt.Key_Right)
-            keyClick(Qt.Key_Space)
-            compare(home().tab, "devices")
-            shot("launcher-drawer-devices")
-            keyClick(Qt.Key_Right)
-            keyClick(Qt.Key_Space)
-            shot("launcher-drawer-account")
-            keyClick(Qt.Key_Escape)                      // B closes the drawer
-            tryVerify(function() { return focusedText() === "Settings" }, 2000, focusedText())
-        }
-
-        function test_launcher_phone() {
-            CloudDeck.uiStyle = "launcher"
-            make(390, 844)
-            shot("launcher-phone")
-            home().openSettings("devices", Qt.OtherFocusReason)
-            shot("launcher-phone-drawer")
-        }
-
-        function test_launcher_keys() {
-            CloudDeck.uiStyle = "launcher"
-            make(1280, 800)
-            home().focusDefault(Qt.TabFocusReason)
-            compare(focusedText(), "Connect")
-            keyClick(Qt.Key_Space)
-            compare(CloudDeck.connects, 3)
-            keyClick(Qt.Key_Right)                       // left/right walk the row of chips
-            compare(focusedText(), "Fit to window")
-            keyClick(Qt.Key_Right)
-            compare(focusedText(), "Mic on")
-            keyClick(Qt.Key_Menu)                        // gamepad X / Start opens the settings
-            tryVerify(function() { return focusedText() === "Stream" })
-        }
-
-        function test_switch_style() {
-            make(1280, 800)
-            home().openSettings("style", Qt.TabFocusReason)
-            tryVerify(function() { return focusedText() === "Console" })
-            keyClick(Qt.Key_Right)
-            keyClick(Qt.Key_Space)                       // pick "Launcher"
-            compare(CloudDeck.uiStyle, "launcher")
-            tryVerify(function() { return home() && home().pages === undefined })
-            tryVerify(function() { return focusedText() === "Launcher" }, 3000, "back on the switch, now in the drawer")
-            shot("launcher-after-switch")
-            keyClick(Qt.Key_Left)
-            keyClick(Qt.Key_Space)
-            compare(CloudDeck.uiStyle, "console")
-            tryVerify(function() { return home() && home().pages !== undefined })
-            tryVerify(function() { return focusedText() === "Console" })
-        }
-
         function test_sign_in() {
             CloudDeck.signedIn = false
             var c = Qt.createComponent("CloudDeckView.qml")
             view = c.createObject(top, { width: 1280, height: 800 })
             wait(50)
             shot("sign-in")
-            CloudDeck.uiStyle = "launcher"
-            shot("sign-in-launcher")
         }
     }
 }

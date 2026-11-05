@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- CloudDeck-Client (docs/adr/0013-home-layouts.md): focused = 3dp ring for D-pad, gamepad and TV remotes. -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-        <item android:state_enabled="false"><shape android:shape="rectangle"><corners android:radius="32dp"/><solid android:color="#e9ecf2"/></shape></item>
-        <item android:state_pressed="true"><shape android:shape="rectangle"><corners android:radius="32dp"/><solid android:color="#c9ced8"/></shape></item>
-        <item android:state_focused="true"><shape android:shape="rectangle"><corners android:radius="32dp"/><solid android:color="#e9ecf2"/><stroke android:width="3dp" android:color="#4c6ef5"/></shape></item>
-        <item><shape android:shape="rectangle"><corners android:radius="32dp"/><solid android:color="#e9ecf2"/></shape></item>
-</selector>

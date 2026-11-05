@@ -32,10 +32,13 @@ mkdir $BUILD_FOLDER
 mkdir $DEPLOY_FOLDER
 mkdir $INSTALLER_FOLDER
 
-# Enable LTO for official builds
-export CFLAGS=-flto=auto
-export CXXFLAGS=-flto=auto
-export LDFLAGS=-flto=auto
+# Enable LTO for official builds (CloudDeck-Client: CDC_NO_LTO=1 skips it, e.g. for slow
+# emulated arm64 builds; tools/build-linux-arm64.sh)
+if [ -z "$CDC_NO_LTO" ]; then
+  export CFLAGS=-flto=auto
+  export CXXFLAGS=-flto=auto
+  export LDFLAGS=-flto=auto
+fi
 
 echo Configuring the project
 pushd $BUILD_FOLDER
@@ -46,7 +49,11 @@ pushd $BUILD_FOLDER
 # work even in X11. To avoid this, we will disable Wayland support for the AppImage.
 #
 # We disable DRM support because linuxdeploy doesn't bundle the appropriate libraries for Qt EGLFS.
-qmake6 $SOURCE_ROOT/moonlight-qt.pro CONFIG+=disable-wayland CONFIG+=disable-libdrm PREFIX=$DEPLOY_FOLDER/usr DEFINES+=APP_IMAGE || fail "Qmake failed!"
+# CloudDeck-Client: CDC_APPIMAGE_LIBDRM=1 keeps DRM (Raspberry Pi: V4L2 decoders hand frames to EGL
+# as DRM PRIME buffers, which needs libdrm).
+LIBDRM_CONFIG=CONFIG+=disable-libdrm
+[ -n "$CDC_APPIMAGE_LIBDRM" ] && LIBDRM_CONFIG=
+qmake6 $SOURCE_ROOT/moonlight-qt.pro CONFIG+=disable-wayland $LIBDRM_CONFIG PREFIX=$DEPLOY_FOLDER/usr DEFINES+=APP_IMAGE || fail "Qmake failed!"
 popd
 
 echo Compiling Moonlight in $BUILD_CONFIG configuration

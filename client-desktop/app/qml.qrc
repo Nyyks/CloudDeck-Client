@@ -19,7 +19,6 @@
         <file>gui/CdProgress.qml</file>
         <file>gui/CdSignIn.qml</file>
         <file>gui/CdHomeConsole.qml</file>
-        <file>gui/CdHomeLauncher.qml</file>
         <file>gui/CdPageDisplay.qml</file>
         <file>gui/CdPageAudio.qml</file>
         <file>gui/CdPageControllers.qml</file>

@@ -107,3 +107,20 @@ GitHub secrets.
 
 Both suites replay `shared/fixtures/clouddeck/*.json`. Change a case there, and
 both implementations must agree.
+
+## Raspberry Pi / ARM64 Linux AppImage (local)
+
+`tools/build-linux-arm64.sh` (run in WSL or on Linux with Docker) builds
+`out/linux-arm64/CloudDeckClient-<version>-linux-aarch64.AppImage`.
+- It runs the x86_64 AppImage recipe inside an arm64 Ubuntu 22.04 container through QEMU,
+  so it is slow: about an hour, less on later runs because the dependencies stay cached in
+  the `cdc-arm64-build` Docker volume.
+- Changes from the x86_64 recipe:
+  - no VA-API, VDPAU or Vulkan;
+  - FFmpeg gets the V4L2 memory-to-memory decoders;
+  - the app keeps libdrm, so hardware-decoded frames reach EGL;
+  - no LTO.
+- It needs a 64-bit OS (Raspberry Pi OS 64-bit, Ubuntu, …) with glibc 2.35 or newer.
+- Hardware decoding depends on the model: a Pi 4 decodes H.264 in hardware; a Pi 5 has
+  no H.264 decoder and its HEVC decoder needs Raspberry Pi's patched FFmpeg, so on a Pi 5
+  this build decodes in software.
