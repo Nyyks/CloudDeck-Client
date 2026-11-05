@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Test profile",
+  "buttons": { "a": "b", "b": "a", "back": "none", "paddle1": "leftShoulder", "bogus": "a", "x": "nonsense" },
+  "leftStick": { "deadzone": 0.1, "sensitivity": 1.0, "invertY": false },
+  "rightStick": { "deadzone": 0.0, "sensitivity": 2.0, "invertY": true },
+  "triggerDeadzone": 0.1,
+  "swapSticks": false
+}

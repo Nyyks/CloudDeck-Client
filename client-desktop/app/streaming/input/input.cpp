@@ -2,6 +2,7 @@
 #include "SDL_compat.h"
 #include "streaming/session.h"
 #include "clouddeck/shortcuts.h" // CloudDeck-Client
+#include "clouddeck/controllerprofile.h" // CloudDeck-Client
 #include "settings/mappingmanager.h"
 #include "path.h"
 #include "utils.h"
@@ -249,6 +250,8 @@ SdlInputHandler::~SdlInputHandler()
         if (m_GamepadState[i].controller != nullptr) {
             SDL_GameControllerClose(m_GamepadState[i].controller);
         }
+        delete m_GamepadState[i].profile; // CloudDeck-Client
+        m_GamepadState[i].profile = nullptr;
     }
 
     SDL_RemoveTimer(m_LongPressTimer);

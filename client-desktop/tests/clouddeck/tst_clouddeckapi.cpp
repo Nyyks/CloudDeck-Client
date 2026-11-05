@@ -9,6 +9,7 @@
 #include "clouddeck/clouddeckapi.h"
 #include "clouddeck/spanlayout.h"
 #include "clouddeck/netrecommend.h"
+#include "clouddeck/controllerprofile.h"
 
 #include <cmath>
 
@@ -165,6 +166,49 @@ private slots:
         QVERIFY(r.ok);
         QCOMPARE(r.stream, QSize(4480, 1440));
         QVERIFY(!r.warning.isEmpty());
+    }
+
+    // ---- controller profiles (clouddeck/controllerprofile.h), shared fixtures
+    static QJsonObject controllerFixture(const char* name)
+    {
+        QFile f(QStringLiteral(FIXTURE_DIR "/../controller/") + QLatin1String(name));
+        if (!f.open(QIODevice::ReadOnly)) qFatal("missing controller fixture %s", name);
+        return QJsonDocument::fromJson(f.readAll()).object();
+    }
+
+    void controllerProfileFixture()
+    {
+        const auto p = ControllerProfile::Profile::fromJson(controllerFixture("profile-v1.json"));
+        const QJsonObject cases = controllerFixture("cases-v1.json");
+        QCOMPARE(p.name, QString("Test profile"));
+        QVERIFY(!p.buttons.contains("bogus")); // unknown source ignored
+        QVERIFY(!p.buttons.contains("x"));     // unknown target ignored
+        for (const QJsonValue& v : cases["buttons"].toArray()) {
+            const QJsonArray c = v.toArray();
+            QCOMPARE(ControllerProfile::mapButton(p, c[0].toString()), c[1].toString());
+        }
+        for (const QJsonValue& v : cases["sticks"].toArray()) {
+            const QJsonArray in = v.toObject()["in"].toArray(), out = v.toObject()["out"].toArray();
+            short lx = in[0].toInt(), ly = in[1].toInt(), rx = in[2].toInt(), ry = in[3].toInt();
+            ControllerProfile::applySticks(p, lx, ly, rx, ry);
+            QCOMPARE(QList<int>({lx, ly, rx, ry}), QList<int>({out[0].toInt(), out[1].toInt(), out[2].toInt(), out[3].toInt()}));
+        }
+        for (const QJsonValue& v : cases["triggers"].toArray()) {
+            QCOMPARE(int(ControllerProfile::applyTrigger(p, (unsigned char)v.toObject()["in"].toInt())), v.toObject()["out"].toInt());
+        }
+        // Round trip keeps the meaning.
+        const auto again = ControllerProfile::Profile::fromJson(p.toJson());
+        QCOMPARE(again.buttons, p.buttons);
+        QCOMPARE(again.rightStick.sensitivity, 2.0);
+        QVERIFY(again.rightStick.invertY);
+        QVERIFY(!p.isIdentity());
+        QVERIFY(ControllerProfile::Profile().isIdentity());
+        // Swapping sticks swaps after shaping.
+        ControllerProfile::Profile sw;
+        sw.swapSticks = true;
+        short a = 100, b = 200, c = 300, d = 400;
+        ControllerProfile::applySticks(sw, a, b, c, d);
+        QCOMPARE(QList<int>({a, b, c, d}), QList<int>({300, 400, 100, 200}));
     }
 
     // ---- network test recommendations (clouddeck/netrecommend.h)

@@ -1,4 +1,5 @@
 #include "streaming/session.h"
+#include "clouddeck/controllerprofile.h" // CloudDeck-Client
 
 #include <Limelight.h>
 #include "SDL_compat.h"
@@ -100,6 +101,14 @@ void SdlInputHandler::sendGamepadState(GamepadState* state)
                 }
             }
         }
+    }
+
+    // CloudDeck-Client: remapping profile (deadzones, sensitivity, invert, swap),
+    // after the single-controller merge so it isn't undone by raw values.
+    if (state->profile != nullptr) {
+        ControllerProfile::applySticks(*state->profile, lsX, lsY, rsX, rsY);
+        lt = ControllerProfile::applyTrigger(*state->profile, lt);
+        rt = ControllerProfile::applyTrigger(*state->profile, rt);
     }
 
     LiSendMultiControllerEvent(state->index,
@@ -303,6 +312,17 @@ void SdlInputHandler::handleControllerButtonEvent(SDL_ControllerButtonEvent* eve
             event->button = SDL_CONTROLLER_BUTTON_X;
             break;
         }
+    }
+
+    // CloudDeck-Client: remapped buttons (SDL's button order matches
+    // ControllerProfile::buttonNames()). Releases map the same way as presses.
+    if (state->profile != nullptr && event->button < ControllerProfile::buttonNames().size()) {
+        const QString target = ControllerProfile::mapButton(*state->profile, ControllerProfile::buttonNames()[event->button]);
+        const int index = ControllerProfile::buttonNames().indexOf(target);
+        if (index < 0) {
+            return; // disabled
+        }
+        event->button = (Uint8)index;
     }
 
     if (event->state == SDL_PRESSED) {
@@ -587,6 +607,16 @@ void SdlInputHandler::handleControllerDeviceEvent(SDL_ControllerDeviceEvent* eve
         }
 
         state->controller = controller;
+        // CloudDeck-Client: the remapping profile assigned to this controller (or the default)
+        {
+            bool hasProfile = false;
+            const char* controllerName = SDL_GameControllerName(controller);
+            auto profile = ControllerProfile::Store::profileFor(QString::fromUtf8(controllerName ? controllerName : ""), &hasProfile);
+            state->profile = hasProfile ? new ControllerProfile::Profile(profile) : nullptr;
+            if (hasProfile) {
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Controller profile '%s' for %s", qPrintable(profile.name), controllerName ? controllerName : "?");
+            }
+        }
         state->jsId = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(state->controller));
 
         hapticCaps = 0;
@@ -805,6 +835,7 @@ void SdlInputHandler::handleControllerDeviceEvent(SDL_ControllerDeviceEvent* eve
             LiSendMultiControllerEvent(state->index, m_GamepadMask,
                                        0, 0, 0, 0, 0, 0, 0);
 
+            delete state->profile; // CloudDeck-Client
             // Clear all remaining state from this slot
             SDL_memset(state, 0, sizeof(*state));
         }

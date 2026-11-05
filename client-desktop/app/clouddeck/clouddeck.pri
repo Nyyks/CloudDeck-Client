@@ -7,6 +7,8 @@ SOURCES += \
     $$PWD/clouddeckapi.cpp \
     $$PWD/clouddeckprovider.cpp \
     $$PWD/cloudsession.cpp \
+    $$PWD/controllerprofile.cpp \
+    $$PWD/controllersettings.cpp \
     $$PWD/displaylease.cpp \
     $$PWD/displaysettings.cpp \
     $$PWD/micstreamer.cpp \
@@ -27,6 +29,8 @@ HEADERS += \
     $$PWD/cloudprovider.h \
     $$PWD/clouddeckprovider.h \
     $$PWD/cloudsession.h \
+    $$PWD/controllerprofile.h \
+    $$PWD/controllersettings.h \
     $$PWD/displaylease.h \
     $$PWD/displaysettings.h \
     $$PWD/micstreamer.h \

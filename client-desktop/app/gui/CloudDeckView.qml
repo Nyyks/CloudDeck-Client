@@ -10,6 +10,7 @@ import CloudDeckMic 1.0
 import CloudDeckUsb 1.0
 import CloudDeckDisplay 1.0
 import CloudDeckShortcuts 1.0
+import CloudDeckControllers 1.0
 
 Item {
     id: root
@@ -398,6 +399,27 @@ Item {
                             }
                         }
                     }
+
+                    // ---- controllers (docs/controller-profiles.md)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 8
+                        Label { text: qsTr("Controllers"); font.bold: true; Layout.fillWidth: true }
+                        Button {
+                            text: qsTr("Remapping profiles...")
+                            flat: true
+                            onClicked: controllerProfiles.open()
+                        }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        opacity: 0.7
+                        text: CloudDeckControllers.defaultProfile === ""
+                              ? qsTr("No remapping. Xbox/Nintendo layout: Settings, or the in-stream menu.")
+                              : qsTr("All controllers use \"%1\" unless set otherwise.").arg(CloudDeckControllers.defaultProfile)
+                    }
+                    ControllerProfiles { id: controllerProfiles; parent: Overlay.overlay }
 
                     // ---- shortcuts (docs/adr/0012-shortcuts.md)
                     RowLayout {

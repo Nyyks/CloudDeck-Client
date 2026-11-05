@@ -1,0 +1,2 @@
+module CloudDeckControllers
+singleton CloudDeckControllers 1.0 CloudDeckControllers.qml

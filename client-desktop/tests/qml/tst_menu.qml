@@ -20,6 +20,7 @@ Item {
         property bool showButton: true
         property bool canShutDown: true
         property string menuKey: "O"
+        property bool nintendoLayout: false
         property string noticeText: "Connection lost. Reconnecting (1 of 5)..."
         property int closes: 0
         property int shutdowns: 0
@@ -49,6 +50,16 @@ Item {
             var no = n.createObject(parent, { overlay: stub, width: 380, height: 40 })
             verify(no !== null)
             no.destroy()
+            var cp = Qt.createComponent("ControllerProfiles.qml")
+            compare(cp.status, Component.Ready, cp.errorString())
+            var dlgObj = cp.createObject(parent, {})
+            verify(dlgObj !== null)
+            dlgObj.open()
+            wait(50)
+            tryVerify(function() { return dlgObj.profileData.name === "Racing" }, 3000, "profile loaded when opened")
+            dlgObj.save()
+            compare(dlgObj.error, "")
+            dlgObj.destroy()
         }
     }
 }

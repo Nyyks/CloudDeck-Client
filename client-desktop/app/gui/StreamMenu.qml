@@ -161,6 +161,14 @@ Pane {
                           : qsTr("The mouse is captured by the stream. Best for games. Ctrl+Alt+Shift+Z releases it.")
                 }
 
+                // ---- controller (Phase 6)
+                SectionLabel { text: qsTr("Controller") }
+                SwitchRow {
+                    text: qsTr("Nintendo button layout (swap A/B and X/Y)")
+                    checked: overlay.nintendoLayout
+                    onToggled: overlay.nintendoLayout = checked
+                }
+
                 // ---- audio
                 SectionLabel { text: qsTr("Audio") }
                 SwitchRow {

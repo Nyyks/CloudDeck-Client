@@ -131,6 +131,19 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
 
         @Override
+        public boolean isNintendoLayout() {
+            return prefConfig.flipFaceButtons;
+        }
+
+        @Override
+        public void setNintendoLayout(boolean on) {
+            // ControllerHandler reads this for every button press, so it applies live.
+            prefConfig.flipFaceButtons = on;
+            android.preference.PreferenceManager.getDefaultSharedPreferences(Game.this)
+                    .edit().putBoolean("checkbox_flip_face_buttons", on).apply();
+        }
+
+        @Override
         public void toggleKeyboard() {
             Game.this.toggleKeyboard();
         }

@@ -355,3 +355,14 @@ void StreamOverlay::hideNotice()
 }
 
 QString StreamOverlay::menuKey() const { return Shortcuts::keyFor("menu"); }
+
+// Xbox / Nintendo face-button layout (A/B and X/Y swapped), live and remembered.
+bool StreamOverlay::nintendoLayout() const { return m_Session->m_InputHandler && m_Session->m_InputHandler->m_SwapFaceButtons; }
+void StreamOverlay::setNintendoLayout(bool on)
+{
+    if (!m_Session->m_InputHandler || m_Session->m_InputHandler->m_SwapFaceButtons == on) return;
+    m_Session->m_InputHandler->m_SwapFaceButtons = on;
+    m_Session->m_Preferences->swapFaceButtons = on;
+    m_Session->m_Preferences->save();
+    emit changed();
+}

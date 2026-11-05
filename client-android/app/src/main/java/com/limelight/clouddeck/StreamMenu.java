@@ -33,6 +33,8 @@ public final class StreamMenu {
     public interface Host {
         boolean isPerfOverlayVisible();
         void setPerfOverlayVisible(boolean visible);
+        boolean isNintendoLayout();
+        void setNintendoLayout(boolean on);
         void toggleKeyboard();
         void disconnect();
         String streamInfo();
@@ -128,6 +130,7 @@ public final class StreamMenu {
             }));
         }
         body.addView(toggle(R.string.cd_menu_stats, host.isPerfOverlayVisible(), host::setPerfOverlayVisible));
+        body.addView(toggle(R.string.cd_menu_nintendo, host.isNintendoLayout(), host::setNintendoLayout));
         body.addView(toggle(R.string.cd_menu_hide_button, buttonHidden(), on -> {
             prefs().edit().putBoolean(PREF_HIDE_BUTTON, on).apply();
             updateButton();

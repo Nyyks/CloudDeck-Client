@@ -55,4 +55,5 @@
     <string name="cd_menu_shutdown_confirm">Tap again to shut down your CloudDeck</string>
     <string name="cd_menu_hide_button">Hide the menu button (Back opens this menu)</string>
     <string name="cd_menu_close">Close</string>
+    <string name="cd_menu_nintendo">Nintendo button layout (swap A/B and X/Y)</string>
 </resources>

@@ -1,0 +1,15 @@
+{
+  "_comment": "Expected results for profile-v1.json, computed independently (Go). Both clients must match exactly. Unknown buttons and targets in the profile are ignored.",
+  "buttons": [["a", "b"], ["b", "a"], ["back", "none"], ["x", "x"], ["paddle1", "leftShoulder"], ["start", "start"]],
+  "sticks": [
+    {"in": [1000, 0, 0, 0], "out": [0, 0, 0, 0]},
+    {"in": [32767, 0, 0, 0], "out": [32767, 0, 0, 0]},
+    {"in": [16384, 0, 0, 0], "out": [14564, 0, 0, 0]},
+    {"in": [0, 0, 0, 16384], "out": [0, 0, 0, -23170]},
+    {"in": [20000, 20000, -12000, 5000], "out": [19648, 19648, -19051, -7938]},
+    {"in": [-32767, -32767, 0, -32767], "out": [-32767, -32767, 0, 32767]}
+  ],
+  "triggers": [
+    {"in": 10, "out": 0}, {"in": 25, "out": 0}, {"in": 26, "out": 1}, {"in": 128, "out": 114}, {"in": 255, "out": 255}
+  ]
+}

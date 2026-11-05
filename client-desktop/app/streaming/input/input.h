@@ -5,6 +5,8 @@
 
 #include "SDL_compat.h"
 
+namespace ControllerProfile { struct Profile; } // CloudDeck-Client
+
 struct GamepadState {
     SDL_GameController* controller;
     SDL_JoystickID jsId;
@@ -36,6 +38,10 @@ struct GamepadState {
     short lsX, lsY;
     short rsX, rsY;
     unsigned char lt, rt;
+
+    // CloudDeck-Client: remapping profile for this controller, or nullptr (owned;
+    // docs/controller-profiles.md)
+    ControllerProfile::Profile* profile;
 };
 
 
