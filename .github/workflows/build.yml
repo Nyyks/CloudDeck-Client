@@ -215,5 +215,12 @@ jobs:
         run: |
           ls -l dist
           PRE=""; [[ "$GITHUB_REF_NAME" == *-* ]] && PRE="--prerelease"   # v1.2.3-alpha.1 -> prerelease
-          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
-            --title "CloudDeck-Client $GITHUB_REF_NAME" --generate-notes $PRE
+          # host.yml attaches the server bundle to the same release; whichever workflow
+          # finishes first creates it, the other adds its files.
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
+              --title "CloudDeck-Client $GITHUB_REF_NAME" --generate-notes $PRE \
+              || gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          fi

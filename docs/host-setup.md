@@ -42,8 +42,8 @@ launcher starts **stock** Sunshine instead when:
 ## Install
 
 1. In the VM's browser (signed in to GitHub), open the repo's **Releases** and
-   download `clouddeck-host-*.tar.gz` and its `.sha256` from the newest
-   release that has them (currently *Phase 5 network test 1*).
+   download `clouddeck-host-*.tar.gz` and its `.sha256` from the latest
+   release (v1.0.0 or newer).
 2. In Konsole:
    ```sh
    cd ~/Downloads

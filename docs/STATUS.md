@@ -9,7 +9,7 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-05 (Phase 7 home layouts implemented). Phase 1 verified by the owner on real devices with
+Last updated: 2026-11-05 (v1.0.0). Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
 explicitly confirmed, so Linux stays *partial* where it differs.
 

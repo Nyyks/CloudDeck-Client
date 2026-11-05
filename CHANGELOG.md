@@ -3,6 +3,13 @@
 All notable changes are recorded here, following [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-11-05
+First stable release: every phase of the brief is implemented. Windows is verified by the owner;
+Android was tested by the owner, and the fixes made after that test were checked on an emulator
+against a local Sunshine. Linux, multiple monitors and the Raspberry Pi build are not verified yet
+(see docs/STATUS.md).
+
 ### Added
 - Resolution in the in-stream menu: desktop restarts the stream in place at the new size; Android
   reconnects at it. Also an on-screen controller tile in the Android menu.
