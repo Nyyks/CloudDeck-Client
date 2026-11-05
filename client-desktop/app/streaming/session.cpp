@@ -2368,6 +2368,16 @@ void Session::exec()
             }
         }
 
+        // CloudDeck-Client: files dropped onto the stream window go to the CloudDeck's
+        // Downloads/CloudDeck folder (docs/adr/0011-file-upload.md)
+        if (event.type == SDL_DROPFILE) {
+            if (m_Overlay != nullptr && event.drop.file != nullptr) {
+                m_Overlay->uploadPaths({QString::fromUtf8(event.drop.file)});
+            }
+            SDL_free(event.drop.file);
+            continue;
+        }
+
         // CloudDeck-Client: the in-stream menu (button or Ctrl+Alt+Shift+O) takes keys and
         // clicks while open, and follows the stream window
         if (m_Overlay != nullptr && m_Overlay->handleEvent(event)) {

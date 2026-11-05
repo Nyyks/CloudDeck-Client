@@ -19,6 +19,7 @@ import (
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/agent"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/clipboard"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/display"
+	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/upload"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/usersession"
 	"github.com/Nyyks/CloudDeck-Client/host/agent/internal/vhci"
 )
@@ -58,6 +59,11 @@ func main() {
 			logger.Printf("warning: clipboard sync disabled: %v", err)
 		} else {
 			srv.Clipboard = clipboard.Klipper{Run: busctl}
+		}
+		if u, err := usersession.Lookup(*desktopUser); err != nil {
+			logger.Printf("warning: file upload disabled: %v", err)
+		} else {
+			srv.Uploads = upload.Saver{Launch: upload.SystemdRun(u.Command)}
 		}
 	}
 

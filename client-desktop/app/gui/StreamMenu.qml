@@ -5,6 +5,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Window 2.15
 import QtQuick.Controls.Material 2.15
+import QtQuick.Dialogs
 
 import CloudDeckMic 1.0
 import CloudDeckUsb 1.0
@@ -23,11 +24,22 @@ Pane {
     Keys.onEscapePressed: overlay.closeMenu()
     Shortcut { sequence: "Ctrl+Alt+Shift+O"; onActivated: overlay.closeMenu() }
 
-    // Close when the user clicks back into the stream (or anywhere else).
+    // Close when the user clicks back into the stream (or anywhere else), but not
+    // while the file picker has the focus.
     Connections {
         target: root.Window.window
         function onActiveChanged() {
-            if (!root.Window.window.active && overlay.menuOpen) overlay.closeMenu()
+            if (!root.Window.window.active && overlay.menuOpen && !uploadDialog.visible) overlay.closeMenu()
+        }
+    }
+
+    FileDialog {
+        id: uploadDialog
+        title: qsTr("Upload files to your CloudDeck")
+        fileMode: FileDialog.OpenFiles
+        onAccepted: {
+            overlay.uploadFiles(selectedFiles)
+            overlay.closeMenu()
         }
     }
     Connections {
@@ -226,6 +238,19 @@ Pane {
                 Hint {
                     visible: CloudDeckUsb.supported && CloudDeckUsb.status !== ""
                     text: CloudDeckUsb.status
+                }
+
+                // ---- files (docs/adr/0011-file-upload.md)
+                SectionLabel { text: qsTr("Files") }
+                Button {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    Layout.rightMargin: 16
+                    text: qsTr("Upload files to my CloudDeck...")
+                    onClicked: uploadDialog.open()
+                }
+                Hint {
+                    text: qsTr("Or drag files onto the stream window. They're saved in Downloads/CloudDeck on your CloudDeck.")
                 }
 
                 // ---- session

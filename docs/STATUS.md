@@ -40,8 +40,8 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | UX | In-stream menu | done | partial | not started | ADR-0009 rev. 2: round CloudDeck button at the top centre (when the cursor is free) or Ctrl+Alt+Shift+O. Panel with display, mouse mode (game/desktop), audio, mic, live USB device switching, reconnect, disconnect, shut down. Rev. 1 (text OSD) was replaced after the owner's feedback. Verified by the owner on Windows on 2026-11-05 |
 | UX | Network test, auto-recommended settings, low-bandwidth mode | not started | not started | not started | Phase 5 |
 | UX | Clipboard sync (text) | done | partial | not started | ADR-0008: two-way via the agent and Plasma's Klipper (busctl as the desktop user), on by default, up to 100 KiB of text. Verified by the owner on Windows on 2026-11-05 |
-| UX | File upload / drag-and-drop | not started | not started | not started | Phase 5 |
-| UX | Auto-reconnect | partial | partial | not started | ADR-0010: in-place reconnect after network drops, 5 attempts (2–8 s apart), notice under the menu button; restores clipboard sync and dropped USB devices. On by default. Not yet verified |
+| UX | File upload / drag-and-drop | partial | partial | not started | ADR-0011: drop files on the stream or use the menu; saved in ~/Downloads/CloudDeck by a user process (systemd-run --user), only complete files kept. Agent unit-tested; **not yet run on the VM** |
+| UX | Auto-reconnect | done | partial | not started | ADR-0010: in-place reconnect after network drops, 5 attempts (2–8 s apart), notice under the menu button; restores clipboard sync and dropped USB devices. On by default. Verified by the owner on Windows on 2026-11-05 |
 | UX | Configurable shortcuts | not started | not started | not started | Phase 5 |
 | UX | Tray icon | not started | not started | n/a | Phase 5 |
 | Controllers | Extended controller support (rumble, gyro, DualSense features, hot-plug) | not started | not started | not started | Phase 6 (scope addition) |

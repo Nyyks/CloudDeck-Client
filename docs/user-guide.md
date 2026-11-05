@@ -101,6 +101,20 @@ While the menu is open, your keys and clicks go to the menu, not the
 CloudDeck. You can hide the button at the bottom of the menu; the hotkey keeps
 working.
 
+## Uploading files (desktop)
+
+Needs the CloudDeck host update on the VM.
+
+There are two ways to upload:
+- Drag files from your PC onto the stream window. This needs a free cursor:
+  windowed mode or *Desktop* mouse mode.
+- Use **Upload files to my CloudDeck…** in the in-stream menu.
+
+They're saved in **Downloads/CloudDeck** on your CloudDeck. A file with the
+same name gets a number added, e.g. `report (1).pdf`. Progress shows under the
+menu button. An interrupted upload leaves nothing behind. Folders can't be
+uploaded; zip them first.
+
 ## Clipboard (desktop)
 
 Needs the CloudDeck host update on the VM.

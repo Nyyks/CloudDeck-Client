@@ -16,9 +16,12 @@
 #include <QObject>
 #include <QRect>
 #include <QString>
+#include <QStringList>
+#include <QVariantList>
 
 #include <SDL.h>
 
+class FileUploader;
 class QQuickView;
 class QWindow;
 class Session;
@@ -73,10 +76,16 @@ public:
 
     // A small status pill under the button, e.g. while reconnecting. It works even
     // when the stream has no decoder to draw Moonlight's own overlay.
-    void showNotice(const QString& text);
+    void showNotice(const QString& text, bool busy = true);
     void hideNotice();
     Q_PROPERTY(QString noticeText READ noticeText NOTIFY changed)
     QString noticeText() const { return m_NoticeText; }
+    Q_PROPERTY(bool noticeBusy READ noticeBusy NOTIFY changed)
+    bool noticeBusy() const { return m_NoticeBusy; }
+
+    // File upload (docs/adr/0011-file-upload.md): dropped files and the menu's picker.
+    void uploadPaths(const QStringList& localPaths);
+    Q_INVOKABLE void uploadFiles(const QVariantList& urls);
 
     Q_INVOKABLE void openMenu();
     Q_INVOKABLE void closeMenu();
@@ -101,6 +110,9 @@ private:
     QQuickView* m_Menu = nullptr;
     QQuickView* m_Notice = nullptr;
     QString m_NoticeText;
+    bool m_NoticeBusy = true;
+    int m_NoticeGeneration = 0;
+    FileUploader* m_Uploader = nullptr;
     bool m_MenuOpen = false;
     bool m_RecaptureOnClose = false;
     Uint32 m_LastPump = 0;

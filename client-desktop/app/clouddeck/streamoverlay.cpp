@@ -2,6 +2,7 @@
 
 #include "cloudsession.h"
 #include "displaysettings.h"
+#include "fileupload.h"
 #include "micstreamer.h"
 #include "streaming/session.h"
 
@@ -12,6 +13,8 @@
 #include <QRegion>
 #include <QScreen>
 #include <QSettings>
+#include <QTimer>
+#include <QUrl>
 #include <QtDebug>
 
 #include <SDL_syswm.h>
@@ -73,6 +76,7 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
 
 StreamOverlay::~StreamOverlay()
 {
+    delete m_Uploader; // aborts a running upload; the VM keeps nothing of it
     delete m_Notice;
     delete m_Menu;
     delete m_Button;
@@ -337,9 +341,11 @@ void StreamOverlay::shutDown()
     disconnectStream();
 }
 
-void StreamOverlay::showNotice(const QString& text)
+void StreamOverlay::showNotice(const QString& text, bool busy)
 {
     m_NoticeText = text;
+    m_NoticeBusy = busy;
+    m_NoticeGeneration++;
     emit changed();
     if (!m_Notice) return;
     updateGeometry();
@@ -351,4 +357,33 @@ void StreamOverlay::hideNotice()
     m_NoticeText.clear();
     emit changed();
     if (m_Notice) m_Notice->hide();
+}
+
+void StreamOverlay::uploadFiles(const QVariantList& urls)
+{
+    QStringList paths;
+    for (const QVariant& v : urls) {
+        const QUrl u = v.toUrl();
+        paths << (u.isLocalFile() ? u.toLocalFile() : v.toString());
+    }
+    uploadPaths(paths);
+}
+
+void StreamOverlay::uploadPaths(const QStringList& localPaths)
+{
+    if (localPaths.isEmpty()) return;
+    if (!m_Uploader) {
+        m_Uploader = new FileUploader(m_Session->m_Computer->activeAddress.address(), m_Session->m_Computer->activeHttpsPort,
+                                      m_Session->m_Computer->serverCert);
+        // Emitted on the upload thread; delivered here when pump() processes events.
+        connect(m_Uploader, &FileUploader::progress, this, [this](const QString& text) { showNotice(text, true); });
+        connect(m_Uploader, &FileUploader::batchFinished, this, [this](const QString& summary, bool) {
+            showNotice(summary, false);
+            const int generation = m_NoticeGeneration;
+            QTimer::singleShot(5000, this, [this, generation]() {
+                if (generation == m_NoticeGeneration) hideNotice();
+            });
+        });
+    }
+    m_Uploader->enqueue(localPaths);
 }
