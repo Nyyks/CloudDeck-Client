@@ -1,5 +1,7 @@
-// CloudDeck-Client: in-stream menu panel (docs/adr/0009-quick-menu.md).
+// CloudDeck-Client: in-stream menu panel (docs/adr/0009-quick-menu.md, rev. 3).
 // Shown in its own window below the round button; closes when it loses focus.
+// Layout: quick toggle tiles on top, then one card per topic, session actions at the bottom.
+// Built from the home screen's controls (Cd*.qml) so both look the same.
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -8,6 +10,8 @@ import QtQuick.Controls.Material 2.15
 
 import CloudDeckMic 1.0
 import CloudDeckUsb 1.0
+import "CdTheme.js" as T
+import "CdFocus.js" as F
 
 Pane {
     id: root
@@ -17,10 +21,19 @@ Pane {
     padding: 0
     focus: true
     Material.theme: Material.Dark
-    Material.accent: "#4dabf7"
-    background: Rectangle { color: "#1d222b"; border.color: "#2f3746"; border.width: 1 }
+    Material.accent: T.accent
+    background: Rectangle { color: T.bg; border.color: T.border; border.width: 1 }
+
+    function moveFocus(forward) {
+        var it = root.Window.activeFocusItem
+        if (!it) return
+        var next = it.nextItemInFocusChain(forward)
+        if (next) next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+    }
 
     Keys.onEscapePressed: overlay.closeMenu()
+    Keys.onUpPressed: moveFocus(false)
+    Keys.onDownPressed: moveFocus(true)
     Shortcut { sequence: "Ctrl+Alt+Shift+" + overlay.menuKey; onActivated: overlay.closeMenu() }
 
     // Close when the user clicks back into the stream (or anywhere else).
@@ -35,26 +48,52 @@ Pane {
         function onChanged() { if (!overlay.menuOpen) root.confirmShutDown = false }
     }
 
-    component SectionLabel: Label {
-        Layout.topMargin: 14
-        Layout.leftMargin: 16
-        font.pixelSize: 12
-        font.bold: true
-        font.capitalization: Font.AllUppercase
-        color: "#8b95a7"
-    }
-    component SwitchRow: Switch {
+    // A square quick toggle: icon, name, state line.
+    component QuickTile: Button {
+        id: tile
+        property url iconUrl: ""
+        property bool on: false
+        property string status: on ? qsTr("On") : qsTr("Off")
         Layout.fillWidth: true
-        Layout.leftMargin: 8
-        Layout.rightMargin: 8
-    }
-    component Hint: Label {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        wrapMode: Text.Wrap
-        font.pixelSize: 12
-        color: "#8b95a7"
+        Layout.preferredWidth: 100
+        Layout.preferredHeight: 84
+        focusPolicy: Qt.StrongFocus
+        topInset: 0; bottomInset: 0; leftInset: 0; rightInset: 0
+        padding: 10
+        Keys.onReturnPressed: clicked()
+        Keys.onEnterPressed: clicked()
+        onActiveFocusChanged: if (activeFocus) F.ensureVisible(tile)
+        contentItem: Column {
+            spacing: 4
+            Image {
+                source: tile.iconUrl
+                width: 20; height: 20
+                sourceSize.width: 40; sourceSize.height: 40
+                opacity: tile.on ? 1 : 0.75
+            }
+            Text {
+                width: parent.width
+                text: tile.text
+                color: T.text
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
+                elide: Text.ElideRight
+            }
+            Text {
+                width: parent.width
+                text: tile.status
+                color: tile.on ? T.accentText : T.muted
+                font.pixelSize: 12
+                elide: Text.ElideRight
+            }
+        }
+        background: Rectangle {
+            radius: 12
+            color: tile.on ? T.accentSoft : tile.down ? T.controlDown : tile.hovered ? T.rowHover : T.surface
+            border.width: 1
+            border.color: tile.on ? T.accentBorder : T.border
+            CdFocusRing { shown: tile.visualFocus; ringRadius: 12 }
+        }
     }
 
     ColumnLayout {
@@ -64,12 +103,9 @@ Pane {
         // ---- header
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 64
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: "#3b5bdb" }
-                GradientStop { position: 1; color: "#0b7285" }
-            }
+            Layout.preferredHeight: 60
+            color: T.surface
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: T.border }
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 16
@@ -77,210 +113,222 @@ Pane {
                 spacing: 12
                 Image {
                     source: "qrc:/res/clouddeck-glyph.svg"
-                    sourceSize.width: 64
-                    Layout.preferredWidth: 26
-                    Layout.preferredHeight: 26
+                    sourceSize.width: 48
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
                     fillMode: Image.PreserveAspectFit
                 }
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-                    Label { text: "CloudDeck"; font.pixelSize: 17; font.bold: true; color: "white" }
-                    Label { text: overlay.streamInfo; font.pixelSize: 12; color: "#dbe4ff" }
+                    Text { text: "CloudDeck"; font.pixelSize: 16; font.weight: Font.Bold; color: T.text }
+                    Text { text: overlay.streamInfo; font.pixelSize: 12; color: T.muted; elide: Text.ElideRight; Layout.fillWidth: true }
                 }
-                ToolButton {
-                    text: "✕"
-                    font.pixelSize: 16
-                    Material.foreground: "white"
+                CdButton {
+                    kind: "ghost"
+                    iconUrl: "qrc:/res/cd/close.svg"
+                    iconSize: 16
+                    text: ""
                     onClicked: overlay.closeMenu()
                 }
             }
         }
 
-        ScrollView {
-            id: scroll
+        Flickable {
+            id: flick
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            contentWidth: availableWidth
+            contentWidth: width
+            contentHeight: col.implicitHeight + 24
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: ScrollBar { }
 
             ColumnLayout {
-                width: scroll.availableWidth
-                spacing: 0
+                id: col
+                x: 12
+                y: 12
+                width: flick.width - 24
+                spacing: 12
 
-                // ---- display
-                SectionLabel { text: qsTr("Display") }
-                SwitchRow {
-                    visible: overlay.canToggleFullscreen
-                    text: qsTr("Fullscreen")
-                    checked: overlay.fullscreen
-                    onToggled: overlay.fullscreen = checked
-                }
-                SwitchRow {
-                    visible: overlay.canFitToWindow
-                    text: qsTr("Fit the CloudDeck's resolution to this window")
-                    checked: overlay.fitToWindow
-                    onToggled: overlay.fitToWindow = checked
-                }
-                SwitchRow {
-                    text: qsTr("Performance stats")
-                    checked: overlay.statsVisible
-                    onToggled: overlay.statsVisible = checked
-                }
-
-                // ---- mouse
-                SectionLabel { text: qsTr("Mouse") }
-                RowLayout {
+                // ---- quick toggles
+                GridLayout {
                     Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
-                    spacing: 8
-                    ButtonGroup { id: mouseGroup }
-                    Button {
-                        Layout.fillWidth: true
-                        checkable: true
-                        ButtonGroup.group: mouseGroup
-                        text: qsTr("Game")
-                        checked: !overlay.desktopMouse
-                        highlighted: checked
-                        onClicked: overlay.desktopMouse = false
+                    columns: 3
+                    columnSpacing: 8
+                    rowSpacing: 8
+                    QuickTile {
+                        visible: overlay.canToggleFullscreen
+                        text: qsTr("Fullscreen")
+                        iconUrl: "qrc:/res/cd/fullscreen.svg"
+                        on: overlay.fullscreen
+                        onClicked: overlay.fullscreen = !overlay.fullscreen
                     }
-                    Button {
-                        Layout.fillWidth: true
-                        checkable: true
-                        ButtonGroup.group: mouseGroup
-                        text: qsTr("Desktop")
-                        checked: overlay.desktopMouse
-                        highlighted: checked
-                        onClicked: overlay.desktopMouse = true
+                    QuickTile {
+                        text: qsTr("Sound")
+                        iconUrl: "qrc:/res/cd/speaker.svg"
+                        on: !overlay.audioMuted
+                        status: on ? qsTr("On") : qsTr("Muted")
+                        onClicked: overlay.audioMuted = !overlay.audioMuted
+                    }
+                    QuickTile {
+                        text: qsTr("Microphone")
+                        iconUrl: "qrc:/res/cd/mic.svg"
+                        on: overlay.micEnabled && !CloudDeckMic.muted
+                        status: !overlay.micEnabled ? qsTr("Off") : CloudDeckMic.muted ? qsTr("Muted") : qsTr("On")
+                        onClicked: {
+                            if (!overlay.micEnabled) overlay.micEnabled = true
+                            else CloudDeckMic.muted = !CloudDeckMic.muted
+                        }
+                    }
+                    QuickTile {
+                        text: qsTr("Stats")
+                        iconUrl: "qrc:/res/cd/stats.svg"
+                        on: overlay.statsVisible
+                        onClicked: overlay.statsVisible = !overlay.statsVisible
+                    }
+                    QuickTile {
+                        text: qsTr("Keyboard")
+                        iconUrl: "qrc:/res/cd/keyboard.svg"
+                        on: overlay.keyboardVisible
+                        status: on ? qsTr("Shown") : qsTr("Esc, F-keys…")
+                        onClicked: { overlay.toggleKeyboard(); overlay.closeMenu() }
+                    }
+                    QuickTile {
+                        visible: overlay.hasGamepad
+                        text: qsTr("Controller")
+                        iconUrl: "qrc:/res/cd/mouse.svg"
+                        on: overlay.controllerMouse
+                        status: on ? qsTr("As mouse") : qsTr("As gamepad")
+                        onClicked: overlay.controllerMouse = !overlay.controllerMouse
                     }
                 }
-                Hint {
-                    text: overlay.desktopMouse
-                          ? qsTr("Free cursor: it can leave the stream window, like on a local desktop. Best for working.")
-                          : qsTr("The mouse is captured by the stream. Best for games. Ctrl+Alt+Shift+Z releases it.")
-                }
-
-                // ---- controller (Phase 6)
-                SectionLabel { text: qsTr("Controller") }
-                SwitchRow {
-                    text: qsTr("Nintendo button layout (swap A/B and X/Y)")
-                    checked: overlay.nintendoLayout
-                    onToggled: overlay.nintendoLayout = checked
-                }
-
-                SwitchRow {
-                    text: qsTr("On-screen controller (touchscreens)")
-                    checked: overlay.controllerVisible
-                    onToggled: overlay.toggleController()
-                }
-                SwitchRow {
-                    visible: overlay.controllerVisible
-                    text: qsTr("PlayStation button style")
-                    checked: overlay.controllerPlaystation
-                    onToggled: overlay.controllerPlaystation = checked
-                }
-                Button {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
-                    text: overlay.keyboardVisible ? qsTr("Hide the on-screen keyboard") : qsTr("On-screen keyboard (Esc, F-keys, Ctrl, arrows)")
-                    onClicked: { overlay.toggleKeyboard(); overlay.closeMenu() }
-                }
-
-                // ---- audio
-                SectionLabel { text: qsTr("Audio") }
-                SwitchRow {
-                    text: qsTr("Mute the CloudDeck's sound")
-                    checked: overlay.audioMuted
-                    onToggled: overlay.audioMuted = checked
-                }
-                SwitchRow {
-                    text: qsTr("Send my microphone")
-                    checked: overlay.micEnabled
-                    onToggled: overlay.micEnabled = checked
-                }
-                Hint {
+                CdText {
+                    Layout.leftMargin: 4
                     visible: !overlay.micEnabled
-                    text: qsTr("Turning the microphone on or off reconnects the stream for a second.")
+                    text: qsTr("Turning the microphone on reconnects the stream for a second.")
                 }
-                SwitchRow {
-                    visible: overlay.micEnabled
-                    text: qsTr("Mute my microphone")
-                    checked: CloudDeckMic.muted
-                    onToggled: CloudDeckMic.muted = checked
+
+                // ---- display and mouse
+                CdCard {
+                    title: qsTr("Display and mouse")
+                    CdSwitch {
+                        Layout.fillWidth: true
+                        visible: overlay.canFitToWindow
+                        text: qsTr("Fit the CloudDeck to this window")
+                        checked: overlay.fitToWindow
+                        onToggled: overlay.fitToWindow = checked
+                    }
+                    CdSegmented {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 14
+                        Layout.rightMargin: 14
+                        Layout.topMargin: 6
+                        options: [{ label: qsTr("Game mouse"), value: false }, { label: qsTr("Desktop mouse"), value: true }]
+                        value: overlay.desktopMouse
+                        onPicked: function(v) { overlay.desktopMouse = v }
+                    }
+                    CdText {
+                        Layout.topMargin: 6
+                        text: overlay.desktopMouse
+                              ? qsTr("The cursor can leave the stream window, like on a local desktop.")
+                              : qsTr("The stream captures the mouse. Ctrl+Alt+Shift+Z releases it.")
+                    }
                 }
-                ComboBox {
+
+                // ---- controller
+                CdCard {
+                    title: qsTr("Controller")
+                    CdSwitch {
+                        Layout.fillWidth: true
+                        text: qsTr("Nintendo button layout")
+                        description: qsTr("Swaps A/B and X/Y")
+                        checked: overlay.nintendoLayout
+                        onToggled: overlay.nintendoLayout = checked
+                    }
+                    CdSwitch {
+                        Layout.fillWidth: true
+                        text: qsTr("On-screen controller")
+                        description: qsTr("For touchscreens")
+                        checked: overlay.controllerVisible
+                        onToggled: overlay.toggleController()
+                    }
+                    CdSegmented {
+                        visible: overlay.controllerVisible
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 14
+                        Layout.rightMargin: 14
+                        Layout.bottomMargin: 6
+                        options: [{ label: qsTr("Xbox"), value: false }, { label: qsTr("PlayStation"), value: true }]
+                        value: overlay.controllerPlaystation
+                        onPicked: function(v) { overlay.controllerPlaystation = v }
+                    }
+                    CdText {
+                        text: qsTr("Select+L1+R1+A: controller as mouse · +B: this menu · +Y: keyboard")
+                    }
+                }
+
+                // ---- microphone device
+                CdCard {
                     visible: overlay.micEnabled
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
-                    model: [qsTr("System default microphone")].concat(CloudDeckMic.devices)
-                    currentIndex: Math.max(0, CloudDeckMic.devices.indexOf(CloudDeckMic.device) + 1)
-                    onActivated: CloudDeckMic.device = index === 0 ? "" : CloudDeckMic.devices[index - 1]
+                    title: qsTr("Microphone")
+                    CdComboRow {
+                        text: qsTr("Input device")
+                        model: [qsTr("System default")].concat(CloudDeckMic.devices)
+                        currentIndex: Math.max(0, CloudDeckMic.devices.indexOf(CloudDeckMic.device) + 1)
+                        onActivated: function(i) { CloudDeckMic.device = i === 0 ? "" : CloudDeckMic.devices[i - 1] }
+                    }
                 }
 
                 // ---- USB
-                RowLayout {
-                    Layout.fillWidth: true
-                    SectionLabel { text: qsTr("USB devices"); Layout.fillWidth: true }
-                    ToolButton {
+                CdCard {
+                    title: qsTr("USB devices")
+                    CdText {
+                        visible: !CloudDeckUsb.supported || CloudDeckUsb.devices.length === 0
+                        text: !CloudDeckUsb.supported ? qsTr("USB forwarding isn't available on this PC.")
+                                                      : qsTr("No USB devices found.")
+                    }
+                    Repeater {
+                        model: CloudDeckUsb.supported ? CloudDeckUsb.devices : []
+                        delegate: CdSwitch {
+                            Layout.fillWidth: true
+                            text: modelData.description
+                            description: modelData.attached ? qsTr("On your CloudDeck")
+                                                            : (modelData.forward ? qsTr("Connecting...") : modelData.busid)
+                            checked: modelData.forward
+                            onToggled: CloudDeckUsb.setForward(modelData.instanceId, checked)
+                        }
+                    }
+                    CdText { visible: CloudDeckUsb.supported && CloudDeckUsb.status !== ""; text: CloudDeckUsb.status }
+                    CdButtonRow {
                         visible: CloudDeckUsb.supported
-                        Layout.topMargin: 8
-                        text: qsTr("Refresh")
-                        font.pixelSize: 12
-                        onClicked: CloudDeckUsb.refresh()
+                        CdButton { kind: "ghost"; text: qsTr("Refresh"); onClicked: CloudDeckUsb.refresh() }
                     }
-                }
-                Hint {
-                    visible: !CloudDeckUsb.supported || CloudDeckUsb.devices.length === 0
-                    text: !CloudDeckUsb.supported ? qsTr("USB forwarding isn't available on this PC.")
-                                                  : qsTr("No USB devices found.")
-                }
-                Repeater {
-                    model: CloudDeckUsb.supported ? CloudDeckUsb.devices : []
-                    delegate: CheckBox {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 8
-                        Layout.rightMargin: 8
-                        text: modelData.description +
-                              (modelData.attached ? "  ·  " + qsTr("on your CloudDeck")
-                                                  : (modelData.forward ? "  ·  " + qsTr("connecting...") : ""))
-                        checked: modelData.forward
-                        onToggled: CloudDeckUsb.setForward(modelData.instanceId, checked)
-                    }
-                }
-                Hint {
-                    visible: CloudDeckUsb.supported && CloudDeckUsb.status !== ""
-                    text: CloudDeckUsb.status
                 }
 
                 // ---- session
-                SectionLabel { text: qsTr("Session") }
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
                     spacing: 8
-                    Button {
+                    CdButton {
                         Layout.fillWidth: true
                         text: qsTr("Reconnect")
+                        iconUrl: "qrc:/res/cd/restart.svg"
                         onClicked: { overlay.closeMenu(); overlay.reconnect() }
                     }
-                    Button {
+                    CdButton {
                         Layout.fillWidth: true
                         text: qsTr("Disconnect")
                         onClicked: overlay.disconnectStream()
                     }
                 }
-                Button {
+                CdButton {
                     visible: overlay.canShutDown
                     Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
-                    text: root.confirmShutDown ? qsTr("Click again to shut down your CloudDeck") : qsTr("Shut down my CloudDeck")
-                    Material.background: root.confirmShutDown ? "#c92a2a" : "#3a2328"
-                    Material.foreground: "white"
+                    kind: root.confirmShutDown ? "primary" : "secondary"
+                    fill: "#c92a2a"
+                    iconUrl: "qrc:/res/cd/power.svg"
+                    text: root.confirmShutDown ? qsTr("Click again to shut down") : qsTr("Shut down my CloudDeck")
                     onClicked: {
                         if (!root.confirmShutDown) { root.confirmShutDown = true; return }
                         overlay.shutDown()
@@ -288,15 +336,12 @@ Pane {
                 }
 
                 // ---- footer
-                Rectangle { Layout.fillWidth: true; Layout.topMargin: 14; Layout.preferredHeight: 1; color: "#2f3746" }
-                SwitchRow {
-                    text: qsTr("Show the menu button during streams")
+                CdSwitch {
+                    Layout.fillWidth: true
+                    text: qsTr("Show the menu button")
+                    description: qsTr("Ctrl+Alt+Shift+%1 or Select+L1+R1+B opens this menu.").arg(overlay.menuKey)
                     checked: overlay.showButton
                     onToggled: overlay.showButton = checked
-                }
-                Hint {
-                    Layout.bottomMargin: 14
-                    text: qsTr("Ctrl+Alt+Shift+%1 opens and closes this menu.").arg(overlay.menuKey)
                 }
             }
         }

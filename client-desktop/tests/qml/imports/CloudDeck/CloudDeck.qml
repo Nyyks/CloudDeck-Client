@@ -23,6 +23,7 @@ QtObject {
     property string uiStyle: "console"
     property string controllerStyle: "xbox"
     property bool onScreenController: false
+    property bool gamepadMouseAtStart: false
     property bool netTestRunning: false
     property string netTestStatus: "23 ms · 187 Mbit/s"
     property string netTestRecommendation: "Recommended: 1080p, 60 FPS, 30 Mbit/s"

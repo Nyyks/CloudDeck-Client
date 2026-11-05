@@ -20,13 +20,14 @@ FocusScope {
         { id: "display", label: qsTr("Display"), icon: "display" },
         { id: "audio", label: qsTr("Audio & mic"), icon: "mic" },
         { id: "controllers", label: qsTr("Controllers"), icon: "gamepad" },
+        { id: "input", label: qsTr("Mouse & keyboard"), icon: "keyboard" },
         { id: "usb", label: qsTr("USB devices"), icon: "usb" },
         { id: "network", label: qsTr("Network"), icon: "network" },
         { id: "general", label: qsTr("General"), icon: "gear" }
     ]
     readonly property var pageFiles: ({
         display: "CdPageDisplay.qml", audio: "CdPageAudio.qml", controllers: "CdPageControllers.qml",
-        usb: "CdPageUsb.qml", network: "CdPageNetwork.qml", general: "CdPageGeneral.qml"
+        input: "CdPageInput.qml", usb: "CdPageUsb.qml", network: "CdPageNetwork.qml", general: "CdPageGeneral.qml"
     })
 
     function pageIndex(id) {

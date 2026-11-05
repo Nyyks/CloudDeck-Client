@@ -4,6 +4,11 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 ### Added
+- Controller as mouse (docs/controller-mouse.md): Select+L1+R1+A switches a controller between gamepad
+  and mouse, a menu tile does it for all controllers, and controllers can start as a mouse. Desktop and Android.
+- One settings menu: Moonlight's streaming settings are part of the CloudDeck settings (ADR-0013 amendment);
+  new Mouse & keyboard page on desktop; Moonlight's list is the Stream page on Android.
+- Tidier in-stream menus with quick toggle tiles on desktop and Android (ADR-0009 rev. 3).
 - Two home screen layouts with a switch in the settings (ADR-0013, Phase 7):
   - **Console**: sidebar pages, a round Connect button and tiles.
   - **Launcher**: one big button, with the settings in a side panel.

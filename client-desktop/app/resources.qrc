@@ -28,6 +28,11 @@
         <file>res/cd/restart.svg</file>
         <file>res/cd/speed.svg</file>
         <file>res/cd/usb.svg</file>
+        <file>res/cd/fullscreen.svg</file>
+        <file>res/cd/speaker.svg</file>
+        <file>res/cd/keyboard.svg</file>
+        <file>res/cd/mouse.svg</file>
+        <file>res/cd/stats.svg</file>
         <file>res/update.svg</file>
         <file>res/baseline-help_outline-24px.svg</file>
         <file>res/baseline-error_outline-24px.svg</file>

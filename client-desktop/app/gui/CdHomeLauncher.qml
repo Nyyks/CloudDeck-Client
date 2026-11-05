@@ -276,6 +276,7 @@ FocusScope {
                         // Devices
                         Loader { Layout.fillWidth: true; active: home.tab === "devices"; visible: active; source: "CdPageAudio.qml" }
                         Loader { Layout.fillWidth: true; active: home.tab === "devices"; visible: active; source: "CdPageControllers.qml" }
+                        Loader { Layout.fillWidth: true; active: home.tab === "devices"; visible: active; source: "CdPageInput.qml" }
                         Loader { Layout.fillWidth: true; active: home.tab === "devices"; visible: active; source: "CdPageUsb.qml" }
                         // Account
                         CdCard {

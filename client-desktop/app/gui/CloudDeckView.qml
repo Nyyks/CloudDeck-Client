@@ -104,6 +104,17 @@ FocusScope {
     function openSettings() {
         if (homeLoader.item) homeLoader.item.openSettings("", Qt.TabFocusReason)
     }
+    // Moonlight's toolbar gear (other pages) lands here: there is one settings menu.
+    function openSettingsFromToolbar() {
+        if (homeLoader.item) homeLoader.item.openSettings("", Qt.OtherFocusReason)
+    }
+    // After a language change, rebuild the home so every list picks up the new texts.
+    function languageChanged() {
+        if (typeof window !== "undefined") window.clearOnBack = true
+        homeLoader.active = false
+        homeLoader.active = Qt.binding(function() { return CloudDeck.signedIn })
+        Qt.callLater(function() { if (homeLoader.item) homeLoader.item.openSettings("style", keyReason()) })
+    }
     function focusDefault(reason) {
         var view = CloudDeck.signedIn ? homeLoader.item : signInLoader.item
         if (view) view.focusDefault(reason)
@@ -160,7 +171,12 @@ FocusScope {
         var keyUi = !SystemProperties.hasDesktopEnvironment || SdlGamepadKeyNavigation.getConnectedGamepads() > 0
         Qt.callLater(cdView.focusDefault, keyUi ? Qt.TabFocusReason : Qt.OtherFocusReason)
     }
-    StackView.onDeactivating: SdlGamepadKeyNavigation.setUiNavMode(false)
+    StackView.onDeactivating: {
+        SdlGamepadKeyNavigation.setUiNavMode(false)
+        // The settings pages edit Moonlight's preferences directly; persist them (as SettingsView did).
+        StreamingPreferences.save()
+    }
+    Component.onDestruction: StreamingPreferences.save()
 
     // Arrow keys (keyboards, TV remotes) move like the D-pad; Menu/Start opens the settings.
     Keys.onUpPressed: moveFocus(false)

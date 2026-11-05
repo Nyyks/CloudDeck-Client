@@ -119,4 +119,27 @@
     <string name="cd_ui_launcher">Launcher</string>
     <string name="cd_card_account">Account</string>
     <string name="cd_use_other_host">Use another streaming host (Manage PCs)</string>
+    <!-- in-stream menu rev. 3 and controller mouse mode (docs/controller-mouse.md) -->
+    <string name="cd_tile_muted">Muted</string>
+    <string name="cd_tile_stats">Stats</string>
+    <string name="cd_tile_controller">Controller</string>
+    <string name="cd_tile_as_mouse">As mouse</string>
+    <string name="cd_tile_as_gamepad">As gamepad</string>
+    <string name="cd_tile_nintendo">Nintendo</string>
+    <string name="cd_tile_typing">Keyboard</string>
+    <string name="cd_tile_typing_sub">Typing</string>
+    <string name="cd_tile_full_keyboard">Full keyboard</string>
+    <string name="cd_tile_full_keyboard_sub">Esc, F-keys, Ctrl</string>
+    <string name="cd_osc_card">On-screen controller</string>
+    <string name="cd_osc_edit_short">Edit layout</string>
+    <string name="cd_osc_save_short">Save…</string>
+    <string name="cd_osc_load_short">Load…</string>
+    <string name="cd_osc_delete_short">Delete…</string>
+    <string name="cd_menu_shutdown_short">Shut down</string>
+    <string name="cd_menu_combo_hint">Select+L1+R1+B opens this menu · +A controller as mouse · +Y keyboard</string>
+    <string name="cd_card_mouse">Controller as mouse</string>
+    <string name="cd_mouse_hint">Select+L1+R1+A switches a controller between gamepad and mouse. As a mouse: the sticks move the pointer, A clicks, B right-clicks, the D-pad scrolls.</string>
+    <string name="cd_mouse_at_start">Start streams with controllers as a mouse</string>
+    <string name="cd_mouse_hold_start">Also switch by holding Start</string>
+    <string name="cd_nav_streaming">Streaming</string>
 </resources>

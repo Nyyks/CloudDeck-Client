@@ -427,6 +427,16 @@ void StreamOverlay::setControllerPlaystation(bool on)
     emit changed();
 }
 
+// Controller mouse mode (docs/controller-mouse.md)
+bool StreamOverlay::hasGamepad() const { return m_Session->m_InputHandler && m_Session->m_InputHandler->hasGamepad(); }
+bool StreamOverlay::controllerMouse() const { return m_Session->m_InputHandler && m_Session->m_InputHandler->anyGamepadMouseMode(); }
+void StreamOverlay::setControllerMouse(bool on)
+{
+    if (!m_Session->m_InputHandler) return;
+    m_Session->m_InputHandler->setAllGamepadMouseMode(on);
+    emit changed();
+}
+
 void StreamOverlay::onStreamRestarted()
 {
     if (m_Osc && m_Osc->isVisible()) {

@@ -128,6 +128,8 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
     private boolean stopped = false;
 
     private final PreferenceConfiguration prefConfig;
+    public static final String CDC_PREF_MOUSE_AT_START = "cdGamepadMouseAtStart";
+    private final boolean cdcMouseAtStart;
     private short currentControllers, initialControllers;
 
     public ControllerHandler(Activity activityContext, NvConnection conn, GameGestures gestures, PreferenceConfiguration prefConfig) {
@@ -135,6 +137,9 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
         this.conn = conn;
         this.gestures = gestures;
         this.prefConfig = prefConfig;
+        // CloudDeck-Client: controllers may start as a mouse (docs/controller-mouse.md)
+        this.cdcMouseAtStart = android.preference.PreferenceManager.getDefaultSharedPreferences(activityContext)
+                .getBoolean(CDC_PREF_MOUSE_AT_START, false);
 		
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             this.deviceVibratorManager = (VibratorManager) activityContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
@@ -266,6 +271,29 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
         InputDeviceContext newContext = createInputDeviceContextForDevice(device);
         newContext.migrateContext(existingContext);
         inputDeviceContexts.put(deviceId, newContext);
+    }
+
+    // CloudDeck-Client: controller mouse mode for the in-stream menu (docs/controller-mouse.md)
+    private java.util.List<GenericControllerContext> cdcControllers() {
+        java.util.List<GenericControllerContext> list = new java.util.ArrayList<>();
+        for (int i = 0; i < inputDeviceContexts.size(); i++) {
+            if (inputDeviceContexts.valueAt(i).assignedControllerNumber) list.add(inputDeviceContexts.valueAt(i));
+        }
+        for (int i = 0; i < usbDeviceContexts.size(); i++) {
+            if (usbDeviceContexts.valueAt(i).assignedControllerNumber) list.add(usbDeviceContexts.valueAt(i));
+        }
+        return list;
+    }
+
+    public boolean cdcHasControllers() { return !cdcControllers().isEmpty(); }
+
+    public boolean cdcMouseActive() {
+        for (GenericControllerContext c : cdcControllers()) if (c.mouseEmulationActive) return true;
+        return false;
+    }
+
+    public void cdcSetMouseAll(boolean on) {
+        for (GenericControllerContext c : cdcControllers()) c.setMouseEmulation(on, false);
     }
 
     public void stop() {
@@ -563,6 +591,11 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
 
         // Report attributes of this new controller to the host
         context.sendControllerArrival();
+
+        // CloudDeck-Client: "start streams with controllers as a mouse"
+        if (cdcMouseAtStart) {
+            context.setMouseEmulation(true, false);
+        }
     }
 
     private UsbDeviceContext createUsbDeviceContextForDevice(AbstractController device) {
@@ -2741,6 +2774,11 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
             else gestures.cdcShowMenu();
             context.inputMap = 0;
         }
+        // CloudDeck-Client: Select+LB+RB+A switches this controller between gamepad and mouse
+        if (context.inputMap == (cdcBase | ControllerPacket.A_FLAG)) {
+            context.setMouseEmulation(!context.mouseEmulationActive, true);
+            context.inputMap = 0;
+        }
 
         // Start+Back+LB+RB is the quit combo
         if (context.inputMap == (ControllerPacket.BACK_FLAG | ControllerPacket.PLAY_FLAG |
@@ -2937,6 +2975,25 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
                 mainThreadHandler.postDelayed(this, mouseEmulationReportPeriod);
             }
         };
+
+        // CloudDeck-Client: set the mode explicitly (combo, menu, "start as a mouse").
+        public void setMouseEmulation(boolean on, boolean toast) {
+            if (on == mouseEmulationActive) return;
+            mainThreadHandler.removeCallbacks(mouseEmulationRunnable);
+            mouseEmulationActive = on;
+            if (toast) {
+                Toast.makeText(activityContext, on ? "Controller works as a mouse (Select+L1+R1+A to switch back)"
+                        : "Controller works as a gamepad", Toast.LENGTH_SHORT).show();
+            }
+            if (on) {
+                mainThreadHandler.postDelayed(mouseEmulationRunnable, mouseEmulationReportPeriod);
+            } else {
+                // Release buttons A/B may still hold down as mouse buttons
+                conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_LEFT);
+                conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_RIGHT);
+                mouseEmulationLastInputMap = 0;
+            }
+        }
 
         public void toggleMouseEmulation() {
             mainThreadHandler.removeCallbacks(mouseEmulationRunnable);

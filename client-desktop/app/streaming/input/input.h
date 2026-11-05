@@ -207,6 +207,13 @@ private:
     static
     Uint32 mouseEmulationTimerCallback(Uint32 interval, void* param);
 
+    // CloudDeck-Client: controller mouse mode on/off for one pad (Start hold, Select+L1+R1+A,
+    // the in-stream menu, or "start in mouse mode")
+    void setGamepadMouseMode(GamepadState* state, bool on);
+    bool anyGamepadMouseMode() const;
+    bool hasGamepad() const;
+    void setAllGamepadMouseMode(bool on);
+
     static
     Uint32 releaseLeftButtonTimerCallback(Uint32 interval, void* param);
 
@@ -219,6 +226,7 @@ private:
     SDL_Window* m_Window;
     bool m_MultiController;
     bool m_GamepadMouse;
+    bool m_GamepadMouseAtStart; // CloudDeck-Client: pads start in mouse mode (clouddeck/gamepadMouseAtStart)
     bool m_SwapMouseButtons;
     bool m_ReverseScrollDirection;
     bool m_SwapFaceButtons;

@@ -201,6 +201,61 @@ Uint32 SdlInputHandler::mouseEmulationTimerCallback(Uint32 interval, void *param
     return interval;
 }
 
+// CloudDeck-Client: one place to switch a controller between gamepad and mouse
+// (hold Start, Select+L1+R1+A, the in-stream menu, "start in mouse mode").
+void SdlInputHandler::setGamepadMouseMode(GamepadState* state, bool on)
+{
+    if (on == (state->mouseEmulationTimer != 0)) {
+        return;
+    }
+
+    if (on) {
+        state->mouseEmulationTimer = SDL_AddTimer(MOUSE_EMULATION_POLLING_INTERVAL, SdlInputHandler::mouseEmulationTimerCallback, state);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Mouse emulation active");
+    }
+    else {
+        SDL_RemoveTimer(state->mouseEmulationTimer);
+        state->mouseEmulationTimer = 0;
+
+        // A combo or menu toggle can switch off while A/B/X still hold a mouse button down
+        static const int k_Buttons[] = { BUTTON_LEFT, BUTTON_RIGHT, BUTTON_MIDDLE, BUTTON_X1, BUTTON_X2 };
+        for (int b : k_Buttons) {
+            LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, b);
+        }
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Mouse emulation deactivated");
+    }
+    Session::get()->notifyMouseEmulationMode(on);
+}
+
+bool SdlInputHandler::hasGamepad() const
+{
+    for (int i = 0; i < MAX_GAMEPADS; i++) {
+        if (m_GamepadState[i].controller != nullptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SdlInputHandler::anyGamepadMouseMode() const
+{
+    for (int i = 0; i < MAX_GAMEPADS; i++) {
+        if (m_GamepadState[i].controller != nullptr && m_GamepadState[i].mouseEmulationTimer != 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void SdlInputHandler::setAllGamepadMouseMode(bool on)
+{
+    for (int i = 0; i < MAX_GAMEPADS; i++) {
+        if (m_GamepadState[i].controller != nullptr) {
+            setGamepadMouseMode(&m_GamepadState[i], on);
+        }
+    }
+}
+
 static void updateAnalogStickAxis(short& value, short newValue, bool& dirty)
 {
 #ifdef STEAM_LINK
@@ -359,22 +414,12 @@ void SdlInputHandler::handleControllerButtonEvent(SDL_ControllerButtonEvent* eve
         if (event->button == SDL_CONTROLLER_BUTTON_START) {
             if (SDL_GetTicks() - state->lastStartDownTime > MOUSE_EMULATION_LONG_PRESS_TIME) {
                 if (state->mouseEmulationTimer != 0) {
-                    SDL_RemoveTimer(state->mouseEmulationTimer);
-                    state->mouseEmulationTimer = 0;
-
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
-                                "Mouse emulation deactivated");
-                    Session::get()->notifyMouseEmulationMode(false);
+                    setGamepadMouseMode(state, false);
                 }
                 else if (m_GamepadMouse) {
                     // Send the start button up event to the host, since we won't do it below
                     sendGamepadState(state);
-
-                    state->mouseEmulationTimer = SDL_AddTimer(MOUSE_EMULATION_POLLING_INTERVAL, SdlInputHandler::mouseEmulationTimerCallback, state);
-
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
-                                "Mouse emulation active");
-                    Session::get()->notifyMouseEmulationMode(true);
+                    setGamepadMouseMode(state, true);
                 }
             }
         }
@@ -439,6 +484,14 @@ void SdlInputHandler::handleControllerButtonEvent(SDL_ControllerButtonEvent* eve
         else {
             Session::get()->m_Overlay->toggleMenu();
         }
+        LiSendMultiControllerEvent(state->index, m_GamepadMask, 0, 0, 0, 0, 0, 0, 0);
+        return;
+    }
+
+    // CloudDeck-Client: Select+L1+R1+A switches this controller between gamepad and mouse
+    // (works whether or not "hold Start" is allowed; docs/controller-mouse.md)
+    if (state->buttons == (BACK_FLAG | LB_FLAG | RB_FLAG | A_FLAG)) {
+        setGamepadMouseMode(state, state->mouseEmulationTimer == 0);
         LiSendMultiControllerEvent(state->index, m_GamepadMask, 0, 0, 0, 0, 0, 0, 0);
         return;
     }
@@ -806,6 +859,11 @@ void SdlInputHandler::handleControllerDeviceEvent(SDL_ControllerDeviceEvent* eve
         // Send a power level if it's known at this time
         if (powerLevel != SDL_JOYSTICK_POWER_UNKNOWN) {
             sendGamepadBatteryState(state, powerLevel);
+        }
+
+        // CloudDeck-Client: optionally start as a mouse (Controllers settings)
+        if (m_GamepadMouseAtStart) {
+            setGamepadMouseMode(state, true);
         }
     }
     else if (event->type == SDL_CONTROLLERDEVICEREMOVED) {

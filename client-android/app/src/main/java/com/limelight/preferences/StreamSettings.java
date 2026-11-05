@@ -266,7 +266,7 @@ public class StreamSettings extends Activity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View view = super.onCreateView(inflater, container, savedInstanceState);
-            UiHelper.applyStatusBarPadding(view);
+            if (getActivity() instanceof StreamSettings) UiHelper.applyStatusBarPadding(view); // CloudDeck-Client: not when embedded
             return view;
         }
 
@@ -560,9 +560,12 @@ public class StreamSettings extends Activity {
                         @Override
                         public void run() {
                             // Ensure the activity is still open when this timeout expires
-                            StreamSettings settingsActivity = (StreamSettings) SettingsFragment.this.getActivity();
-                            if (settingsActivity != null) {
-                                settingsActivity.reloadSettings();
+                            // CloudDeck-Client: the fragment is also embedded in CloudDeckActivity
+                            Activity host = SettingsFragment.this.getActivity();
+                            if (host instanceof StreamSettings) {
+                                ((StreamSettings) host).reloadSettings();
+                            } else if (host instanceof com.limelight.clouddeck.CloudDeckActivity) {
+                                ((com.limelight.clouddeck.CloudDeckActivity) host).reloadStreamSettings();
                             }
                         }
                     }, 500);
@@ -667,6 +670,27 @@ public class StreamSettings extends Activity {
                     return true;
                 }
             });
+
+            // CloudDeck-Client: embedded as the "Stream" page of the CloudDeck settings, which show
+            // these itself (Devices); avoid two switches for one setting (docs/adr/0013-home-layouts.md).
+            if (!(getActivity() instanceof StreamSettings)) {
+                cdcRemove(screen, "checkbox_flip_face_buttons");
+                cdcRemove(screen, "checkbox_show_onscreen_controls");
+                cdcRemove(screen, "checkbox_mouse_emulation");
+            }
+        }
+
+        private static void cdcRemove(PreferenceScreen screen, String key) {
+            for (int i = 0; i < screen.getPreferenceCount(); i++) {
+                Preference p = screen.getPreference(i);
+                if (p instanceof PreferenceCategory) {
+                    Preference c = ((PreferenceCategory) p).findPreference(key);
+                    if (c != null) {
+                        ((PreferenceCategory) p).removePreference(c);
+                        return;
+                    }
+                }
+            }
         }
     }
 }

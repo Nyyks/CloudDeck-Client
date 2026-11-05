@@ -12,6 +12,13 @@
     </LinearLayout>
 
     <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_mouse" />
+        <TextView style="@style/CdHint" android:paddingTop="2dp" android:text="@string/cd_mouse_hint" />
+        <Switch android:id="@+id/cd_mouse_start" style="@style/CdSwitchRow" android:text="@string/cd_mouse_at_start" />
+        <Switch android:id="@+id/cd_mouse_hold" style="@style/CdSwitchRow" android:text="@string/cd_mouse_hold_start" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/CdCard">
         <TextView style="@style/CdCardTitle" android:text="@string/cd_card_controllers" />
         <Switch android:id="@+id/cd_nintendo" style="@style/CdSwitchRow" android:text="@string/cd_nintendo" />
         <TextView style="@style/CdHint" android:text="@string/cd_nintendo_hint" />

@@ -42,6 +42,7 @@ Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
 | A, Enter or Space | Press the control. |
 | B, Back or Escape | Close the settings panel, or go back to Home. |
 | Start, Menu or X | Open the settings. |
+| Select+L1+R1+A (in a stream) | Switch the controller between gamepad and mouse (docs/controller-mouse.md). |
 
 On desktop with a sidebar, left and right move between the sidebar and the page.
 
@@ -219,7 +220,7 @@ clipboard (the system tray's *Clipboard* entry), which is there by default.
 
 Needs the CloudDeck host update on the VM.
 
-- **Windowed mode:** Settings → *Display mode* → *Windowed*, or press
+- **Windowed mode:** Display → *Picture* → *Display mode* → *Windowed*, or press
   **Ctrl+Alt+Shift+X** during a stream to switch between window and fullscreen.
 - **Fit the CloudDeck's resolution to the stream window:** the CloudDeck's
   desktop takes the exact size of your stream window, or of your screen in

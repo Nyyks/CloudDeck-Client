@@ -43,6 +43,9 @@ class StreamOverlay : public QObject
     Q_PROPERTY(bool keyboardVisible READ keyboardVisible NOTIFY changed)
     Q_PROPERTY(bool controllerVisible READ controllerVisible NOTIFY changed)
     Q_PROPERTY(bool controllerPlaystation READ controllerPlaystation WRITE setControllerPlaystation NOTIFY changed)
+    // Controller mouse mode (Select+L1+R1+A), for every connected controller
+    Q_PROPERTY(bool hasGamepad READ hasGamepad NOTIFY changed)
+    Q_PROPERTY(bool controllerMouse READ controllerMouse WRITE setControllerMouse NOTIFY changed)
 
 public:
     explicit StreamOverlay(Session* session);
@@ -93,9 +96,13 @@ public:
     Q_INVOKABLE void toggleKeyboard();
     // On-screen controller (docs/on-screen-controller.md)
     Q_INVOKABLE void toggleController();
+    void refresh() { emit changed(); } // state changed outside the menu (e.g. a controller combo)
     bool controllerVisible() const;
     bool controllerPlaystation() const;
     void setControllerPlaystation(bool on);
+    bool hasGamepad() const;
+    bool controllerMouse() const;
+    void setControllerMouse(bool on);
     // After an in-place restart: the new connection must see the virtual pad arrive again.
     void onStreamRestarted();
     Q_INVOKABLE void sendKey(int vk, bool down, int modifiers);

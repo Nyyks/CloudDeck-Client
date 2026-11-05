@@ -10,10 +10,12 @@
 #include <QtGlobal>
 #include <QDir>
 #include <QGuiApplication>
+#include <QSettings>
 
 SdlInputHandler::SdlInputHandler(StreamingPreferences& prefs, int streamWidth, int streamHeight)
     : m_MultiController(prefs.multiController),
       m_GamepadMouse(prefs.gamepadMouse),
+      m_GamepadMouseAtStart(QSettings().value("clouddeck/gamepadMouseAtStart", false).toBool()),
       m_SwapMouseButtons(prefs.swapMouseButtons),
       m_ReverseScrollDirection(prefs.reverseScrollDirection),
       m_SwapFaceButtons(prefs.swapFaceButtons),

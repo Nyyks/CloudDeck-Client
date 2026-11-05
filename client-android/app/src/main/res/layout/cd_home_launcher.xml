@@ -156,19 +156,27 @@
             <Button android:id="@+id/cd_tab_devices" style="@style/CdSegment" android:text="@string/cd_nav_devices" />
             <Button android:id="@+id/cd_tab_account" style="@style/CdSegment" android:text="@string/cd_nav_account" />
         </LinearLayout>
-        <ScrollView
-            android:id="@+id/cd_content"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
+        <ScrollView
+            android:id="@+id/cd_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-                <include android:id="@+id/cd_page_stream" layout="@layout/cd_section_stream" />
-                <include android:id="@+id/cd_page_devices" layout="@layout/cd_section_devices" android:visibility="gone" />
+                <include android:id="@+id/cd_page_devices" layout="@layout/cd_section_devices" />
                 <include android:id="@+id/cd_page_account" layout="@layout/cd_section_account" android:visibility="gone" />
             </LinearLayout>
         </ScrollView>
+        <FrameLayout
+            android:id="@+id/cd_prefs_host"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
 </FrameLayout>

@@ -1,13 +1,41 @@
-// Settings page: microphone (docs/protocol-extensions.md section 1).
+// Settings page: sound (Moonlight's audio settings) and microphone (docs/protocol-extensions.md section 1).
 import QtQuick 2.9
 import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.3
 
 import CloudDeckMic 1.0
+import StreamingPreferences 1.0
+import SystemProperties 1.0
 import "CdTheme.js" as T
 
 ColumnLayout {
     spacing: 16
+
+    CdCard {
+        title: qsTr("Sound")
+        CdChoiceRow {
+            text: qsTr("Speakers")
+            options: [{ text: qsTr("Stereo"), val: StreamingPreferences.AC_STEREO },
+                      { text: qsTr("5.1 surround sound"), val: StreamingPreferences.AC_51_SURROUND },
+                      { text: qsTr("7.1 surround sound"), val: StreamingPreferences.AC_71_SURROUND }]
+            value: StreamingPreferences.audioConfig
+            onPicked: function(v) { StreamingPreferences.audioConfig = v }
+        }
+        CdSwitch {
+            Layout.fillWidth: true
+            text: qsTr("Mute the CloudDeck's own speakers while streaming")
+            description: qsTr("Restart a running game for this to take effect.")
+            checked: !StreamingPreferences.playAudioOnHost
+            onToggled: StreamingPreferences.playAudioOnHost = !checked
+        }
+        CdSwitch {
+            Layout.fillWidth: true
+            visible: SystemProperties.hasDesktopEnvironment
+            text: qsTr("Mute the stream when this window isn't active")
+            checked: StreamingPreferences.muteOnFocusLoss
+            onToggled: StreamingPreferences.muteOnFocusLoss = checked
+        }
+    }
 
     CdCard {
         title: qsTr("Microphone")

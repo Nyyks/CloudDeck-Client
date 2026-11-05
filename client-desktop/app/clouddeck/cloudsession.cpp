@@ -91,6 +91,8 @@ QString CloudSession::controllerStyle() const { return QSettings().value("cloudd
 void CloudSession::setControllerStyle(const QString& v) { QSettings().setValue("clouddeck/osc/style", v == QLatin1String("playstation") ? "playstation" : "xbox"); emit settingsChanged(); }
 bool CloudSession::onScreenController() const { return QSettings().value("clouddeck/osc/enabled", false).toBool(); }
 void CloudSession::setOnScreenController(bool v) { QSettings().setValue("clouddeck/osc/enabled", v); emit settingsChanged(); }
+bool CloudSession::gamepadMouseAtStart() const { return QSettings().value("clouddeck/gamepadMouseAtStart", false).toBool(); }
+void CloudSession::setGamepadMouseAtStart(bool v) { QSettings().setValue("clouddeck/gamepadMouseAtStart", v); emit settingsChanged(); }
 
 // ------------------------------------------------------------------ state helpers
 

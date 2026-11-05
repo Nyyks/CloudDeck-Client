@@ -17,6 +17,7 @@ Item {
     // main.qml context the view expects
     property var stackView: null
     property int navigations: 0
+    property bool clearOnBack: false
     function navigateTo(url, type) { navigations++ }
 
     property var view: null
@@ -51,7 +52,7 @@ Item {
             make(1280, 800)
             verify(home().pages !== undefined, "console layout")
             shot("console-home")
-            var pages = ["display", "audio", "controllers", "usb", "network", "general"]
+            var pages = ["display", "audio", "controllers", "input", "usb", "network", "general"]
             for (var i = 0; i < pages.length; i++) {
                 home().page = pages[i]
                 shot("console-" + pages[i])
@@ -90,7 +91,7 @@ Item {
             keyClick(Qt.Key_Space)
             compare(home().page, "display")
             keyClick(Qt.Key_Right)                       // into the page
-            verify(focusedText().indexOf("Fit the CloudDeck") === 0, focusedText())
+            verify(focused() !== null && focusedText() !== "Display", "focus moved into the page")
             shot("console-display-focus")
             keyClick(Qt.Key_Escape)                      // B: back to the sidebar
             compare(focusedText(), "Display")

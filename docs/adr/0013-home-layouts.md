@@ -77,3 +77,27 @@
   controller on Android (Moonlight's own keys).
 - The remaining Moonlight screens are not restyled yet: PC list, app grid and
   streaming settings.
+
+## Amendment: one settings menu (2026-11-05)
+The owner asked for Moonlight's own settings to live in the CloudDeck settings, so
+there is only one settings menu.
+- **Desktop:** every option of Moonlight's SettingsView is now on a CloudDeck page,
+  in the same style and with the same navigation:
+  - Display: resolution, frame rate (with custom values), bitrate, display mode,
+    V-Sync, frame pacing, HDR.
+  - Audio & mic: speaker layout, muting the CloudDeck's own speakers, muting when
+    the window isn't active.
+  - Controllers: keep controller 1 connected, background input, controller as mouse.
+  - Mouse & keyboard (new page): desktop mouse, button swap, scroll direction,
+    touch as trackpad, system shortcuts, and the stream shortcuts (moved from General).
+  - General: language, app window mode, quitting the app after a stream, game
+    optimizations, warnings, Discord, keep awake, performance stats, decoder,
+    codec, renderer, YUV 4:4:4, unlocked bitrate, mDNS and blocked-connection detection.
+  - Moonlight's toolbar gear on the other pages (PC list, app grid) now returns
+    to the CloudDeck screen and opens its settings. `SettingsView.qml` is only
+    used when there is no CloudDeck screen (CLI modes).
+- **Android:** Moonlight's preference list (`StreamSettings.SettingsFragment`) is
+  embedded as the **Stream** page or tab, so it keeps every device-specific option
+  and its checks. Options the CloudDeck pages already show (Nintendo layout,
+  on-screen controller, hold Start for mouse) are hidden there to avoid two
+  switches for one setting. Moonlight's PC list still opens its own settings activity.

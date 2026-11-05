@@ -69,6 +69,7 @@ public class CloudDeckActivity extends Activity {
     // Moonlight's own preference keys (PreferenceConfiguration)
     private static final String PREF_FLIP_FACE_BUTTONS = "checkbox_flip_face_buttons";
     private static final String PREF_ONSCREEN_CONTROLLER = "checkbox_show_onscreen_controls";
+    private static final String PREF_MOUSE_EMULATION = "checkbox_mouse_emulation";
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -105,6 +106,13 @@ public class CloudDeckActivity extends Activity {
     private TextView statusView, hostView, statusLine, headlineView, progressView, errorView;
     private Button connectButton;
     private CompoundButton autoStop, micBox, nintendoBox, oscBox;
+    private CompoundButton mouseStartBox, mouseHoldBox;
+    // Moonlight's settings list, embedded as the "Stream" page (one settings menu, ADR-0013)
+    private StreamSettings.SettingsFragment prefsFragment;
+    private final SharedPreferences.OnSharedPreferenceChangeListener languageListener = (p, key) -> {
+        // Android 13+ applies app languages itself; older versions need the activity rebuilt.
+        if ("list_languages".equals(key) && Build.VERSION.SDK_INT < 33) recreate();
+    };
     private String uiStyle = UI_CONSOLE;
     private String page = "home";          // console page, or the launcher's settings tab
     private boolean drawerOpen;            // launcher settings panel
@@ -119,7 +127,9 @@ public class CloudDeckActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        com.limelight.utils.UiHelper.setLocale(this);
         setContentView(R.layout.activity_clouddeck);
+        moonlightPrefs().registerOnSharedPreferenceChangeListener(languageListener);
         provider = new CloudDeckProvider(this);
         prefs = getSharedPreferences("clouddeck", MODE_PRIVATE);
 
@@ -227,6 +237,7 @@ public class CloudDeckActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        moonlightPrefs().unregisterOnSharedPreferenceChangeListener(languageListener);
         cancel.set(true);
         unbindService(serviceConnection);
         worker.shutdownNow();
@@ -260,6 +271,7 @@ public class CloudDeckActivity extends Activity {
     /** (Re)builds the home screen in the layout chosen in the settings. */
     private void inflateHome() {
         uiStyle = UI_LAUNCHER.equals(prefs.getString(PREF_UI_STYLE, UI_CONSOLE)) ? UI_LAUNCHER : UI_CONSOLE;
+        removePrefsFragment();
         homeContainer.removeAllViews();
         homeRoot = getLayoutInflater().inflate(isLauncher() ? R.layout.cd_home_launcher : R.layout.cd_home_console,
                 homeContainer, false);
@@ -303,10 +315,13 @@ public class CloudDeckActivity extends Activity {
             moonlightPrefs().edit().putBoolean(PREF_ONSCREEN_CONTROLLER, c).apply();
             renderToggles();
         });
+        mouseStartBox = v(R.id.cd_mouse_start);
+        mouseStartBox.setOnCheckedChangeListener((b, c) -> { if (!binding) moonlightPrefs().edit().putBoolean(com.limelight.binding.input.ControllerHandler.CDC_PREF_MOUSE_AT_START, c).apply(); });
+        mouseHoldBox = v(R.id.cd_mouse_hold);
+        mouseHoldBox.setOnCheckedChangeListener((b, c) -> { if (!binding) moonlightPrefs().edit().putBoolean(PREF_MOUSE_EMULATION, c).apply(); });
         click(R.id.cd_osc_xbox, () -> { OnScreenController.setStyle(this, OnScreenController.STYLE_XBOX); renderToggles(); });
         click(R.id.cd_osc_ps, () -> { OnScreenController.setStyle(this, OnScreenController.STYLE_PLAYSTATION); renderToggles(); });
         click(R.id.cd_controllers, () -> startActivity(new Intent(this, ControllerProfilesActivity.class)));
-        click(R.id.cd_stream_settings, this::openStreamSettings);
         click(R.id.cd_style_console, () -> setUiStyle(UI_CONSOLE));
         click(R.id.cd_style_launcher, () -> setUiStyle(UI_LAUNCHER));
         click(R.id.cd_signout, this::signOut);
@@ -319,7 +334,7 @@ public class CloudDeckActivity extends Activity {
         click(R.id.cd_tile_mic, () -> micBox.toggle());
         click(R.id.cd_chip_osc, () -> oscBox.toggle());
         click(R.id.cd_chip_nintendo, () -> nintendoBox.toggle());
-        click(R.id.cd_tile_stream, this::openStreamSettings);
+        click(R.id.cd_tile_stream, () -> openSettings("stream", false));
         click(R.id.cd_tile_power, this::powerAction);
         click(R.id.cd_link_power, this::powerAction);
         click(R.id.cd_tile_stop, this::confirmStop);
@@ -350,7 +365,9 @@ public class CloudDeckActivity extends Activity {
     private void showPage(String p) {
         page = p;
         setVisible(R.id.cd_page_home, "home".equals(p));
-        setVisible(R.id.cd_page_stream, "stream".equals(p));
+        setVisible(R.id.cd_content, !"stream".equals(p));
+        setVisible(R.id.cd_prefs_host, "stream".equals(p));
+        if ("stream".equals(p)) attachPrefsFragment();
         setVisible(R.id.cd_page_devices, "devices".equals(p));
         setVisible(R.id.cd_page_account, "account".equals(p));
         int[][] marks = {
@@ -473,7 +490,28 @@ public class CloudDeckActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    private void openStreamSettings() { startActivity(new Intent(this, StreamSettings.class)); }
+    // ---- Moonlight's settings as the Stream page
+    @SuppressWarnings("deprecation")
+    private void attachPrefsFragment() {
+        if (prefsFragment != null) return;
+        prefsFragment = new StreamSettings.SettingsFragment();
+        getFragmentManager().beginTransaction().replace(R.id.cd_prefs_host, prefsFragment).commitAllowingStateLoss();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void removePrefsFragment() {
+        if (prefsFragment == null) return;
+        getFragmentManager().beginTransaction().remove(prefsFragment).commitAllowingStateLoss();
+        getFragmentManager().executePendingTransactions();
+        prefsFragment = null;
+    }
+
+    /** Called by the settings list when an option changes which entries it shows (unlock FPS). */
+    public void reloadStreamSettings() {
+        if (prefsFragment == null) return;
+        removePrefsFragment();
+        attachPrefsFragment();
+    }
 
     private void managePcs() { startActivity(new Intent(this, PcView.class)); }
 
@@ -593,8 +631,6 @@ public class CloudDeckActivity extends Activity {
         String info = streamInfo();
         TextView si = v(R.id.cd_stream_info);
         if (si != null) si.setText(info);
-        TextView summary = v(R.id.cd_stream_summary);
-        if (summary != null) summary.setText(info);
 
         TextView powerTitle = v(R.id.cd_tile_power_title);
         if (powerTitle != null) powerTitle.setText(off ? R.string.cd_start : R.string.cd_restart);
@@ -634,6 +670,8 @@ public class CloudDeckActivity extends Activity {
         micBox.setChecked(mic);
         nintendoBox.setChecked(nintendo);
         oscBox.setChecked(osc);
+        mouseStartBox.setChecked(mp.getBoolean(com.limelight.binding.input.ControllerHandler.CDC_PREF_MOUSE_AT_START, false));
+        mouseHoldBox.setChecked(mp.getBoolean(PREF_MOUSE_EMULATION, true));
         binding = false;
 
         Button chipMic = v(R.id.cd_chip_mic);

@@ -65,11 +65,15 @@
     </LinearLayout>
     <View android:layout_width="1dp" android:layout_height="match_parent" android:background="@color/cd_border" />
 
-    <ScrollView
-        android:id="@+id/cd_content"
+    <!-- Our pages scroll here; the "Stream" page is Moonlight's settings list (cd_prefs_host). -->
+    <FrameLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="1">
+    <ScrollView
+        android:id="@+id/cd_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:fillViewport="true">
         <LinearLayout
             android:layout_width="match_parent"
@@ -89,9 +93,14 @@
                 android:textStyle="bold"
                 android:visibility="gone" />
             <include android:id="@+id/cd_page_home" layout="@layout/cd_page_home_console" />
-            <include android:id="@+id/cd_page_stream" layout="@layout/cd_section_stream" android:visibility="gone" />
             <include android:id="@+id/cd_page_devices" layout="@layout/cd_section_devices" android:visibility="gone" />
             <include android:id="@+id/cd_page_account" layout="@layout/cd_section_account" android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
+    <FrameLayout
+        android:id="@+id/cd_prefs_host"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+    </FrameLayout>
 </LinearLayout>

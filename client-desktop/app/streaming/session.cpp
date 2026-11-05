@@ -1833,11 +1833,16 @@ void Session::notifyMouseEmulationMode(bool enabled)
 
     // We re-use the status update overlay for mouse mode notification
     if (m_MouseEmulationRefCount > 0) {
-        m_OverlayManager.updateOverlayText(Overlay::OverlayStatusUpdate, "Gamepad mouse mode active\nLong press Start to deactivate");
+        m_OverlayManager.updateOverlayText(Overlay::OverlayStatusUpdate, "Controller mouse mode\nSelect+L1+R1+A or hold Start to switch back"); // CloudDeck-Client
         m_OverlayManager.setOverlayState(Overlay::OverlayStatusUpdate, true);
     }
     else {
         m_OverlayManager.setOverlayState(Overlay::OverlayStatusUpdate, false);
+    }
+
+    // CloudDeck-Client: keep the in-stream menu's "controller as mouse" switch in sync
+    if (m_Overlay != nullptr) {
+        m_Overlay->refresh();
     }
 }
 

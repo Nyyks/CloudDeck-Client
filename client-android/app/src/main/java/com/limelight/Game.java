@@ -120,6 +120,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private com.limelight.clouddeck.StreamKeyboard cdcKeyboard; // full on-screen keyboard (Phase 6)
     private final com.limelight.clouddeck.StreamMenu.Host cdcMenuHost = new com.limelight.clouddeck.StreamMenu.Host() {
         @Override
+        public boolean hasControllers() { return controllerHandler != null && controllerHandler.cdcHasControllers(); }
+        @Override
+        public boolean isControllerMouse() { return controllerHandler != null && controllerHandler.cdcMouseActive(); }
+        @Override
+        public void setControllerMouse(boolean on) { if (controllerHandler != null) controllerHandler.cdcSetMouseAll(on); }
+        @Override
         public boolean isPerfOverlayVisible() {
             return prefConfig.enablePerfOverlay;
         }

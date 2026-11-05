@@ -3,7 +3,7 @@ import QtTest 1.15
 import QtQuick.Controls 2.15
 
 Item {
-    width: 400; height: 660
+    width: 400; height: 700
     QtObject {
         id: stub
         signal changed()
@@ -24,6 +24,8 @@ Item {
         property bool keyboardVisible: false
         property bool controllerVisible: false
         property bool controllerPlaystation: false
+        property bool hasGamepad: true
+        property bool controllerMouse: false
         function toggleController() {}
         property int keys: 0
         function toggleKeyboard() {}
@@ -46,6 +48,11 @@ Item {
             var m = c.createObject(parent, { overlay: stub, width: 400, height: 660 })
             verify(m !== null)
             wait(50)
+            wait(300)
+            grabImage(m).save("shots/menu.png")
+            m.contentItem.children[0].children[1].contentY = 420
+            wait(100)
+            grabImage(m).save("shots/menu-lower.png")
             m.destroy()
             var b = Qt.createComponent("StreamMenuButton.qml")
             compare(b.status, Component.Ready, b.errorString())

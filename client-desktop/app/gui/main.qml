@@ -428,7 +428,13 @@ ApplicationWindow {
 
                 iconSource:  "qrc:/res/settings.svg"
 
-                onClicked: navigateTo("qrc:/gui/SettingsView.qml", SettingsView)
+                onClicked: {
+                    // CloudDeck-Client: one settings menu. Go back to the CloudDeck screen and open its
+                    // settings; Moonlight's SettingsView is only used when there is no CloudDeck screen.
+                    var home = stackView.find(function(item) { return item instanceof CloudDeckView })
+                    if (home !== null) { stackView.pop(home); home.openSettingsFromToolbar() }
+                    else navigateTo("qrc:/gui/SettingsView.qml", SettingsView)
+                }
 
                 Keys.onDownPressed: {
                     stackView.currentItem.forceActiveFocus(Qt.TabFocus)

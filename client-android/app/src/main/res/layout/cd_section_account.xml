@@ -20,6 +20,12 @@
     </LinearLayout>
 
     <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_vm" />
+        <Switch android:id="@+id/cd_autostop" style="@style/CdSwitchRow" android:text="@string/cd_auto_stop" />
+        <TextView style="@style/CdHint" android:text="@string/cd_auto_stop_hint" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/CdCard">
         <TextView style="@style/CdCardTitle" android:text="@string/cd_card_account" />
         <TextView
             android:id="@+id/cd_account_email"

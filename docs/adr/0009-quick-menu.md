@@ -93,3 +93,13 @@
   the CloudDeck header. The button hides in picture-in-picture.
 - Display, mouse and USB settings aren't on Android: the stream size is the
   phone's screen and there's no USB forwarding.
+
+## Revision 3 (2026-11-05): tidier menu
+At the owner's request, both menus now use the home screen's style.
+- **Desktop:** quick tiles for fullscreen, sound, microphone, stats, keyboard and
+  controller-as-mouse, then cards for display and mouse, controller, microphone
+  and USB, then the session buttons.
+- **Android:** quick tiles for microphone, stats, controller as mouse, Nintendo
+  layout and both keyboards, a card for the on-screen controller, then
+  Disconnect and Shut down side by side.
+Every control takes keyboard or D-pad focus with a visible ring.

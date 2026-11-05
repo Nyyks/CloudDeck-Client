@@ -26,6 +26,9 @@
         <file>gui/CdPageUsb.qml</file>
         <file>gui/CdPageNetwork.qml</file>
         <file>gui/CdPageGeneral.qml</file>
+        <file>gui/CdPageInput.qml</file>
+        <file>gui/CdChoiceRow.qml</file>
+        <file>gui/CdStreamQuality.qml</file>
         <file>gui/ControllerProfiles.qml</file>
         <file>gui/StreamMenu.qml</file>
         <file>gui/StreamMenuButton.qml</file>

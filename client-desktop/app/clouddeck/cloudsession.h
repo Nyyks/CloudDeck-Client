@@ -41,6 +41,8 @@ class CloudSession : public QObject
     // On-screen controller (docs/on-screen-controller.md), same keys the stream overlay reads
     Q_PROPERTY(QString controllerStyle READ controllerStyle WRITE setControllerStyle NOTIFY settingsChanged)
     Q_PROPERTY(bool onScreenController READ onScreenController WRITE setOnScreenController NOTIFY settingsChanged)
+    // Controllers start as a mouse (docs/controller-mouse.md); read by SdlInputHandler
+    Q_PROPERTY(bool gamepadMouseAtStart READ gamepadMouseAtStart WRITE setGamepadMouseAtStart NOTIFY settingsChanged)
     // Network test (docs/adr/0011-network-test.md)
     Q_PROPERTY(bool netTestRunning READ netTestRunning NOTIFY netTestChanged)
     Q_PROPERTY(QString netTestStatus READ netTestStatus NOTIFY netTestChanged)
@@ -108,6 +110,8 @@ public:
     void setControllerStyle(const QString& v);
     bool onScreenController() const;
     void setOnScreenController(bool v);
+    bool gamepadMouseAtStart() const;
+    void setGamepadMouseAtStart(bool v);
 
 signals:
     void netTestChanged();

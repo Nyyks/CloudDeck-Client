@@ -6,6 +6,7 @@ import QtQuick.Layouts 1.3
 import CloudDeck 1.0
 import CloudDeckControllers 1.0
 import StreamingPreferences 1.0
+import SystemProperties 1.0
 import "CdTheme.js" as T
 
 ColumnLayout {
@@ -25,6 +26,30 @@ ColumnLayout {
         }
         CdText {
             text: qsTr("On a controller: Select+L1+R1+B opens the CloudDeck menu, Select+L1+R1+Y the on-screen keyboard.")
+        }
+    }
+
+    CdCard {
+        title: qsTr("Controller as mouse")
+        CdText {
+            hint: false
+            text: qsTr("Select+L1+R1+A switches a controller between gamepad and mouse at any time.")
+        }
+        CdText {
+            text: qsTr("As a mouse: the sticks move the pointer, A clicks, B right-clicks, X middle-clicks, the D-pad scrolls.")
+        }
+        CdSwitch {
+            Layout.fillWidth: true
+            text: qsTr("Start streams with controllers as a mouse")
+            description: qsTr("Handy for the CloudDeck's desktop; switch back for games.")
+            checked: CloudDeck.gamepadMouseAtStart
+            onToggled: CloudDeck.gamepadMouseAtStart = checked
+        }
+        CdSwitch {
+            Layout.fillWidth: true
+            text: qsTr("Also switch by holding Start")
+            checked: StreamingPreferences.gamepadMouse
+            onToggled: StreamingPreferences.gamepadMouse = checked
         }
     }
 
@@ -92,6 +117,24 @@ ColumnLayout {
                 text: qsTr("Edit profiles...")
                 onClicked: cdView.openControllerProfiles()
             }
+        }
+    }
+
+    CdCard {
+        title: qsTr("More")
+        CdSwitch {
+            Layout.fillWidth: true
+            text: qsTr("Keep controller 1 always connected")
+            description: qsTr("Only for games that don't notice controllers connected after they start.")
+            checked: !StreamingPreferences.multiController
+            onToggled: StreamingPreferences.multiController = !checked
+        }
+        CdSwitch {
+            Layout.fillWidth: true
+            visible: SystemProperties.hasDesktopEnvironment
+            text: qsTr("Use controllers while this window is in the background")
+            checked: StreamingPreferences.backgroundGamepad
+            onToggled: StreamingPreferences.backgroundGamepad = checked
         }
     }
 }
