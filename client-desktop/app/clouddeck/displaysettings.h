@@ -15,7 +15,8 @@ class DisplaySettings : public QObject
     Q_PROPERTY(bool multiMonitor READ multiMonitor WRITE setMultiMonitor NOTIFY settingsChanged)
     // QScreen names of the chosen monitors.
     Q_PROPERTY(QStringList monitors READ monitors WRITE setMonitors NOTIFY settingsChanged)
-    // Switch the CloudDeck's display to the stream resolution (always on with multiple monitors).
+    // Fit the CloudDeck's display to the stream window or screen, following resizes
+    // (always on with multiple monitors).
     Q_PROPERTY(bool matchResolution READ matchResolution WRITE setMatchResolution NOTIFY settingsChanged)
     // [{name, label, width, height, x, y}] of the connected monitors (pixels).
     Q_PROPERTY(QVariantList screens READ screens NOTIFY screensChanged)

@@ -13,6 +13,19 @@ int maxFpsFor(QSize stream)
     return px > 0 ? (int)(kMaxPixelRate / px) : 0;
 }
 
+QSize fitStreamSize(QSize pixels, int fps)
+{
+    double w = qBound(640, pixels.width(), kMaxWidth);
+    double h = qBound(360, pixels.height(), kMaxHeight);
+    double rate = w * h * qMax(fps, 1);
+    if (rate > kMaxPixelRate) {
+        double f = std::sqrt(kMaxPixelRate / rate);
+        w *= f;
+        h *= f;
+    }
+    return QSize((int)w & ~1, (int)h & ~1);
+}
+
 Result compute(const QList<Display>& selected, int fps)
 {
     Result r;

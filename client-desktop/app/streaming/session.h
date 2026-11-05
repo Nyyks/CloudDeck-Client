@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QRect>
+#include <atomic>
 #include <QSemaphore>
 #include <QQuickWindow>
 
@@ -250,6 +251,15 @@ private:
     bool m_Spanning = false;
     QRect m_SpanWindow;
     class DisplayLease* m_DisplayLease = nullptr;
+    // CloudDeck-Client: fit the CloudDeck's desktop to the window (ADR-0007 amendment).
+    // A resize that settles restarts the stream in place at the new size.
+    bool m_FitToWindow = false;
+    bool m_BitrateIsDefault = false;
+    bool m_ForceResume = false;          // restart: the host app is already running
+    std::atomic<bool> m_Restarting {false};
+    Uint32 m_ResizeCheckAt = 0;          // SDL ticks at which to compare window and stream size; 0 = none
+    void maybeRestartForWindowSize();
+    void restartStreamAt(int width, int height);
     SupportedVideoFormatList m_SupportedVideoFormats; // Sorted in order of descending priority
     STREAM_CONFIGURATION m_StreamConfig;
     DECODER_RENDERER_CALLBACKS m_VideoCallbacks;

@@ -191,6 +191,21 @@ for kargs):** *AC:* 2 independent outputs.
 **Phase 5: Polish.** Quick Menu, network test, clipboard, file upload,
 shortcuts, auto-reconnect, tray, Android virtual gamepad.
 
+**Windowed mode** *(scope addition requested by the owner, 2026-11-05; done
+with Phase 4a)*:
+- **Inherited from Moonlight:** a windowed display mode (Settings → Display
+  mode) and the Ctrl+Alt+Shift+X fullscreen toggle.
+- **Added:** "Fit the CloudDeck's resolution to the stream window". The VM's
+  desktop takes the window's exact pixel size, or the screen's in fullscreen.
+  When a resize or fullscreen toggle settles (about 1 s), the stream restarts
+  in place at the new size, keeping the same window, the running app and
+  attached USB devices. ADR-0007 has the amendment.
+- **Planned:** a fullscreen/windowed entry in the Quick Menu.
+
+*AC:* resizing the window or toggling fullscreen leaves the remote desktop
+unscaled and sharp within about 3 s. Quitting restores the VM's original
+resolution.
+
 **Phase 6: Controllers** *(scope addition requested by the owner, 2026-11-04)*
 
 Baseline inherited from Moonlight:

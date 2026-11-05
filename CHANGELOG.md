@@ -11,7 +11,8 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - USB passthrough (ADR-0006): agent tunnel (Sunshine patch 0002) and vhci attach.
   - Windows uses usbipd-win (verified).
   - Linux uses a pkexec helper on usbip-host (tested with fake kernels only).
-- Multiple monitors as one wide stream, and matching the VM's resolution to the stream
+- Multiple monitors as one wide stream, and fitting the VM's resolution to the stream window
+  (follows resizes and fullscreen toggles with an in-place stream restart)
   (ADR-0007). The agent switches KWin's mode for the stream and restores it afterwards.
   Not yet verified on the VM.
 - `host/tools/display-test.sh`: a 15-second, self-reverting check of KWin custom modes.

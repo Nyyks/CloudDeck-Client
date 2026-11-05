@@ -61,6 +61,31 @@
      scaling and overlapping (mirrored) monitors are rejected. Non-rectangular
      arrangements get a warning.
 
+### Amendment (2026-11-05): fit to the window
+"Set the CloudDeck's resolution to match the stream" became **"Fit the
+CloudDeck's resolution to the stream window"**. It applies to windowed mode
+(the owner asked for windowed mode) and to fullscreen.
+
+1. **Initial size.** The stream starts at the window's pixel size. In
+   fullscreen it uses the screen's native mode instead of the configured
+   resolution. The size is clamped to the host limits and made even.
+2. **Resizes.** A resize or fullscreen toggle arms a check, which runs once the
+   size has been stable for 1 s and no mouse button is held. If the window's
+   pixel size differs from the stream's, the session restarts **in place**:
+   - The decoder is dropped and input is ignored.
+   - A worker thread stops the connection and opens a new display lease
+     *before* releasing the old one, so the host goes straight to the new size
+     and still remembers the original mode.
+   - The worker then sends `resume` (the app keeps running) and reconnects.
+   - A render reset recreates the decoder in the same SDL window.
+
+   Mic streaming restarts with the connection. USB forwarding is untouched.
+   The default bitrate is rescaled; a custom bitrate stays.
+3. **Exclusive fullscreen** (`WM_FULLSCREEN`) never triggers restarts. It picks
+   its display mode from the stream.
+4. **Quitting during a restart** interrupts it, and cleanup waits for it to
+   finish, so connection start and stop never run at the same time.
+
 ## Consequences
 - Plasma sees **one ultrawide output**:
   - the panel spans all monitors;

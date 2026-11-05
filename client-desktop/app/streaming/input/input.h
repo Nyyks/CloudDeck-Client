@@ -90,6 +90,9 @@ public:
 
     void setWindow(SDL_Window* window);
 
+    // CloudDeck-Client: the stream was restarted at a new size (fit to window)
+    void setStreamSize(int width, int height) { m_StreamWidth = width; m_StreamHeight = height; }
+
     void handleKeyEvent(SDL_KeyboardEvent* event);
 
     void handleMouseButtonEvent(SDL_MouseButtonEvent* event);

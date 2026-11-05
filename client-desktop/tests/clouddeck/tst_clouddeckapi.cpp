@@ -164,6 +164,17 @@ private slots:
         QVERIFY(!r.warning.isEmpty());
     }
 
+    void fitStreamSize()
+    {
+        QCOMPARE(SpanLayout::fitStreamSize(QSize(1536, 865), 60), QSize(1536, 864)); // odd -> even
+        QCOMPARE(SpanLayout::fitStreamSize(QSize(1920, 1009), 60), QSize(1920, 1008));
+        QCOMPARE(SpanLayout::fitStreamSize(QSize(300, 200), 60), QSize(640, 360));   // minimum
+        QSize big = SpanLayout::fitStreamSize(QSize(5120, 1440), 120);              // pixel-rate cap
+        QVERIFY((long long)big.width() * big.height() * 120 <= SpanLayout::kMaxPixelRate);
+        QVERIFY(big.width() % 2 == 0 && big.height() % 2 == 0);
+        QVERIFY(qAbs(big.width() / (double)big.height() - 5120 / 1440.0) < 0.01);  // keeps the shape
+    }
+
     void spanLimits()
     {
         QVERIFY(!SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)}}, 60).ok);

@@ -78,9 +78,19 @@ Needs the CloudDeck host update on the VM, plus:
 
 Needs the CloudDeck host update on the VM.
 
-- **Set the CloudDeck's resolution to match the stream:** before each stream,
-  the CloudDeck switches its screen to your stream resolution and frame rate,
-  so nothing is scaled. When the stream ends it switches back.
+- **Windowed mode:** Settings → *Display mode* → *Windowed*, or press
+  **Ctrl+Alt+Shift+X** during a stream to switch between window and fullscreen.
+- **Fit the CloudDeck's resolution to the stream window:** the CloudDeck's
+  desktop takes the exact size of your stream window, or of your screen in
+  fullscreen, so nothing is scaled or blurry.
+  - When you resize the window or toggle fullscreen, the stream reconnects at
+    the new size about a second after you let go, which takes a moment.
+  - The app keeps running and USB devices stay attached.
+  - When the stream ends, the CloudDeck goes back to its previous resolution.
+  - With this on, the *Resolution* setting is ignored. A default bitrate
+    follows the size.
+  - *Display mode: Fullscreen* (exclusive) doesn't follow resizes. Use
+    *Borderless windowed* or *Windowed*.
 - **Use several monitors:** tick the monitors to use. The stream becomes one
   wide desktop, e.g. 3840×1080 for two 1080p monitors side by side. It's shown
   in one borderless window covering exactly those monitors, and the mouse moves

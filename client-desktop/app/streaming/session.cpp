@@ -38,6 +38,7 @@
 #include <QtEndian>
 #include <QCoreApplication>
 #include <QThreadPool>
+#include <QThread>
 #include <QSvgRenderer>
 #include <QPainter>
 #include <QImage>
@@ -690,6 +691,24 @@ bool Session::initialize(QQuickWindow* qtWindow)
     int x, y, width, height;
     getWindowDimensions(x, y, width, height);
 
+    // CloudDeck-Client: fit the CloudDeck to the window. Stream exactly the window's
+    // size (windowed) or the screen's native size (fullscreen), and follow resizes.
+    m_FitToWindow = !m_Spanning && DisplaySettings::get()->matchResolution();
+    if (m_FitToWindow) {
+        QSize target(width, height);
+        if (m_IsFullScreen) {
+            SDL_DisplayMode mode;
+            if (SDL_GetDesktopDisplayMode(x & 0xFFFF, &mode) == 0) { // x = SDL_WINDOWPOS_CENTERED_DISPLAY(index)
+                target = QSize(mode.w, mode.h);
+            }
+        }
+        target = SpanLayout::fitStreamSize(target, m_Preferences->fps);
+        m_StreamConfig.width = target.width();
+        m_StreamConfig.height = target.height();
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fitting the CloudDeck to the %s: %dx%d",
+                    m_IsFullScreen ? "screen" : "window", target.width(), target.height());
+    }
+
     // Create a hidden window to use for decoder initialization tests
     SDL_Window* testWindow = StreamUtils::createTestWindow();
     if (!testWindow) {
@@ -709,11 +728,11 @@ bool Session::initialize(QQuickWindow* qtWindow)
     m_StreamConfig.fps = m_Preferences->fps;
     m_StreamConfig.bitrate = m_Preferences->bitrateKbps;
 
-    // CloudDeck-Client: a default bitrate was chosen for the single-monitor size;
-    // scale it to the span (a custom bitrate is kept).
-    if (m_Spanning &&
-        m_StreamConfig.bitrate == StreamingPreferences::getDefaultBitrate(m_Preferences->width, m_Preferences->height,
-                                                                          m_StreamConfig.fps, m_Preferences->enableYUV444)) {
+    // CloudDeck-Client: a default bitrate was chosen for the configured resolution;
+    // scale it to the span or window size (a custom bitrate is kept).
+    m_BitrateIsDefault = m_StreamConfig.bitrate == StreamingPreferences::getDefaultBitrate(m_Preferences->width, m_Preferences->height,
+                                                                                         m_StreamConfig.fps, m_Preferences->enableYUV444);
+    if ((m_Spanning || m_FitToWindow) && m_BitrateIsDefault) {
         m_StreamConfig.bitrate = StreamingPreferences::getDefaultBitrate(m_StreamConfig.width, m_StreamConfig.height,
                                                                          m_StreamConfig.fps, m_Preferences->enableYUV444);
     }
@@ -1569,6 +1588,110 @@ void Session::updateOptimalWindowDisplayMode()
     SDL_SetWindowDisplayMode(m_Window, &bestMode);
 }
 
+// CloudDeck-Client: input events dropped while the stream restarts at a new size.
+// Device hot-plug events are kept so the input handler's gamepad state stays right.
+static bool dropDuringRestart(Uint32 type)
+{
+    switch (type) {
+    case SDL_KEYDOWN: case SDL_KEYUP: case SDL_TEXTEDITING: case SDL_TEXTINPUT:
+    case SDL_MOUSEMOTION: case SDL_MOUSEBUTTONDOWN: case SDL_MOUSEBUTTONUP: case SDL_MOUSEWHEEL:
+    case SDL_CONTROLLERAXISMOTION: case SDL_CONTROLLERBUTTONDOWN: case SDL_CONTROLLERBUTTONUP:
+    case SDL_CONTROLLERTOUCHPADDOWN: case SDL_CONTROLLERTOUCHPADMOTION: case SDL_CONTROLLERTOUCHPADUP:
+    case SDL_CONTROLLERSENSORUPDATE:
+    case SDL_FINGERDOWN: case SDL_FINGERUP: case SDL_FINGERMOTION:
+    case SDL_RENDER_DEVICE_RESET: // the restart triggers its own reset when the new stream runs
+        return true;
+    default:
+        return false;
+    }
+}
+
+// CloudDeck-Client: called from the SDL loop. Once a resize has settled, restart the
+// stream at the window's size if it differs from the stream's.
+void Session::maybeRestartForWindowSize()
+{
+    if (m_ResizeCheckAt == 0 || m_Restarting || !SDL_TICKS_PASSED(SDL_GetTicks(), m_ResizeCheckAt)) {
+        return;
+    }
+    m_ResizeCheckAt = 0;
+
+    Uint32 flags = SDL_GetWindowFlags(m_Window);
+    if (flags & SDL_WINDOW_MINIMIZED) {
+        return;
+    }
+    if ((flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL_WINDOW_FULLSCREEN) {
+        return; // exclusive fullscreen picks its display mode from the stream; don't chase it
+    }
+    if (SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK) {
+        m_ResizeCheckAt = SDL_GetTicks() + 500; // still dragging the window edge
+        return;
+    }
+
+    int w, h;
+#if SDL_VERSION_ATLEAST(2, 26, 0)
+    SDL_GetWindowSizeInPixels(m_Window, &w, &h);
+#else
+    SDL_GL_GetDrawableSize(m_Window, &w, &h);
+#endif
+    QSize target = SpanLayout::fitStreamSize(QSize(w, h), m_StreamConfig.fps);
+    if (target.width() == m_StreamConfig.width && target.height() == m_StreamConfig.height) {
+        return;
+    }
+    restartStreamAt(target.width(), target.height());
+}
+
+// CloudDeck-Client: stop the stream, switch the CloudDeck to the new size and resume
+// the running app, all in the same window. The blocking part runs on a worker thread
+// while the SDL loop keeps the window responsive (and drops input). USB devices stay
+// attached; the display lease is handed over without restoring in between.
+void Session::restartStreamAt(int width, int height)
+{
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Restarting the stream at %dx%d to fit the window", width, height);
+    m_Restarting = true;
+
+    // Drop the decoder now; frames arriving until the stop are ignored (drSubmitDecodeUnit).
+    SDL_LockMutex(m_DecoderLock);
+    delete m_VideoDecoder;
+    m_VideoDecoder = nullptr;
+    SDL_UnlockMutex(m_DecoderLock);
+
+    m_InputHandler->setStreamSize(width, height);
+
+    QThread* t = QThread::create([this, width, height]() {
+        // Input is dropped from now on; give the input handler's batching timers
+        // (mouse motion is flushed every few ms) time to send what they hold before
+        // the input stream goes away.
+        SDL_Delay(100);
+        MicStreamer::get()->onConnectionStopping();
+        LiStopConnection();
+
+        m_StreamConfig.width = width;
+        m_StreamConfig.height = height;
+        if (m_BitrateIsDefault) {
+            m_StreamConfig.bitrate = StreamingPreferences::getDefaultBitrate(width, height, m_StreamConfig.fps,
+                                                                             m_Preferences->enableYUV444);
+        }
+        m_ForceResume = true;
+        bool ok = startConnectionAsync();
+        m_Restarting = false;
+
+        SDL_Event event = {};
+        if (ok) {
+            event.type = SDL_RENDER_DEVICE_RESET; // recreate the decoder for the new stream
+        }
+        else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Restarting the stream at the new size failed");
+            m_UnexpectedTermination = true;
+            event.type = SDL_QUIT;
+            event.quit.timestamp = SDL_GetTicks();
+        }
+        SDL_PushEvent(&event);
+    });
+    t->setObjectName("CloudDeck resize");
+    QObject::connect(t, &QThread::finished, t, &QObject::deleteLater);
+    t->start();
+}
+
 void Session::toggleFullscreen()
 {
     if (m_Spanning) {
@@ -1688,6 +1811,9 @@ bool Session::startConnectionAsync()
                                        m_StreamConfig.fps);
         QString error = lease->acquire();
         if (error.isEmpty()) {
+            // On a restart the old lease is released only now, so the host goes
+            // straight to the new size and still restores its original mode at the end.
+            delete m_DisplayLease;
             m_DisplayLease = lease;
         }
         else {
@@ -1705,7 +1831,7 @@ bool Session::startConnectionAsync()
 
     try {
         NvHTTP http(m_Computer);
-        http.startApp(m_Computer->currentGameId != 0 ? "resume" : "launch",
+        http.startApp((m_ForceResume || m_Computer->currentGameId != 0) ? "resume" : "launch", // CloudDeck-Client: m_ForceResume on a fit-to-window restart
                       m_Computer->isNvidiaServerSoftware,
                       m_App.id, &m_StreamConfig,
                       enableGameOptimizations,
@@ -1807,6 +1933,10 @@ bool Session::startConnectionAsync()
     }
 
     MicStreamer::get()->onConnectionStarted(); // CloudDeck-Client
+    if (m_Restarting) {
+        // CloudDeck-Client: fit-to-window restart; USB stays attached and the UI is already gone
+        return true;
+    }
     UsbForwarder::get()->onConnectionStarted(m_Computer->activeAddress.address(), m_Computer->activeHttpsPort, m_Computer->serverCert); // CloudDeck-Client
     emit connectionStarted();
     return true;
@@ -2062,8 +2192,13 @@ void Session::exec()
 
     // Hijack this thread to be the SDL main thread. We have to do this
     // because we want to suspend all Qt processing until the stream is over.
+    // CloudDeck-Client: compare the window and stream size once the window has settled
+    if (m_FitToWindow) {
+        m_ResizeCheckAt = SDL_GetTicks() + 1500;
+    }
     SDL_Event event;
     for (;;) {
+        maybeRestartForWindowSize(); // CloudDeck-Client
 #if SDL_VERSION_ATLEAST(2, 0, 18) && !defined(STEAM_LINK)
         // SDL 2.0.18 has a proper wait event implementation that uses platform
         // support to block on events rather than polling on Windows, macOS, X11,
@@ -2074,7 +2209,7 @@ void Session::exec()
         // NB: This behavior was introduced in SDL 2.0.16, but had a few critical
         // issues that could cause indefinite timeouts, delayed joystick detection,
         // and other problems.
-        if (!SDL_WaitEventTimeout(&event, 1000)) {
+        if (!SDL_WaitEventTimeout(&event, m_ResizeCheckAt ? 100 : 1000)) {
             presence.runCallbacks();
             continue;
         }
@@ -2095,6 +2230,10 @@ void Session::exec()
             continue;
         }
 #endif
+        // CloudDeck-Client: no input reaches the host while the stream restarts at a new size
+        if (m_Restarting && dropDuringRestart(event.type)) {
+            continue;
+        }
         switch (event.type) {
         case SDL_QUIT:
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
@@ -2167,6 +2306,14 @@ void Session::exec()
             if (needsFirstEnterCapture && event.window.event == SDL_WINDOWEVENT_ENTER) {
                 m_InputHandler->setCaptureActive(true);
                 needsFirstEnterCapture = false;
+            }
+
+            // CloudDeck-Client: a resize restarts the stream at the new size once it settles
+            if (m_FitToWindow && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                m_ResizeCheckAt = SDL_GetTicks() + 1000;
+            }
+            if (m_Restarting) {
+                break; // the restart recreates the decoder when the new stream runs
             }
 
             // We want to recreate the decoder for resizes (full-screen toggles) and the initial shown event.
@@ -2408,6 +2555,15 @@ void Session::exec()
     }
 
 DispatchDeferredCleanup:
+    // CloudDeck-Client: let a fit-to-window restart finish (interrupted) before tearing
+    // the connection down, so the two never run LiStopConnection/LiStartConnection at once.
+    if (m_Restarting) {
+        LiInterruptConnection();
+        while (m_Restarting) {
+            SDL_Delay(10);
+        }
+    }
+
     // Switch back to synchronous logging mode
     StreamUtils::exitAsyncLoggingMode();
 

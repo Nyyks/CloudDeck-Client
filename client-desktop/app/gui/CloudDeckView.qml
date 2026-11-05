@@ -355,7 +355,7 @@ Item {
                     Label { text: qsTr("Display"); font.bold: true; Layout.topMargin: 8 }
                     CheckBox {
                         Layout.fillWidth: true
-                        text: qsTr("Set the CloudDeck's resolution to match the stream")
+                        text: qsTr("Fit the CloudDeck's resolution to the stream window")
                         checked: CloudDeckDisplay.matchResolution || CloudDeckDisplay.multiMonitor
                         enabled: !CloudDeckDisplay.multiMonitor
                         onToggled: CloudDeckDisplay.matchResolution = checked

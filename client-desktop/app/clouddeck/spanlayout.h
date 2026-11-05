@@ -36,4 +36,9 @@ Result compute(const QList<Display>& selected, int fps);
 // The highest frame rate the host allows at this size (for error messages).
 int maxFpsFor(QSize stream);
 
+// "Fit the CloudDeck to the window": the stream size for a window (or screen) of
+// `pixels`, clamped to what the host accepts (minimum 640x360, the size and pixel
+// rate limits above; even dimensions).
+QSize fitStreamSize(QSize pixels, int fps);
+
 }
