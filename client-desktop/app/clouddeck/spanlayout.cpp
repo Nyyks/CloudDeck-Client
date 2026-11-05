@@ -23,7 +23,9 @@ QSize fitStreamSize(QSize pixels, int fps)
         w *= f;
         h *= f;
     }
-    return QSize((int)w & ~1, (int)h & ~1);
+    // Width: a multiple of 8. KWin builds custom modes with CVT timings, which round
+    // the width down to 8, so any other width would never match the mode it adds.
+    return QSize((int)w & ~7, (int)h & ~1);
 }
 
 Result compute(const QList<Display>& selected, int fps)
@@ -66,7 +68,7 @@ Result compute(const QList<Display>& selected, int fps)
     }
 
     r.window = u;
-    int w = (int)std::lround(u.width() * scale) & ~1;
+    int w = (int)std::lround(u.width() * scale) & ~7; // multiple of 8, see fitStreamSize()
     int h = (int)std::lround(u.height() * scale) & ~1;
     r.stream = QSize(w, h);
 

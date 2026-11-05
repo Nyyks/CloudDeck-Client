@@ -1923,8 +1923,13 @@ bool Session::startConnectionAsync()
                                                                          false);
     }
 
+    // CloudDeck-Client: pass copies. LiStartConnection() fills unset callbacks with
+    // placeholders in the struct it is given, and a pull renderer (no submitDecodeUnit)
+    // would then be rejected when a fit-to-window restart starts the connection again.
+    DECODER_RENDERER_CALLBACKS videoCallbacks = m_VideoCallbacks;
+    AUDIO_RENDERER_CALLBACKS audioCallbacks = m_AudioCallbacks;
     int err = LiStartConnection(&hostInfo, &m_StreamConfig, &k_ConnCallbacks,
-                                &m_VideoCallbacks, &m_AudioCallbacks,
+                                &videoCallbacks, &audioCallbacks,
                                 NULL, 0, NULL, 0);
     if (err != 0) {
         // We already displayed an error dialog in the stage failure

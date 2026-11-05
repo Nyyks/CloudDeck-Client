@@ -260,6 +260,11 @@ func (m *Manager) Set(width, height, fps int) (*Lease, error) {
 }
 
 func (m *Manager) addCustomMode(output string, width, height, fps int) (Mode, error) {
+	if width%8 != 0 {
+		// KWin generates custom modes with CVT timings, which round the width down
+		// to a multiple of 8; the requested mode would never appear.
+		return Mode{}, fmt.Errorf("%dx%d is not available and custom modes need a width divisible by 8", width, height)
+	}
 	mhz := strconv.Itoa(fps * 1000)
 	var lastErr error
 	// Full blanking first (what a monitor would advertise); reduced blanking needs

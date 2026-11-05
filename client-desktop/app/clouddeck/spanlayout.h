@@ -38,7 +38,7 @@ int maxFpsFor(QSize stream);
 
 // "Fit the CloudDeck to the window": the stream size for a window (or screen) of
 // `pixels`, clamped to what the host accepts (minimum 640x360, the size and pixel
-// rate limits above; even dimensions).
+// rate limits above; width a multiple of 8, even height).
 QSize fitStreamSize(QSize pixels, int fps);
 
 }

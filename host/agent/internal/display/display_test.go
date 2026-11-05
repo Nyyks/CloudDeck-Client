@@ -189,6 +189,22 @@ func TestSetAddsCustomMode(t *testing.T) {
 	l.Release()
 }
 
+func TestCustomModeWidthMustBeMultipleOf8(t *testing.T) {
+	f := newFake()
+	m := &Manager{Run: f.run}
+	if _, err := m.Set(1070, 720, 60); err == nil || !strings.Contains(err.Error(), "divisible by 8") {
+		t.Fatalf("err = %v", err)
+	}
+	for _, c := range f.calls {
+		if strings.Contains(c, "addCustomMode") {
+			t.Fatalf("tried to add an impossible mode: %v", f.calls)
+		}
+	}
+	if f.current != "16" {
+		t.Fatalf("mode changed: %s", f.current)
+	}
+}
+
 func TestReducedBlankingFallback(t *testing.T) {
 	f := newFake()
 	f.rejectFull = true

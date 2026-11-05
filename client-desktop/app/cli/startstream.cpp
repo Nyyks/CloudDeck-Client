@@ -84,6 +84,10 @@ public:
                     m_Computer = event.computer;
                     m_TimeoutTimer->start(APP_SEEK_TIMEOUT);
                     emit q->searchingApp();
+                    // CloudDeck-Client: check the app list we already have. On a second
+                    // stream in the same run it is loaded and nothing changes any more, so
+                    // waiting for computerStateChanged alone hangs on "Loading app list".
+                    QTimer::singleShot(0, q, [q, c = event.computer]() { q->onComputerUpdated(c); });
                 } else {
                     m_State = StateFailure;
                     QString msg = QObject::tr("Computer %1 has not been paired. "
