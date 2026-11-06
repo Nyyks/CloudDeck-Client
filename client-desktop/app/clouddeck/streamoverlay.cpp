@@ -162,21 +162,24 @@ void StreamOverlay::updateButtonVisibility()
     SdlInputHandler* in = m_Session->m_InputHandler;
     const Uint32 flags = SDL_GetWindowFlags(m_Session->m_Window);
     // The button can only be clicked while the cursor is free: desktop mouse mode (the
-    // local cursor appears over the button) or capture released.
+    // local cursor appears over the button) or capture released. While the stream holds the
+    // mouse it stays visible, dimmed, as a reminder that Ctrl+Alt+Shift+<menu key> or
+    // Select+L1+R1+B opens the menu (and frees the cursor). Same in windowed and fullscreen.
     const bool cursorFree = in && (in->m_AbsoluteMouseMode || !in->isCaptureActive());
-    // In fullscreen it stays visible even while the stream holds the mouse, dimmed, as a reminder
-    // that Ctrl+Alt+Shift+<menu key> or Select+L1+R1+B opens the menu (and frees the cursor).
-    const bool fullscreen = flags & SDL_WINDOW_FULLSCREEN;
-    const bool visible = showButton() && (cursorFree || fullscreen) && !(flags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN));
+    const bool visible = showButton() && !(flags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN));
     m_Button->setOpacity(cursorFree ? 0.85 : 0.4);
-    if (visible != m_Button->isVisible()) {
-        if (visible) {
-            updateGeometry();
-            m_Button->show();
-        }
-        else {
-            m_Button->hide();
-        }
+    // Switching between windowed and fullscreen restyles the stream window (and its topmost
+    // state); show the button afresh so it sits above the stream in the new mode.
+    const Uint32 mode = flags & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
+    const bool modeChanged = mode != m_LastWindowMode;
+    m_LastWindowMode = mode;
+    if (visible && (modeChanged || !m_Button->isVisible())) {
+        if (m_Button->isVisible()) m_Button->hide();
+        updateGeometry();
+        m_Button->show();
+    }
+    else if (!visible && m_Button->isVisible()) {
+        m_Button->hide();
     }
 }
 

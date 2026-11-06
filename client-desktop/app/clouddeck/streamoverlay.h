@@ -141,5 +141,6 @@ private:
     bool m_MenuOpen = false;
     bool m_RecaptureOnClose = false;
     Uint32 m_LastPump = 0;
+    Uint32 m_LastWindowMode = 0; // SDL fullscreen flags at the last visibility check
     Uint32 m_OpenedAt = 0;
 };

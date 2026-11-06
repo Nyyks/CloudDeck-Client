@@ -9,7 +9,7 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-06 (v1.1.0). The owner tested the 1.1 changes and they work as expected:
+Last updated: 2026-11-06 (v1.1.1: the windowed menu-button fix, tested by the owner). The owner tested the 1.1 changes and they work as expected:
 - the per-user MSI;
 - the DNS fallback for Connect;
 - the About page;

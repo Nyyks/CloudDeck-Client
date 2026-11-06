@@ -4,6 +4,13 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-06
+
+### Fixed
+- Desktop: the in-stream menu button was missing in windowed mode while the stream held the mouse
+  (1.1.0 only kept it in fullscreen). It's now shown in every mode, dimmed while the mouse is
+  captured, and shown afresh when switching between windowed and fullscreen.
+
 ## [1.1.0] - 2026-11-06
 Polish and fixes after the first stable release, tested by the owner. Downloads: Windows MSI and zip,
 Linux AppImage (x86_64 and aarch64 for the Raspberry Pi), Android APK, and the VM host bundle.

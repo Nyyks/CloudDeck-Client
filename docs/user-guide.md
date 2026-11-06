@@ -120,7 +120,8 @@ All of Moonlight's streaming settings are part of these pages; there's no second
 ## In-stream menu
 
 **Opening it:**
-- Click the round CloudDeck button at the top centre. It's shown while your cursor is free, and dimmed in fullscreen.
+- Click the round CloudDeck button at the top centre. It's dimmed while the stream holds your mouse;
+  release the mouse (Ctrl+Alt+Shift+Z) or use a shortcut below to open the menu.
 - Press **Ctrl+Alt+Shift+O** (desktop).
 - Press **Select+L1+R1+B** on a controller.
 - Press **Back** (Android).
