@@ -1,11 +1,14 @@
 # User guide
 
-> Status: early Phase 1 build. See [STATUS.md](STATUS.md) for what's verified.
+> See [STATUS.md](STATUS.md) for what's verified.
 
 ## First start
 
-1. Install it: the MSI or portable zip on Windows, the AppImage on Linux, the
-   APK on Android. It installs alongside stock Moonlight and shares nothing with it.
+1. Install it: the MSI or portable zip on Windows, the AppImage on Linux (x86_64 or
+   aarch64, e.g. a Raspberry Pi), the APK on Android. It installs alongside stock Moonlight
+   and shares nothing with it. The MSI installs for your user only
+   (`%LOCALAPPDATA%\Programs\CloudDeck Client`) and needs no admin rights. If you installed 1.0.0,
+   uninstall it first; it was installed for all users.
 2. Sign in with your CloudDeck email and password. The password is sent to
    CloudDeck's login service once and never stored. A session token is kept in
    your OS keychain:
@@ -23,10 +26,15 @@
 ## Home screen
 
 A sidebar with pages. On phones it becomes a strip of chips under the header.
-- Desktop pages: Home, Display, Audio & mic, Controllers, Mouse & keyboard, USB devices,
-  Network, General. They include all of Moonlight's streaming settings.
-- Android pages: Home, Stream (Moonlight's streaming settings), Devices, Account.
-- Home has the round **Connect** button, quick toggles and tiles for Restart, Stop and more.
+- Desktop pages: Home, Video, Audio, Controls (tabs: Keyboard & mouse, Gamepad, USB),
+  Network, General. They include all of Moonlight's streaming settings; General hides its rarely
+  needed options behind *Show advanced settings…*. **About** (version, update check, links) is the
+  link under *Sign out*.
+- Android pages: Home, Stream (Moonlight's streaming settings), Devices, Account (with About).
+- Home has the round **Connect** button, quick picks for resolution and display mode (desktop) and
+  tiles for Resolution, Restart, Stop and more.
+- If your network's DNS is slow to catch up after the CloudDeck starts, the client connects to
+  the CloudDeck's IP address after 15 seconds instead of waiting.
 
 Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
 

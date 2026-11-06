@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CloudDeckActivity extends Activity {
     private static final long RUNNING_TIMEOUT_MS = 5 * 60_000;
     private static final long DNS_TIMEOUT_MS = 2 * 60_000;
+    private static final long DNS_FALLBACK_MS = 15_000; // then connect to the public IP directly
     private static final long HOST_TIMEOUT_MS = 2 * 60_000;
     private static final int SUNSHINE_HTTP_PORT = 47989;
 
@@ -350,7 +351,14 @@ public class CloudDeckActivity extends Activity {
         click(R.id.cd_chip_mic, () -> micBox.toggle());
         click(R.id.cd_tile_mic, () -> micBox.toggle());
         click(R.id.cd_chip_osc, () -> oscBox.toggle());
-        click(R.id.cd_tile_stream, () -> openSettings("stream"));
+        click(R.id.cd_tile_stream, this::pickResolution);
+
+        // About (Account page)
+        TextView aboutVersion = v(R.id.cd_about_version);
+        if (aboutVersion != null) aboutVersion.setText(getString(R.string.cd_about_version, com.limelight.BuildConfig.VERSION_NAME));
+        click(R.id.cd_about_update, this::checkForUpdates);
+        click(R.id.cd_about_github, () -> openUrl(REPO_URL));
+        click(R.id.cd_about_coffee, () -> openUrl(COFFEE_URL));
         click(R.id.cd_tile_power, this::powerAction);
         click(R.id.cd_tile_stop, this::confirmStop);
 
@@ -476,6 +484,108 @@ public class CloudDeckActivity extends Activity {
 
     private void managePcs() { startActivity(new Intent(this, PcView.class)); }
 
+    // ---- About: project links and the update check (GitHub releases)
+    private static final String REPO_URL = "https://github.com/Nyyks/CloudDeck-Client";
+    private static final String COFFEE_URL = "https://buymeacoffee.com/nyyks";
+    private static final String RELEASES_API = "https://api.github.com/repos/Nyyks/CloudDeck-Client/releases/latest";
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)));
+        } catch (android.content.ActivityNotFoundException e) {
+            showError(url);
+        }
+    }
+
+    /** "1.2.3" newer than "1.2.0"? Pre-release suffixes are ignored. */
+    static boolean isNewer(String a, String b) {
+        String[] x = a.replaceFirst("^v", "").split("-")[0].split("\\.");
+        String[] y = b.replaceFirst("^v", "").split("-")[0].split("\\.");
+        for (int i = 0; i < 3; i++) {
+            int p = i < x.length ? parseIntSafe(x[i]) : 0, q = i < y.length ? parseIntSafe(y[i]) : 0;
+            if (p != q) return p > q;
+        }
+        return false;
+    }
+
+    private static int parseIntSafe(String s) {
+        try { return Integer.parseInt(s.trim()); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private void checkForUpdates() {
+        final TextView status = v(R.id.cd_about_update_status);
+        final View download = v(R.id.cd_about_download);
+        if (status == null) return;
+        status.setVisibility(View.VISIBLE);
+        status.setText(R.string.cd_about_checking);
+        worker.execute(() -> {
+            String text;
+            String url = null;
+            HttpURLConnection c = null;
+            try {
+                c = (HttpURLConnection) new URL(RELEASES_API).openConnection();
+                c.setConnectTimeout(8000);
+                c.setReadTimeout(8000);
+                c.setRequestProperty("Accept", "application/vnd.github+json");
+                int code = c.getResponseCode();
+                if (code == 200) {
+                    java.io.InputStream in = c.getInputStream();
+                    java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+                    byte[] b = new byte[8192];
+                    int n;
+                    while ((n = in.read(b)) > 0) buf.write(b, 0, n);
+                    org.json.JSONObject r = new org.json.JSONObject(buf.toString("UTF-8"));
+                    String tag = r.optString("tag_name", "");
+                    if (isNewer(tag, com.limelight.BuildConfig.VERSION_NAME)) {
+                        text = getString(R.string.cd_about_available, tag.replaceFirst("^v", ""));
+                        url = r.optString("html_url", REPO_URL + "/releases/latest");
+                    } else {
+                        text = getString(R.string.cd_about_latest);
+                    }
+                } else if (code == 404) {
+                    text = getString(R.string.cd_about_private);
+                } else {
+                    text = getString(R.string.cd_about_failed, "HTTP " + code);
+                }
+            } catch (Exception e) {
+                text = getString(R.string.cd_about_failed, e.getClass().getSimpleName());
+            } finally {
+                if (c != null) c.disconnect();
+            }
+            final String fText = text, fUrl = url;
+            ui.post(() -> {
+                status.setText(fText);
+                if (download != null) {
+                    download.setVisibility(fUrl != null ? View.VISIBLE : View.GONE);
+                    download.setOnClickListener(x -> openUrl(fUrl));
+                }
+            });
+        });
+    }
+
+    // ---- Resolution from the home screen (the in-stream menu has the same choices)
+    private void pickResolution() {
+        android.graphics.Point screen = new android.graphics.Point();
+        getWindowManager().getDefaultDisplay().getRealSize(screen);
+        final int sw = Math.max(screen.x, screen.y), sh = Math.min(screen.x, screen.y);
+        final int[][] sizes = {{1280, 720}, {1920, 1080}, {2560, 1440}, {3840, 2160}, {sw, sh}};
+        String[] labels = {"720p (1280 × 720)", "1080p (1920 × 1080)", "1440p (2560 × 1440)", "4K (3840 × 2160)",
+                getString(R.string.cd_res_this_screen, sw, sh)};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.cd_tile_resolution)
+                .setItems(labels, (d, which) -> {
+                    SharedPreferences p = moonlightPrefs();
+                    String res = sizes[which][0] + "x" + sizes[which][1];
+                    p.edit().putString("list_resolution", res)
+                            .putInt("seekbar_bitrate_kbps", PreferenceConfiguration.getDefaultBitrate(res, p.getString("list_fps", "60")))
+                            .apply();
+                    if (prefsFragment != null) reloadStreamSettings();
+                    render();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private void powerAction() {
         if (CloudDeckApi.STATUS_OFF.equals(machine.status)) startMachine();
         else confirm(R.string.cd_confirm_restart, () -> { restartPending = true; stopMachine(); });
@@ -582,6 +692,11 @@ public class CloudDeckActivity extends Activity {
         setEnabledDim(connectButton, !busy && !CloudDeckApi.STATUS_STOPPING.equals(s));
 
         String info = streamInfo();
+        TextView resSub = v(R.id.cd_tile_res_sub);
+        if (resSub != null) {
+            PreferenceConfiguration pc = PreferenceConfiguration.readPreferences(this);
+            resSub.setText(pc.width + " × " + pc.height);
+        }
         TextView si = v(R.id.cd_stream_info);
         if (si != null) si.setText(info);
 
@@ -799,19 +914,27 @@ public class CloudDeckActivity extends Activity {
         }
 
         // 2. DNS points at the machine's current public IP
-        final String host = provider.hostAddress(m);
+        final String dnsName = provider.hostAddress(m);
+        String connectHost = dnsName;
         setProgress(getString(R.string.cd_progress_dns));
         t0 = System.currentTimeMillis();
         while (true) {
             checkCancelled();
             if (m.publicIp.isEmpty()) {
                 m = provider.getMachine();
-            } else if (resolvesTo(host, m.publicIp)) {
+            } else if (resolvesTo(dnsName, m.publicIp)) {
+                break;
+            } else if (System.currentTimeMillis() - t0 > DNS_FALLBACK_MS) {
+                // DNS lags (stale cache, TTL). The public IP comes from the signed-in CloudDeck API
+                // and the host is still identified by its unique ID and pinned certificate.
+                LimeLog.info("CloudDeck: DNS for " + dnsName + " has not caught up; connecting to " + m.publicIp);
+                connectHost = m.publicIp;
                 break;
             }
-            if (System.currentTimeMillis() - t0 > DNS_TIMEOUT_MS) throw new ConnectException(getString(R.string.cd_err_dns, host));
+            if (System.currentTimeMillis() - t0 > DNS_TIMEOUT_MS) throw new ConnectException(getString(R.string.cd_err_dns, dnsName));
             sleep(3000);
         }
+        final String host = connectHost;
 
         // 3. Sunshine answers serverinfo
         setProgress(getString(R.string.cd_progress_host));

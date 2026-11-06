@@ -25,6 +25,10 @@ using namespace CloudDeckApi;
 // Timeouts per stage (observed on 2026-11-04: start ~80 s, stop ~75 s).
 static const int kRunningTimeoutMs   = 5 * 60 * 1000;
 static const int kDnsTimeoutMs       = 2 * 60 * 1000;
+// CloudDeck-Client: after this long without DNS catching up (stale caches, slow TTLs), connect to
+// the public IP directly. Sunshine's certificate is pinned at pairing, so the name is not needed.
+static const int kDnsFallbackMs      = 15 * 1000;
+static const int kPublicIpTimeoutMs  = 60 * 1000;
 static const int kSunshineTimeoutMs  = 2 * 60 * 1000;
 static const int kPairTimeoutMs      = 90 * 1000;
 static const int kFastPollMs = 5000;
@@ -101,6 +105,7 @@ void CloudSession::clearError() { setError(QString()); }
 void CloudSession::setStage(Stage s)
 {
     m_Stage = s;
+    if (s == Stage::WaitingDns) m_ConnectHost.clear(); // each connect starts with the DNS name
     m_StageClock.restart();
     emit busyChanged();
 }
@@ -353,12 +358,16 @@ void CloudSession::probeDns()
         return;
     }
     if (expected.isEmpty()) {
-        // public_ip not populated yet; refresh and retry
+        // public_ip not populated yet; refresh and retry (bounded, so this never hangs)
+        if (m_StageClock.elapsed() > kPublicIpTimeoutMs) {
+            failConnect(tr("CloudDeck has not reported your CloudDeck's network address yet. Try again in a minute."));
+            return;
+        }
         refreshStatus();
         m_StepTimer.start(2000);
         return;
     }
-    QHostInfo::lookupHost(host, this, [this, expected](const QHostInfo& info) {
+    QHostInfo::lookupHost(host, this, [this, host, expected](const QHostInfo& info) {
         if (m_Stage != Stage::WaitingDns) return;
         for (const QHostAddress& a : info.addresses()) {
             if (QHostAddress(expected).isEqual(a, QHostAddress::ConvertV4MappedToIPv4)) {
@@ -366,6 +375,16 @@ void CloudSession::probeDns()
                 stepConnect();
                 return;
             }
+        }
+        // CloudDeck-Client: DNS lags (stale cache, TTL). The public IP comes from the signed-in
+        // CloudDeck API and the host is still identified by its unique ID and pinned certificate,
+        // so connecting to the IP is as safe as the name.
+        if (m_StageClock.elapsed() > kDnsFallbackMs && !QHostAddress(expected).isNull()) {
+            qInfo() << "CloudDeck: DNS for" << host << "has not caught up; connecting to" << expected << "directly";
+            m_ConnectHost = expected;
+            setStage(Stage::WaitingSunshine);
+            stepConnect();
+            return;
         }
         if (m_StageClock.elapsed() > kDnsTimeoutMs) {
             failConnect(tr("%1 still does not point to your CloudDeck. Your DNS cache may be stale; try again in a minute.")
@@ -378,7 +397,7 @@ void CloudSession::probeDns()
 
 void CloudSession::probeSunshine()
 {
-    QNetworkRequest req(QUrl(QStringLiteral("http://%1:%2/serverinfo").arg(hostAddress()).arg(kSunshineHttpPort)));
+    QNetworkRequest req(QUrl(QStringLiteral("http://%1:%2/serverinfo").arg(connectHost()).arg(kSunshineHttpPort)));
     QNetworkReply* reply = m_ProbeNam->get(req);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
@@ -430,7 +449,7 @@ void CloudSession::beginPairing()
         disconnect(*conn);
         if (m_Stage != Stage::Pairing) return;
         if (!success.toBool()) {
-            failConnect(tr("Could not connect to %1.").arg(hostAddress()));
+            failConnect(tr("Could not connect to %1.").arg(connectHost()));
             return;
         }
         waitForOnlineComputer();
@@ -439,7 +458,7 @@ void CloudSession::beginPairing()
         m_ComputerManager->startPolling();
         m_ManagerPolling = true;
     }
-    m_ComputerManager->addNewHostManually(hostAddress());
+    m_ComputerManager->addNewHostManually(connectHost());
 }
 
 void CloudSession::releasePolling()
@@ -461,7 +480,7 @@ void CloudSession::waitForOnlineComputer()
         }
     }
     if (m_StageClock.elapsed() > kPairTimeoutMs) {
-        failConnect(tr("Timed out connecting to %1.").arg(hostAddress()));
+        failConnect(tr("Timed out connecting to %1.").arg(connectHost()));
         return;
     }
     QTimer::singleShot(500, this, &CloudSession::waitForOnlineComputer);

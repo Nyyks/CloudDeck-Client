@@ -12,6 +12,12 @@
   <PropertyGroup>
     <AcceptEula>wix7</AcceptEula>
   </PropertyGroup>
+  <!-- CloudDeck-Client: per-user package. Files in the user profile can't have file key paths or
+       per-folder RemoveFolder entries the way these ICEs want; Product.wxs cleans up with
+       RemoveFolderEx instead. -->
+  <PropertyGroup>
+    <SuppressIces>ICE38;ICE64;ICE91</SuppressIces>
+  </PropertyGroup>
   <PropertyGroup Condition="$(SIGN)!=''">
     <SignOutput>true</SignOutput>
   </PropertyGroup>

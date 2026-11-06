@@ -4,6 +4,7 @@ QtObject {
     property bool hasDesktopEnvironment: true
     property bool hasBrowser: false
     property bool usesMaterial3Theme: true
+    property string versionString: "1.0.1"
     property bool supportsHdr: false
     property bool rendererAlwaysFullScreen: false
     property bool hasDiscordIntegration: false

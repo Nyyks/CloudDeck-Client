@@ -164,7 +164,11 @@ void StreamOverlay::updateButtonVisibility()
     // The button can only be clicked while the cursor is free: desktop mouse mode (the
     // local cursor appears over the button) or capture released.
     const bool cursorFree = in && (in->m_AbsoluteMouseMode || !in->isCaptureActive());
-    const bool visible = showButton() && cursorFree && !(flags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN));
+    // In fullscreen it stays visible even while the stream holds the mouse, dimmed, as a reminder
+    // that Ctrl+Alt+Shift+<menu key> or Select+L1+R1+B opens the menu (and frees the cursor).
+    const bool fullscreen = flags & SDL_WINDOW_FULLSCREEN;
+    const bool visible = showButton() && (cursorFree || fullscreen) && !(flags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN));
+    m_Button->setOpacity(cursorFree ? 0.85 : 0.4);
     if (visible != m_Button->isVisible()) {
         if (visible) {
             updateGeometry();

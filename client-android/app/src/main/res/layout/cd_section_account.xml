@@ -28,4 +28,29 @@
             <Button android:id="@+id/cd_manage_pcs" style="@style/CdButton.Ghost" android:text="@string/cd_manage_pcs" />
         </LinearLayout>
     </LinearLayout>
+
+    <LinearLayout style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_about" />
+        <TextView android:id="@+id/cd_about_version" style="@style/CdBody" android:paddingBottom="2dp" />
+        <TextView style="@style/CdHint" android:text="@string/cd_about_tagline" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/cd_about_update" style="@style/CdButton.Primary" android:layout_marginEnd="8dp" android:text="@string/cd_about_check" />
+            <Button android:id="@+id/cd_about_download" style="@style/CdButton" android:text="@string/cd_about_download" android:visibility="gone" />
+        </LinearLayout>
+        <TextView android:id="@+id/cd_about_update_status" style="@style/CdHint" android:paddingTop="6dp" android:visibility="gone" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/cd_about_github" style="@style/CdButton" android:layout_marginEnd="8dp" android:text="@string/cd_about_github" />
+            <Button android:id="@+id/cd_about_coffee" style="@style/CdButton" android:text="@string/cd_about_coffee" />
+        </LinearLayout>
+        <TextView style="@style/CdHint" android:paddingTop="8dp" android:text="@string/cd_about_license" />
+    </LinearLayout>
 </LinearLayout>

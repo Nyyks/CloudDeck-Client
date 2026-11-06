@@ -293,6 +293,13 @@ if "%ML_SYMBOL_STORE%" NEQ "" (
     if !ERRORLEVEL! NEQ 0 goto Error
 )
 
+rem CloudDeck-Client: we ship the .msi itself (per-user, no admin), not upstream's setup bundle
+rem that installs the VC++ redistributable, so the runtime DLLs go into the package app-locally.
+rem They're MS-signed already; the signing step above has run.
+echo Copying VC++ runtime to deployment directory
+copy "%VC_REDIST_DLL_PATH%\*.dll" %DEPLOY_FOLDER%
+if !ERRORLEVEL! NEQ 0 goto Error
+
 echo Building MSI
 cmd /c "set VERSION= && msbuild -Restore %SOURCE_ROOT%\wix\Moonlight\Moonlight.wixproj /p:Configuration=%BUILD_CONFIG% /p:Platform=%ARCH% /p:MSBuildProjectExtensionsPath=%BUILD_FOLDER%\"
 if !ERRORLEVEL! NEQ 0 goto Error
@@ -302,10 +309,6 @@ copy %BUILD_FOLDER%\app\%BUILD_CONFIG%\Moonlight.exe %DEPLOY_FOLDER%
 if !ERRORLEVEL! NEQ 0 goto Error
 
 echo Building portable package
-rem This must be done after WiX harvesting and signing, since the VCRT dlls are MS signed
-rem and should not be harvested for inclusion in the full installer
-copy "%VC_REDIST_DLL_PATH%\*.dll" %DEPLOY_FOLDER%
-if !ERRORLEVEL! NEQ 0 goto Error
 
 rem Since we don't publish Windows installers for CI builds, let's use the user profile
 rem location of the regular non-portable version by default. We'll place a file in the

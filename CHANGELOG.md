@@ -4,6 +4,29 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+### Added
+- Resolution and display-mode quick picks on the desktop home screen, next to the mic chip. On Android,
+  the stream tile on Home opens a resolution picker. Both are also in the in-stream menu, as before.
+- About page (desktop: the link under Sign out; Android: a card on the Account page). It shows the
+  version, an update check against GitHub releases, and links to GitHub and Buy me a coffee.
+  The update check only works while the repository's releases are public.
+
+### Changed
+- Settings are grouped: a **Controls** page holds Keyboard & mouse, Gamepad and USB as tabs. The desktop
+  General page hides its advanced options behind "Show advanced settings…".
+- Windows MSI installs per user into `%LOCALAPPDATA%\Programs\CloudDeck Client` and no longer needs
+  admin rights. It bundles the VC++ runtime and adds no firewall rule (the client only connects out).
+  Uninstall the 1.0.0 MSI, which was per-machine, before installing this one.
+- Android app name is "CloudDeck Client" (no "(Debug)").
+- Desktop: the settings gear in the top right of the home screen is gone (Settings is in the sidebar).
+- Desktop: the in-stream menu button also shows in fullscreen while the pointer is captured, dimmed.
+
+### Fixed
+- Connect could hang on "Waiting for network address" when the local DNS cache lags behind CloudDeck.
+  After 15 seconds, the clients connect to the public IP that the CloudDeck API reports. The host is
+  still checked by its unique ID and pinned certificate.
+- Connect could wait forever when CloudDeck hadn't reported a public IP yet. It now gives up after 60 seconds.
+
 ## [1.0.0] - 2026-11-05
 First stable release: every phase of the brief is implemented. Windows is verified by the owner;
 Android was tested by the owner, and the fixes made after that test were checked on an emulator

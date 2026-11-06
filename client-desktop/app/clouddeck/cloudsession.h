@@ -159,6 +159,9 @@ private:
 
     Stage m_Stage = Stage::Idle;
     QElapsedTimer m_StageClock;
+    // The address the connect flow uses: the DNS name, or the public IP once DNS has lagged too long.
+    QString m_ConnectHost;
+    QString connectHost() const { return m_ConnectHost.isEmpty() ? hostAddress() : m_ConnectHost; }
     QPointer<ComputerManager> m_ComputerManager;
     QString m_HostUuid;          // Sunshine uniqueid from serverinfo (fresh DNS)
     bool m_ManagerPolling = false;

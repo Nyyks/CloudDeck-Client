@@ -107,8 +107,8 @@
             <TextView android:id="@+id/cd_tile_mic_sub" style="@style/CdTileSub" />
         </LinearLayout>
         <LinearLayout android:id="@+id/cd_tile_stream" style="@style/CdTile">
-            <TextView style="@style/CdTileTitle" android:drawableStart="@drawable/cd_ic_tune" android:text="@string/cd_tile_stream" />
-            <TextView style="@style/CdTileSub" android:text="@string/cd_tile_stream_sub" />
+            <TextView style="@style/CdTileTitle" android:drawableStart="@drawable/cd_ic_tune" android:text="@string/cd_tile_resolution" />
+            <TextView android:id="@+id/cd_tile_res_sub" style="@style/CdTileSub" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

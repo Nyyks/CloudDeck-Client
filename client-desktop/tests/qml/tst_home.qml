@@ -51,7 +51,7 @@ Item {
             make(1280, 800)
             verify(home().pages !== undefined, "console layout")
             shot("console-home")
-            var pages = ["display", "audio", "controllers", "input", "usb", "network", "general"]
+            var pages = ["display", "audio", "controls", "network", "general", "about"]
             for (var i = 0; i < pages.length; i++) {
                 home().page = pages[i]
                 shot("console-" + pages[i])
@@ -65,7 +65,7 @@ Item {
             make(390, 844)
             verify(home().narrow)
             shot("console-phone")
-            home().page = "controllers"
+            home().page = "controls"
             shot("console-phone-controllers")
         }
 
@@ -80,20 +80,20 @@ Item {
             keyClick(Qt.Key_Return)                      // keyboard / TV remote OK
             compare(CloudDeck.connects, 2)
             keyClick(Qt.Key_Tab)                         // D-pad down
-            compare(focusedText(), "Microphone on")
+            compare(focusedText(), "Fits the window  ▾")  // resolution quick choice
             keyClick(Qt.Key_Down)                        // arrow key, same as Tab
-            compare(focusedText(), "Clipboard shared")
+            compare(focusedText(), "Borderless windowed  ▾") // display mode quick choice
             keyClick(Qt.Key_Left)                        // back to the sidebar
             compare(focusedText(), "Home")
             keyClick(Qt.Key_Tab)
-            compare(focusedText(), "Display")
+            compare(focusedText(), "Video")
             keyClick(Qt.Key_Space)
             compare(home().page, "display")
             keyClick(Qt.Key_Right)                       // into the page
             verify(focused() !== null && focusedText() !== "Display", "focus moved into the page")
             shot("console-display-focus")
             keyClick(Qt.Key_Escape)                      // B: back to the sidebar
-            compare(focusedText(), "Display")
+            compare(focusedText(), "Video")
             keyClick(Qt.Key_Escape)                      // B again: Home
             compare(home().page, "home")
         }

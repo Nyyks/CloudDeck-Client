@@ -192,7 +192,7 @@ jobs:
           mkdir -p ../out
           n=$(find app/build/outputs/apk -name '*.apk' | wc -l)
           [ "$n" -eq 1 ] || { echo "expected 1 APK, found $n"; exit 1; }
-          cp app/build/outputs/apk/nonRoot/debug/*.apk "../out/CloudDeckClient-${CI_VERSION}-android-arm64-x86_64-debug.apk"
+          cp app/build/outputs/apk/nonRoot/debug/*.apk "../out/CloudDeckClient-${CI_VERSION}-android.apk"
           ls -l ../out
       - uses: actions/upload-artifact@v6
         with:

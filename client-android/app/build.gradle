@@ -92,8 +92,8 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
-            resValue "string", "app_label", "CloudDeck Client (Debug)"
-            resValue "string", "app_label_root", "CloudDeck Client (Root Debug)"
+            resValue "string", "app_label", "CloudDeck Client" // the builds we ship are debug-signed (no release key)
+            resValue "string", "app_label_root", "CloudDeck Client (Root)"
         }
         release {
             // To whomever is releasing/using an APK in release mode with

@@ -13,10 +13,10 @@ Download from the [latest release](../../releases/latest):
 
 | Platform | File | Notes |
 |---|---|---|
-| Windows 10/11 (x64) | `…-windows-x64.msi` or `…-windows-x64-portable.zip` | The MSI adds Start menu and desktop shortcuts. |
+| Windows 10/11 (x64) | `…-windows-x64.msi` or `…-windows-x64-portable.zip` | The MSI installs for your user only, into `%LOCALAPPDATA%\Programs`, and needs no admin rights. It adds Start menu and desktop shortcuts. If you installed 1.0.0, uninstall it first. That version was installed for all users. |
 | Linux (x64) | `…-linux-x86_64.AppImage` | `chmod +x` it and run it. |
-| Raspberry Pi 4/5, ARM64 Linux | `…-linux-aarch64.AppImage` | Needs a 64-bit OS. Not verified on a Pi yet. |
-| Android 5+ (phones, handhelds, TV) | `…-android-arm64-x86_64-debug.apk` | Allow installs from unknown sources. |
+| Raspberry Pi 4/5, ARM64 Linux | `…-linux-aarch64.AppImage` | Needs a 64-bit OS. |
+| Android 5+ (phones, handhelds, TV) | `…-android.apk` | Allow installs from unknown sources. |
 
 All clients install next to stock Moonlight and share nothing with it. Sign in with your CloudDeck
 email and password; the password is used once and a session token goes to the OS keychain.

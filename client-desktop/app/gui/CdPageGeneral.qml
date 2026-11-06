@@ -159,7 +159,19 @@ ColumnLayout {
         }
     }
 
+    // Advanced options stay folded away until asked for (less to read for most people).
+    property bool showAdvanced: false
+    CdButtonRow {
+        Layout.leftMargin: 0
+        CdButton {
+            kind: "ghost"
+            text: page.showAdvanced ? qsTr("Hide advanced settings") : qsTr("Show advanced settings...")
+            onClicked: page.showAdvanced = !page.showAdvanced
+        }
+    }
+
     CdCard {
+        visible: page.showAdvanced
         title: qsTr("Advanced")
         CdChoiceRow {
             text: qsTr("Video decoder")

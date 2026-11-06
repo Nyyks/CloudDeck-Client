@@ -426,6 +426,10 @@ ApplicationWindow {
             NavigableToolButton {
                 id: settingsButton
 
+                // CloudDeck-Client: the CloudDeck screen has its own settings; the gear stays only
+                // for the CLI modes that start without it.
+                visible: initialView.indexOf("CloudDeckView.qml") < 0
+
                 iconSource:  "qrc:/res/settings.svg"
 
                 onClicked: {

@@ -77,6 +77,48 @@ FocusScope {
         var n = usbForwardCount()
         return n === 0 ? qsTr("No USB devices") : n === 1 ? qsTr("1 USB device") : qsTr("%1 USB devices").arg(n)
     }
+    // ---- home quick settings: resolution and display mode (also in the in-stream menu)
+    function resolutionChoices() {
+        var list = []
+        if (!CloudDeckDisplay.multiMonitor) list.push({ text: qsTr("Fit to window"), val: "fit" })
+        list.push({ text: "720p (1280 × 720)", val: "1280x720" }, { text: "1080p (1920 × 1080)", val: "1920x1080" },
+                  { text: "1440p (2560 × 1440)", val: "2560x1440" }, { text: "4K (3840 × 2160)", val: "3840x2160" })
+        var s = SystemProperties.getNativeResolution(0)
+        if (s.width > 0) list.push({ text: qsTr("This screen (%1 × %2)").arg(s.width & ~7).arg(s.height), val: (s.width & ~7) + "x" + s.height })
+        return list
+    }
+    function resolutionValue() {
+        if (CloudDeckDisplay.multiMonitor) return "multi"
+        return CloudDeckDisplay.matchResolution ? "fit" : StreamingPreferences.width + "x" + StreamingPreferences.height
+    }
+    function resolutionLabel() {
+        if (CloudDeckDisplay.multiMonitor) return qsTr("Several monitors")
+        if (CloudDeckDisplay.matchResolution) return qsTr("Fits the window")
+        return StreamingPreferences.width + " × " + StreamingPreferences.height
+    }
+    function setResolution(v) {
+        if (v === "fit") { CloudDeckDisplay.matchResolution = true; return }
+        var wh = v.split("x")
+        CloudDeckDisplay.matchResolution = false
+        StreamingPreferences.width = parseInt(wh[0])
+        StreamingPreferences.height = parseInt(wh[1])
+        if (StreamingPreferences.autoAdjustBitrate)
+            StreamingPreferences.bitrateKbps = StreamingPreferences.getDefaultBitrate(StreamingPreferences.width, StreamingPreferences.height,
+                                                                                      StreamingPreferences.fps, StreamingPreferences.enableYUV444)
+        StreamingPreferences.save()
+    }
+    function displayModeChoices() {
+        return [{ text: qsTr("Fullscreen"), val: StreamingPreferences.WM_FULLSCREEN },
+                { text: qsTr("Borderless windowed"), val: StreamingPreferences.WM_FULLSCREEN_DESKTOP },
+                { text: qsTr("Windowed"), val: StreamingPreferences.WM_WINDOWED }]
+    }
+    function displayModeLabel() {
+        var c = displayModeChoices()
+        for (var i = 0; i < c.length; i++) if (c[i].val === StreamingPreferences.windowMode) return c[i].text
+        return qsTr("Display mode")
+    }
+    function setDisplayMode(v) { StreamingPreferences.windowMode = v; StreamingPreferences.save() }
+
     function confirmStop() { stopConfirm.open() }
     function confirmRestart() { restartConfirm.open() }
     function openControllerProfiles() { controllerProfiles.open() }

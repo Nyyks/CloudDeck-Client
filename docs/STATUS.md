@@ -9,7 +9,12 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-05 (v1.0.0). Phase 1 verified by the owner on real devices with
+Last updated: 2026-11-06 (after v1.0.0). Unreleased since then: a per-user MSI (built locally;
+installing it isn't verified yet), a DNS fallback for Connect, an About page with an update check
+(works only while releases are public), a Controls settings group and home-screen resolution picks.
+The owner confirmed that the Raspberry Pi AppImage works.
+
+Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
 explicitly confirmed, so Linux stays *partial* where it differs.
 

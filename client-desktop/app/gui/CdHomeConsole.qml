@@ -9,6 +9,9 @@ import QtQuick.Layouts 1.3
 import ComputerManager 1.0
 import CloudDeck 1.0
 import CloudDeckMic 1.0
+import CloudDeckDisplay 1.0
+import StreamingPreferences 1.0
+import SystemProperties 1.0
 import "CdTheme.js" as T
 
 FocusScope {
@@ -17,17 +20,16 @@ FocusScope {
     readonly property bool narrow: width < T.narrowWidth
     readonly property var pages: [
         { id: "home", label: qsTr("Home"), icon: "home" },
-        { id: "display", label: qsTr("Display"), icon: "display" },
-        { id: "audio", label: qsTr("Audio & mic"), icon: "mic" },
-        { id: "controllers", label: qsTr("Controllers"), icon: "gamepad" },
-        { id: "input", label: qsTr("Mouse & keyboard"), icon: "keyboard" },
-        { id: "usb", label: qsTr("USB devices"), icon: "usb" },
+        { id: "display", label: qsTr("Video"), icon: "display" },
+        { id: "audio", label: qsTr("Audio"), icon: "mic" },
+        { id: "controls", label: qsTr("Controls"), icon: "gamepad" },
         { id: "network", label: qsTr("Network"), icon: "network" },
-        { id: "general", label: qsTr("General"), icon: "gear" }
+        { id: "general", label: qsTr("General"), icon: "gear" },
+        { id: "about", label: qsTr("About"), icon: "account", hidden: true } // linked under the account
     ]
     readonly property var pageFiles: ({
-        display: "CdPageDisplay.qml", audio: "CdPageAudio.qml", controllers: "CdPageControllers.qml",
-        input: "CdPageInput.qml", usb: "CdPageUsb.qml", network: "CdPageNetwork.qml", general: "CdPageGeneral.qml"
+        display: "CdPageDisplay.qml", audio: "CdPageAudio.qml", controls: "CdPageControls.qml",
+        network: "CdPageNetwork.qml", general: "CdPageGeneral.qml", about: "CdPageAbout.qml"
     })
 
     function pageIndex(id) {
@@ -49,6 +51,11 @@ FocusScope {
     function showPage(id, reason) {
         page = id
         if (reason !== undefined) navItem(id).forceActiveFocus(reason)
+    }
+    // Controls page on a given tab ("input", "gamepad", "usb")
+    function showControls(tab) {
+        page = "controls"
+        Qt.callLater(function() { if (pageLoader.item) pageLoader.item.tab = tab })
     }
     function focusContent(reason) {
         if (page === "home") { connectBtn.forceActiveFocus(reason); return }
@@ -101,6 +108,7 @@ FocusScope {
                 model: home.pages
                 delegate: CdNavItem {
                     Layout.fillWidth: true
+                    visible: !modelData.hidden
                     text: modelData.label
                     iconUrl: "qrc:/res/cd/" + modelData.icon + ".svg"
                     selected: home.page === modelData.id
@@ -140,14 +148,24 @@ FocusScope {
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight
                         }
-                        CdButton {
-                            id: signOutBtn
-                            kind: "link"
-                            leftPadding: 0
-                            minSize: 36
-                            font.pixelSize: 12
-                            text: qsTr("Sign out")
-                            onClicked: CloudDeck.signOut()
+                        Row {
+                            spacing: 4
+                            CdButton {
+                                kind: "link"
+                                leftPadding: 0
+                                minSize: 36
+                                font.pixelSize: 12
+                                text: qsTr("About")
+                                onClicked: home.showPage("about")
+                            }
+                            CdButton {
+                                id: signOutBtn
+                                kind: "link"
+                                minSize: 36
+                                font.pixelSize: 12
+                                text: qsTr("Sign out")
+                                onClicked: CloudDeck.signOut()
+                            }
                         }
                     }
                 }
@@ -193,6 +211,7 @@ FocusScope {
                     model: home.pages
                     delegate: CdNavItem {
                         compact: true
+                        visible: !modelData.hidden
                         text: modelData.label
                         iconUrl: "qrc:/res/cd/" + modelData.icon + ".svg"
                         selected: home.page === modelData.id
@@ -336,6 +355,20 @@ FocusScope {
                                 Flow {
                                     Layout.fillWidth: true
                                     spacing: 8
+                                    CdQuickChoice {
+                                        enabled: !CloudDeckDisplay.multiMonitor
+                                        label: cdView.resolutionLabel()
+                                        options: cdView.resolutionChoices()
+                                        value: cdView.resolutionValue()
+                                        onPicked: function(v) { cdView.setResolution(v) }
+                                    }
+                                    CdQuickChoice {
+                                        visible: SystemProperties.hasDesktopEnvironment
+                                        label: cdView.displayModeLabel()
+                                        options: cdView.displayModeChoices()
+                                        value: StreamingPreferences.windowMode
+                                        onPicked: function(v) { cdView.setDisplayMode(v) }
+                                    }
                                     CdChip {
                                         on: CloudDeckMic.enabled
                                         text: on ? qsTr("Microphone on") : qsTr("Microphone off")
@@ -349,7 +382,7 @@ FocusScope {
                                     CdChip {
                                         on: cdView.usbForwardCount() > 0
                                         text: cdView.usbChipText()
-                                        onClicked: home.showPage("usb", Qt.TabFocusReason)
+                                        onClicked: home.showControls("usb")
                                     }
                                     CdChip {
                                         on: CloudDeck.autoReconnect
@@ -400,6 +433,7 @@ FocusScope {
                         visible: home.narrow
                         Layout.fillWidth: true
                         Text { Layout.fillWidth: true; text: CloudDeck.email; color: T.muted; font.pixelSize: 13; elide: Text.ElideRight }
+                        CdButton { kind: "link"; text: qsTr("About"); onClicked: home.showPage("about") }
                         CdButton { kind: "link"; text: qsTr("Sign out"); onClicked: CloudDeck.signOut() }
                     }
                 }

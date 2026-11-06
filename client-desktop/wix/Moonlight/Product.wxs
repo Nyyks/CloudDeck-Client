@@ -14,7 +14,11 @@
            Language="1033"
            Version="!(bind.fileVersion.MoonlightExe)"
            Manufacturer="CloudDeck-Client"
+           Scope="perUser"
            UpgradeCode="13a9f569-2a4e-4933-a953-da72914e9d10">
+    <!-- CloudDeck-Client: per-user install into %LOCALAPPDATA%\Programs, no admin rights needed.
+         The VC++ runtime is installed alongside the app (build-arch.bat), and there is no firewall
+         rule (that needs admin; the client only makes outgoing connections). -->
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize" />
     <MediaTemplate CompressionLevel="high" EmbedCab="yes" />
 
@@ -29,7 +33,7 @@
     <!-- There's no way to delete a registry key on uninstall but not major upgrade, so
         we have to roll our own deletion via custom action -->
     <CustomAction Id="DeleteRegistryKey"
-                  Directory="ProgramFiles6432Folder"
+                  Directory="INSTALLFOLDER"
                   ExeCommand="reg.exe delete &quot;HKCU\$(var.RegKey)&quot; /f"
                   Execute="deferred"
                   Return="ignore"
@@ -53,6 +57,10 @@
       <util:RemoveFolderEx Id="CleanupAppDataFolder"
                            On="uninstall"
                            Property="APPDATAFOLDER" />
+      <!-- Per-user folders are not tracked by Windows Installer; clean the install folder up too. -->
+      <util:RemoveFolderEx Id="CleanupInstallFolder"
+                           On="uninstall"
+                           Property="INSTALLFOLDER" />
       <RegistryValue Root="HKCU"
                      Key="$(var.RegKey)"
                      Name="Installed"
@@ -96,12 +104,7 @@
         <File Id="MoonlightExe"
               KeyPath="yes"
               Checksum="yes"
-              Source="$(var.BuildDir)\app\$(var.Configuration)\Moonlight.exe">
-          <fire:FirewallException Id="MoonlightFirewallException"
-                                  Scope="any"
-                                  IgnoreFailure="yes"
-                                  Name="$(var.FullName)" />
-        </File>
+              Source="$(var.BuildDir)\app\$(var.Configuration)\Moonlight.exe" />
       </Component>
     </DirectoryRef>
 
@@ -118,8 +121,10 @@
     </Feature>
 
     <StandardDirectory Id="DesktopFolder" />
-    <StandardDirectory Id="ProgramFiles6432Folder">
-      <Directory Id="INSTALLFOLDER" Name="$(var.InstallFolder)" />
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="LocalProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="$(var.InstallFolder)" />
+      </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="ApplicationProgramsFolder" Name="$(var.InstallFolder)" />
