@@ -132,3 +132,10 @@ or fit-to-window:
 
 The in-stream menus also offer a resolution choice. Desktop restarts the stream in place;
 Android ends the stream and reconnects at once, keeping the lease.
+
+## Amendment 2: no separate outputs for now (2026-11-06)
+The owner decided not to change the VM's boot settings, so Phase 4b (separate KWin outputs
+through kernel-argument EDID overrides) is not planned. A wrong kernel argument can leave the VM
+unbootable or unreachable. Multiple monitors stay one wide VM output: fullscreen games and
+maximized windows span every streamed monitor. The user guide advises single-monitor mode for
+games and window snapping for apps. Revisit only if the owner asks.

@@ -1,40 +1,75 @@
 # User guide
 
-> See [STATUS.md](STATUS.md) for what's verified.
+How to use CloudDeck-Client on Windows, Linux (including the Raspberry Pi) and Android.
+What's verified on each platform is in [STATUS.md](STATUS.md).
 
-## First start
+**Contents:**
+- [At a glance](#at-a-glance)
+- [Install and first start](#install-and-first-start)
+- [Home screen](#home-screen)
+- [Settings](#settings)
+- [In-stream menu](#in-stream-menu)
+- [Controllers](#controllers)
+- [Microphone](#microphone)
+- [USB devices](#usb-devices-windows-and-linux)
+- [Display and multiple monitors](#display-and-multiple-monitors-windows-and-linux)
+- [Clipboard](#clipboard-windows-and-linux)
+- [Network test](#network-test-windows-and-linux)
+- [Shortcuts](#shortcuts-windows-and-linux)
+- [Troubleshooting](#troubleshooting)
 
-1. Install it: the MSI or portable zip on Windows, the AppImage on Linux (x86_64 or
-   aarch64, e.g. a Raspberry Pi), the APK on Android. It installs alongside stock Moonlight
-   and shares nothing with it. The MSI installs for your user only
-   (`%LOCALAPPDATA%\Programs\CloudDeck Client`) and needs no admin rights. If you installed 1.0.0,
-   uninstall it first; it was installed for all users.
-2. Sign in with your CloudDeck email and password. The password is sent to
-   CloudDeck's login service once and never stored. A session token is kept in
-   your OS keychain:
+## At a glance
+
+| I want to… | Do this |
+|---|---|
+| Start streaming | Press **Connect** on Home. It starts the VM if needed. |
+| Change the resolution | Use the Resolution chip on Home (desktop) or the Resolution tile (Android). In a stream, use the menu. |
+| Open the menu in a stream | Click the round button, press Ctrl+Alt+Shift+O, or press Select+L1+R1+B on a controller. |
+| Use a controller as a mouse | Press Select+L1+R1+A, or use the *Controller* tile in the menu. |
+| Type Esc, F-keys or Ctrl on a touchscreen | *Full keyboard* in the menu, or Select+L1+R1+Y. |
+| Use my microphone on the VM | Turn on the microphone on Home and choose *CloudDeck Microphone* on the VM. |
+| Save money | Turn on *Stop my CloudDeck when the stream ends*. |
+| Check for a new version | Open **About**: on desktop it's under *Sign out*, on Android on the Account page. |
+
+## Install and first start
+
+1. Install the client from the [latest release](../../../releases/latest):
+   - Windows: the MSI or the portable zip.
+     - The MSI installs for your user only, into `%LOCALAPPDATA%\Programs\CloudDeck Client`, and needs no admin rights.
+     - If you have 1.0.0 installed, uninstall it first; it was installed for all users.
+   - Linux: the AppImage (x86_64, or aarch64 for a Raspberry Pi 4/5 with a 64-bit OS). Run `chmod +x` on it, then start it.
+   - Android: the APK.
+
+   It installs next to stock Moonlight and shares nothing with it.
+2. Sign in with your CloudDeck email and password. The password goes to CloudDeck's login once
+   and is never stored. A session token is kept in your OS keychain:
    - Windows: Credential Manager
-   - Linux: Secret Service (GNOME Keyring / KWallet)
+   - Linux: Secret Service (GNOME Keyring or KWallet)
    - Android: Keystore
 
-   If no keychain is available, you sign in on each launch.
-3. Press **Start and connect**. The app:
-   - starts your CloudDeck (about 1–2 minutes),
-   - waits until its address and streaming host are reachable,
-   - pairs automatically the first time: no address to copy, no PIN to type,
-   - launches the `CloudDeck` app and starts streaming.
+   Without a keychain, you sign in on every launch.
+3. Press **Start and connect**. The client:
+   1. starts your CloudDeck (about 1–2 minutes);
+   2. waits until its address and streaming host answer;
+   3. pairs automatically the first time (no address to copy, no PIN to type);
+   4. launches the `CloudDeck` app and streams.
+
+For microphone, USB, clipboard, display switching and the network test, install the server side
+on the VM once ([host-setup.md](host-setup.md)). Streaming works without it.
 
 ## Home screen
 
-A sidebar with pages. On phones it becomes a strip of chips under the header.
-- Desktop pages: Home, Video, Audio, Controls (tabs: Keyboard & mouse, Gamepad, USB),
-  Network, General. They include all of Moonlight's streaming settings; General hides its rarely
-  needed options behind *Show advanced settings…*. **About** (version, update check, links) is the
-  link under *Sign out*.
-- Android pages: Home, Stream (Moonlight's streaming settings), Devices, Account (with About).
-- Home has the round **Connect** button, quick picks for resolution and display mode (desktop) and
-  tiles for Resolution, Restart, Stop and more.
-- If your network's DNS is slow to catch up after the CloudDeck starts, the client connects to
-  the CloudDeck's IP address after 15 seconds instead of waiting.
+- **Connect:** the round button. It skips any steps that are already done.
+- **Tiles:**
+  - Start, Stop (asks first) and Restart. Restart stops the VM, waits until it's off, then starts it again.
+  - Controller profiles.
+  - Resolution on Android.
+- **Quick chips:**
+  - Desktop: resolution, display mode, microphone, clipboard, USB devices, auto-reconnect.
+  - Android: microphone, on-screen controller.
+- **Your CloudDeck:** live status: Running, Stopped, Starting or Stopping.
+
+The client never offers CloudDeck's **Reset** (factory wipe); it can't send that request at all.
 
 Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
 
@@ -42,138 +77,185 @@ Everything works with touch, mouse, keyboard, a gamepad or a TV remote:
 |---|---|
 | D-pad or arrow keys | Move between controls. A ring shows where you are. |
 | A, Enter or Space | Press the control. |
-| B, Back or Escape | Go back to the sidebar, then to Home. |
+| B, Back or Escape | Back to the sidebar, then to Home. |
 | Start, Menu or X | Open the settings. |
-| Select+L1+R1+A (in a stream) | Switch the controller between gamepad and mouse (docs/controller-mouse.md). |
 
-On desktop with a sidebar, left and right move between the sidebar and the page.
+On desktop, left and right move between the sidebar and the page. On phones the sidebar
+becomes a strip of chips under the header.
 
-## Buttons
+## Settings
 
-| Button | Does |
+All of Moonlight's streaming settings are part of these pages; there's no second settings menu.
+
+**Desktop**
+
+| Page | What's there |
 |---|---|
-| Start and connect / Connect | Everything above. Skips the steps that are already done. |
-| Start / Stop | Power the VM on or off (Stop asks first). |
-| Restart | Stop, wait until it's off, start again. CloudDeck has no restart call. |
-| Manage PCs | The classic Moonlight host list, for other hosts or troubleshooting. |
-| Sign out | Forgets the session token. |
+| Video | Quality (resolution, frame rate, bitrate, low bandwidth), the CloudDeck's screen (fit to window, several monitors), display mode, picture (HDR, V-Sync, frame pacing) |
+| Audio | Speakers (stereo or surround, muting) and microphone (device, test) |
+| Controls | Tabs: **Keyboard & mouse** (mouse mode, system shortcuts, in-stream shortcuts, touchscreen), **Gamepad** (button layout, remapping, controller as mouse, on-screen controller), **USB devices** (devices to forward) |
+| Network | Connection test, recommended settings, reconnect automatically |
+| General | Language, appearance, stop when the stream ends or when idle, clipboard, stats, app to launch. *Show advanced settings…* reveals codec, renderer and the rest |
 
-The app never offers CloudDeck's **Reset** (factory wipe). It can't send that
-request at all.
+**About** (the link under *Sign out*) shows the version and has *Check for updates*, GitHub and
+*Buy me a coffee*.
 
-## Options
+**Android**
 
-- **Stop my CloudDeck when the stream ends:** turns the VM off as soon as you
-  leave the stream.
-- **Stop when idle** (desktop): turns the VM off if you haven't streamed for
-  the chosen time (Never, 15 minutes … 4 hours).
-- **Reconnect automatically if the connection drops** (desktop, on by
-  default): after a network drop the stream reconnects in the same window.
-  - It makes up to 5 attempts over about 20 s, showing *Reconnecting (n of 5)*
-    under the menu button.
-  - Your app keeps running on the CloudDeck.
-  - Clipboard sync and forwarded USB devices come back with the stream.
-- **App to launch:** the Sunshine app name. The default is `CloudDeck`.
-
-## Microphone
-
-Needs the CloudDeck host update on the VM ([host-setup.md](host-setup.md)).
-
-1. On the CloudDeck screen, turn on **Send my microphone to the CloudDeck**.
-   On desktop, pick a device and press **Test** to check the level meter.
-   Android asks for the microphone permission.
-2. Start a stream. On the VM, the microphone appears as **CloudDeck Microphone**;
-   choose it in Discord, Steam or the game if it isn't picked automatically.
-3. During a stream on desktop, **Ctrl+Alt+Shift+U** mutes and unmutes (the key is
-   configurable, see Shortcuts below).
-
-The audio is encrypted with the stream's session key. If the host doesn't
-have the update, the setting shows *Host does not support the microphone* and
-streaming works as usual.
-
-## USB devices (Windows and Linux)
-
-Needs the CloudDeck host update on the VM, plus:
-- **Windows:** [usbipd-win](https://github.com/dorssel/usbipd-win) (the app offers
-  **Install usbipd-win**).
-- **Linux:** the kernel's `usbip-host` module (Fedora ships it; on Ubuntu it's in
-  `linux-modules-extra`) and `pkexec`. When a stream with forwarded devices
-  starts, you're asked for your password once.
-
-1. On the CloudDeck screen under **USB devices**, check each device you want on
-   your CloudDeck. The first time, Windows asks for administrator approval to
-   *share* the device with usbipd.
-2. Start a stream. Checked devices move to the VM ("on your CloudDeck") and
-   come back to your PC when the stream ends.
-3. While forwarded, a device can't be used on this PC. Don't forward the
-   keyboard or mouse you're using. Webcams and USB audio may work poorly over
-   the internet.
-
-## In-stream menu (desktop)
-
-During a stream there are two ways to open the menu:
-- Click the round **CloudDeck button** at the top centre. It's shown while your
-  cursor is free: *Desktop* mouse mode, or after Ctrl+Alt+Shift+Z.
-- Press **Ctrl+Alt+Shift+O**, in any mode.
-
-Click back into the stream, press Esc, or press the hotkey again to close it.
-
-| Section | What you can change |
+| Page | What's there |
 |---|---|
-| Display | Fullscreen; fit the CloudDeck's resolution to this window; performance stats |
-| Mouse | **Game**: captured by the stream, for games. **Desktop**: a free cursor that can leave the window, for working. Remembered for next time. |
-| Audio | Mute the CloudDeck's sound. Send my microphone (turning it on or off reconnects for a second). Mute my microphone. Choose the microphone. |
-| USB devices | Tick or untick devices. They move to or from the CloudDeck right away. |
-| Session | Reconnect; disconnect; shut down my CloudDeck (click twice) |
+| Home | Connect, tiles, quick toggles |
+| Stream | Moonlight's streaming settings |
+| Devices | Controllers (layout, on-screen controller, controller as mouse), microphone |
+| Account | Stop when the stream ends, account, other hosts (*Manage PCs*), About |
 
-While the menu is open, your keys and clicks go to the menu, not the
-CloudDeck. You can hide the button at the bottom of the menu; the hotkey keeps
-working.
+**Useful options:**
+- *Stop my CloudDeck when the stream ends:* turns the VM off as soon as you leave the stream.
+- *Stop when idle* (desktop): turns the VM off if you haven't streamed for the chosen time (15 minutes to 4 hours).
+- *Reconnect automatically* (desktop, on by default):
+  - after a network drop, the stream reconnects in the same window, with up to 5 attempts over about 20 s;
+  - your app keeps running, and clipboard and USB devices come back with the stream.
+- *App to launch:* the Sunshine app name; `CloudDeck` by default.
+
+## In-stream menu
+
+**Opening it:**
+- Click the round CloudDeck button at the top centre. It's shown while your cursor is free, and dimmed in fullscreen.
+- Press **Ctrl+Alt+Shift+O** (desktop).
+- Press **Select+L1+R1+B** on a controller.
+- Press **Back** (Android).
+
+**Closing it:** press Esc, click back into the stream, or press the same key again.
+While it's open, keys and clicks go to the menu, not the CloudDeck.
+
+| Tile or section | Does |
+|---|---|
+| Fullscreen (desktop) | Switch between window and fullscreen |
+| Resolution | Restarts the stream at another size. Your app keeps running. |
+| Stats | Performance overlay |
+| Sound / Microphone | Mute the CloudDeck's sound; mute or choose your microphone |
+| Controller | Switch controllers between *As gamepad* and *As mouse* |
+| On-screen controller / pad | Show or hide it; on Android also edit, save and load layouts |
+| Keyboard / Full keyboard | Typing keyboard, or the full one with Esc, F-keys and Ctrl |
+| Display and mouse (desktop) | **Game mouse** is captured by the stream. **Desktop mouse** can leave the window. |
+| USB devices (desktop) | Tick devices to move them to or from the CloudDeck right away |
+| Reconnect, Disconnect, Shut down | Shut down needs a second click |
+
+You can hide the menu button at the bottom of the menu; the shortcut keeps working.
 
 ## Controllers
 
-- **Xbox/Nintendo layout:** in the in-stream menu, *Nintendo button layout*
-  swaps A/B and X/Y. It applies right away and is remembered.
-- **Remapping profiles:** on the desktop CloudDeck screen, *Controllers →
-  Remapping profiles…*; on Android, *Controller profiles*. You can:
+- **Layout:** Xbox, or Nintendo (swaps A/B and X/Y). Set it in the settings (desktop:
+  Controls → Gamepad; Android: Devices).
+- **Remapping profiles** (desktop: Controls → Gamepad → Remapping → *Edit profiles…*; Android: *Controller profiles*):
   - send any button as another one, or disable it;
-  - set the deadzone, sensitivity and invert up/down per stick;
-  - set a trigger deadzone and swap the sticks.
+  - per stick: deadzone, sensitivity, invert up/down;
+  - trigger deadzone and swapped sticks.
 
-  Choose one profile for all controllers, or a profile per controller. A
-  handheld's built-in controls count as a controller. Profiles apply from the
-  next stream.
-- **On-screen controller:** on Android, choose the *PlayStation button style*
-  (✕ ○ □ △) or keep Xbox (A B X Y) in the stream menu. *Edit on-screen
-  controller layout*, then *Save layout as…*, keeps several layouts that you
-  can *Load*. On desktop (tablets, 2-in-1s, Linux phones), switch on
-  *On-screen controller (touchscreens)* in the stream menu; it has the same
-  Xbox/PlayStation style switch.
-- **Gamepad combos:**
+  Use one profile for all controllers or one per controller. A handheld's built-in controls
+  count as a controller. Profiles apply from the next stream.
+- **Controller as mouse** ([controller-mouse.md](controller-mouse.md)):
+  - **Select+L1+R1+A** or the menu tile switches it.
+  - As a mouse, the sticks move the pointer, A clicks, B right-clicks and the D-pad scrolls.
+    On desktop, X middle-clicks.
+  - Streams can also start in mouse mode, and holding Start can switch it too (both are options).
+- **On-screen controller:** for touchscreens.
+  - Xbox (A B X Y) or PlayStation (✕ ○ □ △) style.
+  - On Android, edit the layout and save several of them by name.
+  - On desktop (tablets, 2-in-1s, Linux phones), turn it on from the menu.
+- **On-screen keyboard:** a full keyboard with Esc, F-keys, arrows, Ctrl, Alt, Win and Shift.
+  - Tap a modifier to hold it for the next key (Ctrl, then C = Ctrl+C); double-tap to keep it held.
+  - Keys are sent like a real keyboard, so they also work in games.
+- **Combos:**
 
   | Combo | Does |
   |---|---|
-  | Select + L1 + R1 + Y | On-screen keyboard |
   | Select + L1 + R1 + B | CloudDeck menu |
-  | Select + L1 + R1 + X | Performance stats (Moonlight) |
-  | Start + Select + L1 + R1 | Disconnect (Moonlight) |
+  | Select + L1 + R1 + A | Controller as mouse / gamepad |
+  | Select + L1 + R1 + Y | On-screen keyboard |
+  | Select + L1 + R1 + X | Performance stats |
+  | Start + Select + L1 + R1 | Disconnect |
 
-## On-screen keyboard
+## Microphone
 
-A full keyboard for touchscreens and handhelds, with Esc, F-keys, arrows, Ctrl,
-Alt, Win and Shift. Open it from the in-stream menu, or with **Select + L1 + R1
-+ Y** on a gamepad.
-- Tap a modifier to hold it for the next key (Ctrl, then C = Ctrl+C).
-  Double-tap it to keep it held.
-- Keys are sent like a real keyboard, so they also work in games.
-- ✕ or Back closes it.
+Needs the server side on the VM.
 
-## Shortcuts (desktop)
+1. On Home, turn the microphone on.
+   - Desktop: pick a device under Audio and press **Test** to see the level.
+   - Android: allow the permission when it asks.
+2. Start a stream. On the VM the microphone is **CloudDeck Microphone**. Choose it in Discord,
+   Steam or the game if it isn't picked automatically.
+3. Mute it from the menu, or with **Ctrl+Alt+Shift+U** on desktop.
 
-All in-stream shortcuts are **Ctrl+Alt+Shift + a key**. On the CloudDeck screen,
-*Shortcuts during a stream → Change…* lets you pick the key for each one.
+The audio is encrypted with the stream's session key. Without the server side, the setting
+shows *Host does not support the microphone* and streaming works as usual.
 
-| Default | Action |
+## USB devices (Windows and Linux)
+
+Needs the server side on the VM, plus:
+- **Windows:** [usbipd-win](https://github.com/dorssel/usbipd-win). The client offers *Install usbipd-win*.
+- **Linux:** the `usbip-host` kernel module and `pkexec`.
+  - Fedora ships the module; on Ubuntu it's in `linux-modules-extra`.
+  - You're asked for your password once per stream that forwards devices.
+
+**Using it:**
+1. Under Controls → USB devices, tick each device you want on your CloudDeck. The first time, Windows asks
+   for administrator approval to share the device with usbipd.
+2. Start a stream. Ticked devices move to the VM and come back when the stream ends.
+3. While a device is forwarded, you can't use it on this PC.
+
+**Limits:**
+- Don't forward the keyboard or mouse you're using.
+- Webcams and USB audio may work poorly over the internet.
+
+## Display and multiple monitors (Windows and Linux)
+
+Needs the server side on the VM.
+
+- **Window or fullscreen:** set *Display mode* on Home or under Video. During a stream, press
+  **Ctrl+Alt+Shift+X**.
+- **Fit the CloudDeck's resolution to the stream window:** the VM's desktop takes the exact size
+  of your window, or of your screen in fullscreen, so nothing is scaled.
+  - After you resize or toggle fullscreen, the stream restarts at the new size about a second
+    later. Your app keeps running and USB devices stay attached.
+  - When the stream ends, the VM goes back to its previous resolution.
+  - With this on, the Resolution setting is ignored.
+  - Exclusive *Fullscreen* doesn't follow resizes; use *Borderless windowed* or *Windowed*.
+- **Several monitors:** under Video → *Use several monitors*, tick the monitors to use. The stream becomes one wide desktop (e.g.
+  3840×1080 for two 1080p monitors) in a borderless window across exactly those monitors.
+  - The VM sees **one ultrawide screen**:
+    - fullscreen games and *maximize* stretch across all the monitors;
+    - the taskbar spans them all;
+    - use window snapping for apps, and single-monitor mode for games.
+  - The monitors need the same display scaling (e.g. all 100%).
+  - Monitors of different heights leave areas of the VM's desktop off-screen.
+  - Above 4096 pixels wide, HEVC or AV1 is used.
+  - Limit: about 5120×1440 at 60 FPS, or 3840×1080 at 120 FPS.
+  - The fullscreen toggle does nothing in this mode; quit with **Ctrl+Alt+Shift+Q**.
+
+## Clipboard (Windows and Linux)
+
+Needs the server side on the VM. On by default:
+- Text you copy on your PC, also in other apps while the stream runs, can be pasted on the
+  CloudDeck, and the other way round.
+- When a stream starts, your PC's clipboard is copied to the CloudDeck.
+- Text only, up to 100 KB. Images and files aren't shared.
+- On the VM it needs Plasma's clipboard (*Clipboard* in the system tray), which is there by default.
+
+## Network test (Windows and Linux)
+
+Under **Network**, with your CloudDeck running:
+- **Test my connection** measures latency and speed in a few seconds and uses a few tens of MB.
+- **Apply recommended settings** sets resolution, frame rate and bitrate for your connection
+  and screen. For example, 1080p, 60 FPS and 20 Mbit/s on a 1920×1200 laptop with a fast line.
+- **Low bandwidth** (under Video → Quality): 1280×720, 30 FPS, 3 Mbit/s, for hotel Wi-Fi or hotspots.
+
+## Shortcuts (Windows and Linux)
+
+All in-stream shortcuts are **Ctrl+Alt+Shift + a key**. To change the keys, go to
+Controls → Keyboard & mouse → *Change shortcuts…*. Changes apply from the next stream.
+
+| Key | Action |
 |---|---|
 | O | Open the CloudDeck menu |
 | Q | Disconnect |
@@ -189,72 +271,19 @@ All in-stream shortcuts are **Ctrl+Alt+Shift + a key**. On the CloudDeck screen,
 | L | Keep the mouse in the window (desktop mode) |
 | K | Capture system keys (Win, Alt+Tab) |
 
-Changes apply to the next stream.
-
-## Network test (desktop)
-
-On the CloudDeck screen under **Network**, with your CloudDeck running:
-- **Test my connection** measures the latency and the speed from your
-  CloudDeck to this PC, in a few seconds and a few tens of MB.
-- **Apply recommended settings** then sets the resolution, frame rate and
-  bitrate that fit your connection and screen. Example: 1080p at 60 FPS and
-  20 Mbit/s on a 1920×1200 laptop with a fast line.
-- **Low-bandwidth mode** sets 1280×720 at 30 FPS and 3 Mbit/s, for hotel Wi-Fi
-  or mobile hotspots.
-
-You can change everything afterwards in Settings. With *Fit the CloudDeck's
-resolution to the stream window* on, the window decides the resolution.
-
-## Clipboard (desktop)
-
-Needs the CloudDeck host update on the VM.
-
-*Share the clipboard (text) with my CloudDeck while streaming* is on by default:
-- Text you copy on your PC, also in other apps while the stream runs, can be
-  pasted on the CloudDeck.
-- Text you copy on the CloudDeck can be pasted on your PC.
-- When a stream starts, your PC's clipboard is copied to the CloudDeck.
-
-It's text only, up to 100 KB. Images and files aren't shared. It needs Plasma's
-clipboard (the system tray's *Clipboard* entry), which is there by default.
-
-## Display and multiple monitors (desktop)
-
-Needs the CloudDeck host update on the VM.
-
-- **Windowed mode:** Display → *Picture* → *Display mode* → *Windowed*, or press
-  **Ctrl+Alt+Shift+X** during a stream to switch between window and fullscreen.
-- **Fit the CloudDeck's resolution to the stream window:** the CloudDeck's
-  desktop takes the exact size of your stream window, or of your screen in
-  fullscreen, so nothing is scaled or blurry.
-  - When you resize the window or toggle fullscreen, the stream reconnects at
-    the new size about a second after you let go, which takes a moment.
-  - The app keeps running and USB devices stay attached.
-  - When the stream ends, the CloudDeck goes back to its previous resolution.
-  - With this on, the *Resolution* setting is ignored. A default bitrate
-    follows the size.
-  - *Display mode: Fullscreen* (exclusive) doesn't follow resizes. Use
-    *Borderless windowed* or *Windowed*.
-- **Use several monitors:** tick the monitors to use. The stream becomes one
-  wide desktop, e.g. 3840×1080 for two 1080p monitors side by side. It's shown
-  in one borderless window covering exactly those monitors, and the mouse moves
-  across them as on a local PC.
-  - The monitors need the same display scaling (e.g. all 100%).
-  - Monitors of different heights work, but the CloudDeck desktop then has
-    areas that are outside your screens.
-  - Above 4096 pixels wide, HEVC or AV1 is used (H.264 can't go that wide).
-  - Limit: about 5120×1440 at 60 FPS, or 3840×1080 at 120 FPS.
-
-  On the CloudDeck it's one ultrawide screen: the taskbar spans all monitors,
-  and *maximize* fills all of them (use window snapping instead). The
-  fullscreen toggle does nothing while streaming to several monitors; quit with
-  **Ctrl+Alt+Shift+Q**. To have Windows keys like Win or Alt+Tab go to the
-  CloudDeck, set *Capture system keyboard shortcuts* to *always* in Settings.
+To send Win or Alt+Tab to the CloudDeck, set *Send system shortcuts like Alt+Tab to the
+CloudDeck* to *Always* or *In fullscreen* (Controls → Keyboard & mouse).
 
 ## Troubleshooting
 
-- *"streaming host is not reachable"*: CloudDeck only lets in the network the
-  VM was started from. If you started it from another device or network,
-  press Restart from this one.
-- *"still does not point to your CloudDeck"*: your DNS resolver cached the
-  address from when the VM was off. Wait a minute and try again.
+- **"streaming host is not reachable":** CloudDeck only lets in the network the VM was started
+  from. If you started it from another device or network, press Restart from this one.
+- **Stuck on "Waiting for network address":** your DNS still has the address from when the VM
+  was off. After 15 seconds the client connects to the VM's IP address directly. If it still
+  fails, wait a minute and try again.
+- **Windows MSI says a newer or other version is installed:** uninstall CloudDeck Client from
+  *Settings → Apps* first (1.0.0 was installed for all users), then run the new MSI.
+- **The VM features are missing** (microphone, USB, clipboard): install or update the server
+  side ([host-setup.md](host-setup.md)). Check `~/.config/clouddeck-client/last-healthcheck` on the VM.
+- **Something else:** *Manage PCs* opens the classic Moonlight host list. If your release is
+  public, open an issue on GitHub with the client log.

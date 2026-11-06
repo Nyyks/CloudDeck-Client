@@ -9,10 +9,16 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-06 (after v1.0.0). Unreleased since then: a per-user MSI (built locally;
-installing it isn't verified yet), a DNS fallback for Connect, an About page with an update check
-(works only while releases are public), a Controls settings group and home-screen resolution picks.
-The owner confirmed that the Raspberry Pi AppImage works.
+Last updated: 2026-11-06 (v1.1.0). The owner tested the 1.1 changes and they work as expected:
+- the per-user MSI;
+- the DNS fallback for Connect;
+- the About page;
+- the Controls settings group;
+- the home-screen resolution picks.
+
+The owner also confirmed that the Raspberry Pi AppImage works. The update check only works while
+the repository's releases are public. Multi-monitor stays one wide VM output: the owner decided
+against Phase 4b (VM kernel arguments) for now.
 
 Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
@@ -23,7 +29,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Release | CI builds (MSI + portable zip, AppImage, APK); tagged releases | done | partial | done | |
 | Release | Side-by-side with stock Moonlight | done | partial | done | ADR-0005 |
 | Release | Icons | done | partial | done | `tools/icon-gen`; the official CloudDeck mark at the owner's request (private use, see THIRD_PARTY_NOTICES). The Android TV banner is still Moonlight's. |
-| Release | Own version number | done | partial | done | 0.1.0 from `client-desktop/app/version.txt` |
+| Release | Own version number | done | partial | done | 1.1.0 from `client-desktop/app/version.txt` (all clients) |
 | Account | Sign in, session restored from keychain | done | partial | done | Linux: Secret Service path untested on a real desktop |
 | Account | MFA challenge | partial | partial | partial | This account has no MFA, so it's untested |
 | VM | Live status, Start / Stop / Restart | done | partial | done | Restart = stop+start (no API) |
@@ -41,7 +47,7 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Display | Multiple monitors, one wide stream (4a) | partial | partial | n/a | ADR-0007. One borderless window over the chosen monitors; the host agent switches the VM to the combined resolution via kscreen-doctor and restores it when the stream ends. Agent and layout unit-tested; **not yet run on the VM**. Linux via XWayland. |
 | Display | Windowed mode | done | partial | n/a | Inherited from Moonlight (Display → Picture → Display mode; Ctrl+Alt+Shift+X). Used by the owner on Windows on 2026-11-05 |
 | Display | Fit the VM resolution to the window or screen, following resizes | done | partial | partial | Android (2026-11-05): the VM follows the stream resolution for every stream, plus a resolution choice in the in-stream menu (reconnects); not yet verified on the VM. ADR-0007 amendment: an in-place stream restart at the new size about 1 s after a resize settles, keeping USB and the running app. Verified by the owner on Windows on 2026-11-05 (windowed resizes, fullscreen toggle, reconnect). Off by default. |
-| Display | Multiple monitors as separate outputs (4b) | not started | not started | n/a | Needs kernel arguments (EDID overrides): owner approval first |
+| Display | Multiple monitors as separate outputs (4b) | declined | declined | n/a | Needs kernel arguments (EDID overrides). The owner decided against it on 2026-11-06; fullscreen games span every streamed monitor. See ADR-0007, amendment 2 |
 | Display | Tablet as extra screen | not started | n/a | not started | Stretch goal |
 | UX | In-stream menu | done | partial | done | Rev. 3 (2026-11-05, not yet verified): tidier layout with quick tiles on both. Android: button + Back open a dialog (mic mute, stats, keyboard, disconnect, shut down), verified by the owner on 2026-11-05. ADR-0009 rev. 2: round CloudDeck button at the top centre (when the cursor is free) or Ctrl+Alt+Shift+O. Panel with display, mouse mode (game/desktop), audio, mic, live USB device switching, reconnect, disconnect, shut down. Rev. 1 (text OSD) was replaced after the owner's feedback. Verified by the owner on Windows on 2026-11-05 |
 | UX | Network test, auto-recommended settings, low-bandwidth mode | done | partial | not started | ADR-0011: latency + CloudDeck→PC speed through the agent (net/test), recommended resolution/FPS/bitrate for this screen, one-click apply; low-bandwidth preset 720p30 3 Mbit/s. Verified by the owner on Windows on 2026-11-05 |

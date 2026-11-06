@@ -4,6 +4,10 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-06
+Polish and fixes after the first stable release, tested by the owner. Downloads: Windows MSI and zip,
+Linux AppImage (x86_64 and aarch64 for the Raspberry Pi), Android APK, and the VM host bundle.
+
 ### Added
 - Resolution and display-mode quick picks on the desktop home screen, next to the mic chip. On Android,
   the stream tile on Home opens a resolution picker. Both are also in the in-stream menu, as before.
@@ -20,6 +24,10 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 - Android app name is "CloudDeck Client" (no "(Debug)").
 - Desktop: the settings gear in the top right of the home screen is gone (Settings is in the sidebar).
 - Desktop: the in-stream menu button also shows in fullscreen while the pointer is captured, dimmed.
+- Android APK is named `CloudDeckClient-<version>-android.apk`.
+- README rewritten with a feature overview. The user guide is reorganised and matches the current pages and menus.
+- Multiple monitors stay one wide VM screen. Separate outputs (Phase 4b, VM kernel arguments) are
+  not planned for now (ADR-0007 amendment 2).
 
 ### Fixed
 - Connect could hang on "Waiting for network address" when the local DNS cache lags behind CloudDeck.
