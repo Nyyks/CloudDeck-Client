@@ -22,10 +22,13 @@ docker run --rm -v "$REPO/host/agent:/src" -v "$OUT:/out" -w /src -e CGO_ENABLED
 echo "== Sources"
 # Build on a Docker volume, not on the Windows file system (much faster under QEMU).
 docker volume create cdc-arm64-build >/dev/null
-tar -C "$REPO" --exclude='client-desktop/build' --exclude='client-desktop/libs' --exclude='client-desktop/deps*' \
-    --exclude='*.o' -cf - client-desktop common shared .github/scripts | \
-  docker run --rm -i --platform linux/arm64 -v cdc-arm64-build:/b ubuntu:22.04 \
-    bash -c 'rm -rf /b/src && mkdir -p /b/src && tar -C /b/src -xf -'
+# One container reads the repo (read-only bind mount) and writes the volume, so nothing depends
+# on a stdin pipe into docker (which got cut short in detached runs).
+docker run --rm -v "$REPO:/repo:ro" -v cdc-arm64-build:/b alpine sh -euc '
+  rm -rf /b/src && mkdir -p /b/src
+  tar -C /repo --exclude=client-desktop/build --exclude=client-desktop/libs --exclude="client-desktop/deps*" \
+      --exclude="*.o" -cf - client-desktop common shared .github/scripts | tar -C /b/src -xf -
+  for d in client-desktop common shared; do [ -d "/b/src/$d" ] || { echo "sources incomplete: $d missing"; exit 1; }; done'
 
 echo "== Build (arm64 container)"
 docker run --rm --platform linux/arm64 -v cdc-arm64-build:/b -v "$OUT:/out" -e VERSION="$VERSION" ubuntu:22.04 bash -euo pipefail -c '
@@ -35,7 +38,7 @@ apt-get install -y -qq --no-install-recommends ca-certificates git wget file bui
   autoconf automake libtool python3-pip \
   qt6-base-dev qt6-declarative-dev libqt6svg6-dev qml6-module-qtquick-controls qml6-module-qtquick-templates \
   qml6-module-qtquick-layouts qml6-module-qtqml-workerscript qml6-module-qtquick-window qml6-module-qtquick \
-  qt6-qpa-plugins libqt6svg6 \
+  qt6-qpa-plugins libqt6svg6 libqt6opengl6-dev \
   libgbm-dev libdrm-dev libfreetype-dev libasound2-dev libdbus-1-dev libegl1-mesa-dev libgl1-mesa-dev libgles2-mesa-dev \
   libglu1-mesa-dev libibus-1.0-dev libpulse-dev libudev-dev libx11-dev libxcursor-dev libxext-dev libxi-dev \
   libxinerama-dev libxkbcommon-dev libxrandr-dev libxss-dev libxt-dev libxv-dev libxxf86vm-dev libxcb-dri3-dev \
@@ -80,6 +83,9 @@ mkdir -p /b/bin && cd /b/bin
 [ -x linuxdeploy-aarch64.AppImage ] || wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-aarch64.AppImage
 [ -x linuxdeploy-plugin-qt-aarch64.AppImage ] || wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-aarch64.AppImage
 chmod +x linuxdeploy*.AppImage
+# AppImages mark themselves with "AI\x02" at ELF offset 8, which stops the QEMU binfmt entry from
+# matching them ("Exec format error" under emulation). Zero the marker; extract-and-run still works.
+for f in linuxdeploy*.AppImage; do head -c 3 /dev/zero | dd of="$f" bs=1 seek=8 count=3 conv=notrunc status=none; done
 export PATH=/b/bin:$PATH APPIMAGE_EXTRACT_AND_RUN=1
 
 cd /b/src/client-desktop

@@ -8,3 +8,7 @@ host/sunshine-patches/series text eol=lf
 *.png binary
 *.ico binary
 gradlew text eol=lf
+# Linux desktop entries must keep LF (a CR ends up in Icon= and breaks AppImage/desktop lookups)
+*.desktop text eol=lf
+*.metainfo.xml text eol=lf
+*.appdata.xml text eol=lf
