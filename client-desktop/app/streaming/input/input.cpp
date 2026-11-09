@@ -363,6 +363,22 @@ void SdlInputHandler::updateKeyboardGrabState()
     m_KeyboardCaptureActive = shouldGrab;
 }
 
+void SdlInputHandler::setSystemKeysMode(StreamingPreferences::CaptureSysKeysMode mode)
+{
+    if (mode == StreamingPreferences::CSK_OFF && m_CaptureSystemKeysMode != StreamingPreferences::CSK_OFF) {
+        m_ToggledOffSysKeysMode = m_CaptureSystemKeysMode;
+    }
+    m_CaptureSystemKeysMode = mode;
+    updateKeyboardGrabState();
+}
+
+StreamingPreferences::CaptureSysKeysMode SdlInputHandler::toggledSystemKeysMode() const
+{
+    if (m_CaptureSystemKeysMode != StreamingPreferences::CSK_OFF) return StreamingPreferences::CSK_OFF;
+    return m_ToggledOffSysKeysMode != StreamingPreferences::CSK_OFF ? m_ToggledOffSysKeysMode
+                                                                     : StreamingPreferences::CSK_FOCUSED;
+}
+
 bool SdlInputHandler::isSystemKeyCaptureActive()
 {
     if (m_CaptureSystemKeysMode == StreamingPreferences::CSK_OFF) {

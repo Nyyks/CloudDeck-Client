@@ -144,9 +144,10 @@ While it's open, keys and clicks go to the menu, not the CloudDeck.
 | Stats | Performance overlay |
 | Sound / Microphone | Mute the CloudDeck's sound; mute or choose your microphone |
 | Controller | Switch controllers between *As gamepad* and *As mouse* |
+| System keys (desktop) | Win, Alt+Tab… to the CloudDeck or this PC, for this stream (like Ctrl+Alt+Shift+K) |
 | On-screen controller / pad | Show or hide it; on Android also edit, save and load layouts |
 | Keyboard / Full keyboard | Typing keyboard, or the full one with Esc, F-keys and Ctrl |
-| Display and mouse (desktop) | **Game mouse** is captured by the stream. **Desktop mouse** can leave the window. |
+| Display, mouse and keyboard (desktop) | **Game mouse** is captured by the stream; **Desktop mouse** can leave the window. The system-key mode (saved) |
 | USB devices (desktop) | Tick devices to move them to or from the CloudDeck right away |
 | Reconnect, Disconnect, Shut down | Shut down needs a second click |
 

@@ -10,7 +10,10 @@ system shortcuts to the CloudDeck*:
 | **Always while streaming** | the CloudDeck for as long as a stream runs. On Windows this includes when another window on this PC is active (see below). On Linux it works like *While the stream window is active*. |
 
 **During a stream:**
-- **Ctrl+Alt+Shift+K** switches capture off, and back on in the chosen mode.
+- **Ctrl+Alt+Shift+K**, or the **System keys** tile in the CloudDeck menu, switches capture off
+  and back on in the chosen mode, for this stream only.
+- The menu's *Display, mouse and keyboard* card has the same three modes. A change there applies
+  at once and is saved.
 - To leave the stream window while capture is on, use the mouse, the CloudDeck menu or
   **Ctrl+Alt+Shift+D** (minimize).
 

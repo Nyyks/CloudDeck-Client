@@ -6,6 +6,7 @@
 #include "micstreamer.h"
 #include "shortcuts.h"
 #include "streaming/session.h"
+#include "utils.h"
 
 #include <QCoreApplication>
 #include <QGuiApplication>
@@ -309,6 +310,41 @@ void StreamOverlay::setDesktopMouse(bool on)
     in->m_AbsoluteMouseMode = on;
     m_Session->m_Preferences->absoluteMouseMode = on; // remembered for the next stream
     m_Session->m_Preferences->save();
+    emit changed();
+}
+
+int StreamOverlay::systemKeysMode() const
+{
+    // The saved choice; Ctrl+Alt+Shift+K and the tile only switch this stream on or off.
+    return m_Session->m_Preferences->captureSysKeysMode;
+}
+
+void StreamOverlay::setSystemKeysMode(int mode)
+{
+    const auto m = static_cast<StreamingPreferences::CaptureSysKeysMode>(mode);
+    m_Session->m_Preferences->captureSysKeysMode = m; // remembered for next time
+    m_Session->m_Preferences->save();
+    if (m_Session->m_InputHandler) m_Session->m_InputHandler->setSystemKeysMode(m);
+    emit changed();
+}
+
+bool StreamOverlay::systemKeysOn() const
+{
+    return m_Session->m_InputHandler &&
+           m_Session->m_InputHandler->systemKeysMode() != StreamingPreferences::CSK_OFF;
+}
+
+bool StreamOverlay::canCaptureSystemKeys() const
+{
+    // Without a desktop environment they always go to the CloudDeck.
+    return WMUtils::isRunningDesktopEnvironment();
+}
+
+void StreamOverlay::toggleSystemKeys()
+{
+    SdlInputHandler* in = m_Session->m_InputHandler;
+    if (!in) return;
+    in->setSystemKeysMode(in->toggledSystemKeysMode());
     emit changed();
 }
 

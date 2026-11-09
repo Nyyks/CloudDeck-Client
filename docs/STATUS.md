@@ -9,14 +9,16 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-09 (1.2.0 in progress). Since v1.1.1, built but not yet tested on the owner's devices:
-- the Android APK with 32-bit ABIs, for Android TV;
-- the three system-shortcut modes, plus the Windows "always" forwarder;
-- the Linux token file used when no keychain runs;
-- the Raspberry Pi OS Trixie .deb, built against Raspberry Pi's FFmpeg for the Pi 5's HEVC decoder;
-- the generic x86_64 .deb.
+Last updated: 2026-11-09 (v1.2.0). The owner tested three 1.2.0 builds and they work as expected:
+- **Windows zip:** system-shortcut modes.
+- **Android APK:** Android TV.
+- **Raspberry Pi .deb** on a Pi 5 with Trixie: hardware decoding, stream and saved sign-in.
 
-Checked here:
+Not yet tested on the owner's devices:
+- the generic x86_64 .deb (CI builds it from the AppImage);
+- the in-stream menu's *System keys* tile and mode choice, added after that test.
+
+Checked here before the owner's test:
 - **Android TV emulator** (API 34, 32-bit x86): the v1.1.1 APK fails with INSTALL_FAILED_NO_MATCHING_ABIS, while the new one installs, shows in the TV launcher, runs and takes D-pad focus.
 - **Pi .deb** in an arm64 Trixie container with Raspberry Pi's archive: installs with apt, links Raspberry Pi's libavcodec (+rpt2) and starts. There was no GPU or V4L2 in the container, so hardware decoding is untested.
 - **Generic .deb:** installs and starts on Ubuntu 24.04 and Debian Trixie.

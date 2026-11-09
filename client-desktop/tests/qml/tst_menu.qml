@@ -29,6 +29,10 @@ Item {
         property string resolution: "fit"
         property var resolutionChoices: [{ text: "Fit to window", val: "fit" }, { text: "1080p (1920 × 1080)", val: "1920x1080" }]
         function setResolution(v) { resolution = v }
+        property int systemKeysMode: 3 // CSK_FOCUSED
+        property bool systemKeysOn: true
+        property bool canCaptureSystemKeys: true
+        function toggleSystemKeys() { systemKeysOn = !systemKeysOn }
         function toggleController() {}
         property int keys: 0
         function toggleKeyboard() {}
@@ -45,6 +49,31 @@ Item {
     TestCase {
         name: "StreamMenu"
         when: windowShown
+        function findClickable(item, t) {
+            if (item.text === t && typeof item.clicked === "function") return item
+            for (var i = 0; i < item.children.length; i++) {
+                var r = findClickable(item.children[i], t)
+                if (r) return r
+            }
+            return null
+        }
+        // CloudDeck-Client: the "System keys" tile switches capture for this stream
+        function test_system_keys_tile() {
+            var c = Qt.createComponent("StreamMenu.qml")
+            compare(c.status, Component.Ready, c.errorString())
+            var m = c.createObject(parent, { overlay: stub, width: 400, height: 660 })
+            wait(50)
+            var tile = findClickable(m, "System keys")
+            verify(tile !== null, "System keys tile")
+            verify(tile.visible)
+            compare(tile.status, "To CloudDeck")
+            tile.clicked()
+            compare(stub.systemKeysOn, false)
+            compare(tile.status, "On this PC")
+            tile.clicked()
+            compare(stub.systemKeysOn, true)
+            m.destroy()
+        }
         function test_loads() {
             var c = Qt.createComponent("StreamMenu.qml")
             compare(c.status, Component.Ready, c.errorString())

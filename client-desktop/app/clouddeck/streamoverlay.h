@@ -50,6 +50,11 @@ class StreamOverlay : public QObject
     // Stream resolution from the menu: "fit" or "WxH", and the choices offered [{text, value}]
     Q_PROPERTY(QString resolution READ resolution NOTIFY changed)
     Q_PROPERTY(QVariantList resolutionChoices READ resolutionChoices NOTIFY changed)
+    // System shortcuts (docs/keyboard-capture.md): the mode (StreamingPreferences::CaptureSysKeysMode,
+    // saved) and whether they go to the CloudDeck right now (the tile; this stream only)
+    Q_PROPERTY(int systemKeysMode READ systemKeysMode WRITE setSystemKeysMode NOTIFY changed)
+    Q_PROPERTY(bool systemKeysOn READ systemKeysOn NOTIFY changed)
+    Q_PROPERTY(bool canCaptureSystemKeys READ canCaptureSystemKeys CONSTANT)
 
 public:
     explicit StreamOverlay(Session* session);
@@ -75,6 +80,11 @@ public:
     void setStatsVisible(bool on);
     bool desktopMouse() const;
     void setDesktopMouse(bool on);
+    int systemKeysMode() const;
+    void setSystemKeysMode(int mode);
+    bool systemKeysOn() const;
+    bool canCaptureSystemKeys() const;
+    Q_INVOKABLE void toggleSystemKeys();
     bool audioMuted() const;
     void setAudioMuted(bool on);
     bool micEnabled() const;

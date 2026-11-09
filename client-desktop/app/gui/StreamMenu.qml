@@ -9,6 +9,7 @@ import QtQuick.Window 2.15
 import QtQuick.Controls.Material 2.15
 
 import CloudDeckMic 1.0
+import StreamingPreferences 1.0
 import CloudDeckUsb 1.0
 import "CdTheme.js" as T
 import "CdFocus.js" as F
@@ -195,6 +196,15 @@ Pane {
                         onClicked: { overlay.toggleKeyboard(); overlay.closeMenu() }
                     }
                     QuickTile {
+                        // CloudDeck-Client: Win, Alt+Tab... on/off for this stream (Ctrl+Alt+Shift+K)
+                        visible: overlay.canCaptureSystemKeys
+                        text: qsTr("System keys")
+                        iconUrl: "qrc:/res/cd/keyboard.svg"
+                        on: overlay.systemKeysOn
+                        status: on ? qsTr("To CloudDeck") : qsTr("On this PC")
+                        onClicked: overlay.toggleSystemKeys()
+                    }
+                    QuickTile {
                         visible: overlay.hasGamepad
                         text: qsTr("Controller")
                         iconUrl: "qrc:/res/cd/mouse.svg"
@@ -211,7 +221,7 @@ Pane {
 
                 // ---- display and mouse
                 CdCard {
-                    title: qsTr("Display and mouse")
+                    title: qsTr("Display, mouse and keyboard")
                     CdChoiceRow {
                         visible: overlay.canFitToWindow
                         text: qsTr("Resolution")
@@ -234,6 +244,19 @@ Pane {
                         text: overlay.desktopMouse
                               ? qsTr("The cursor can leave the stream window, like on a local desktop.")
                               : qsTr("The stream captures the mouse. Ctrl+Alt+Shift+Z releases it.")
+                    }
+                    // CloudDeck-Client: system shortcuts (docs/keyboard-capture.md), saved
+                    CdChoiceRow {
+                        visible: overlay.canCaptureSystemKeys
+                        text: qsTr("Win, Alt+Tab and other system keys")
+                        description: Qt.platform.os === "windows"
+                                     ? qsTr("Always also covers other active windows. Saved; the System keys tile switches them for this stream.")
+                                     : qsTr("Saved; the System keys tile switches them for this stream.")
+                        options: [{ text: qsTr("On this PC"), val: StreamingPreferences.CSK_OFF },
+                                  { text: qsTr("CloudDeck, window active"), val: StreamingPreferences.CSK_FOCUSED },
+                                  { text: qsTr("CloudDeck, always"), val: StreamingPreferences.CSK_ALWAYS }]
+                        value: overlay.systemKeysMode
+                        onPicked: function(v) { overlay.systemKeysMode = v }
                     }
                 }
 

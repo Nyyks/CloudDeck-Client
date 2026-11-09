@@ -4,6 +4,10 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-09
+Android TV, system shortcuts and Linux packages, after the owner's weekend test of 1.1.1. The owner
+tested the Windows zip, the Android APK and the Raspberry Pi .deb.
+
 ### Added
 - System shortcuts on desktop (docs/keyboard-capture.md): *Send Win, Alt+Tab and other system
   shortcuts to the CloudDeck* has three modes.
@@ -11,7 +15,8 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
   - **While the stream window is active**: also with the mouse released and in windowed mode.
   - **Always while streaming**: on Windows, also while another window on the PC is active.
     Linux can't take keys from other windows, so there it works like *While the stream window is active*.
-  - Ctrl+Alt+Shift+K switches it off and back on during a stream.
+  - In the in-stream menu: a **System keys** tile (on or off for this stream, like
+    Ctrl+Alt+Shift+K) and the mode choice in *Display, mouse and keyboard*.
 - Linux .deb packages, installing a `clouddeck-client` command and a menu entry:
   - **Raspberry Pi OS Trixie (64-bit)**: a native build against Raspberry Pi OS's own libraries,
     including Raspberry Pi's FFmpeg. This gives the Pi 5 hardware HEVC decoding.

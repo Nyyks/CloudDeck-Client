@@ -157,6 +157,12 @@ public:
 
     bool isSystemKeyCaptureActive();
 
+    // CloudDeck-Client: system-key mode from the in-stream menu (applies now)
+    StreamingPreferences::CaptureSysKeysMode systemKeysMode() const { return m_CaptureSystemKeysMode; }
+    void setSystemKeysMode(StreamingPreferences::CaptureSysKeysMode mode);
+    // Off <-> the last mode that was on (Ctrl+Alt+Shift+K, the menu tile)
+    StreamingPreferences::CaptureSysKeysMode toggledSystemKeysMode() const;
+
     void setCaptureActive(bool active);
 
     bool isMouseInVideoRegion(int mouseX, int mouseY, int windowWidth = -1, int windowHeight = -1);
