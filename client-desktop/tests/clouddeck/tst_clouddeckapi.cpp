@@ -10,6 +10,9 @@
 #include "clouddeck/spanlayout.h"
 #include "clouddeck/netrecommend.h"
 #include "clouddeck/controllerprofile.h"
+#include "clouddeck/secretstore.h"
+#include <QFileInfo>
+#include <QTemporaryDir>
 
 #include <cmath>
 
@@ -291,6 +294,34 @@ private slots:
         QCOMPARE(SpanLayout::maxFpsFor(QSize(5120, 1440)), 67);
         QVERIFY(SpanLayout::compute({{"a", QRect(0, 0, 1920, 1080), QSize(1920, 1080)},
                                      {"b", QRect(1920, 0, 1920, 1080), QSize(1920, 1080)}}, 120).ok);
+    }
+
+    // Linux without a Secret Service (Raspberry Pi OS): the token goes to a private file,
+    // survives a fresh read, and sign-out (remove) deletes it.
+    void secretStoreFileFallback()
+    {
+#ifdef Q_OS_LINUX
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        qputenv("XDG_CONFIG_HOME", tmp.path().toUtf8());
+        qputenv("DBUS_SESSION_BUS_ADDRESS", "unix:path=/nonexistent/cdc-test-bus"); // no keychain
+        SecretStore& s = SecretStore::get();
+        QVERIFY(s.write(QStringLiteral("refresh_token"), "tok-123"));
+        const QString dir = tmp.path() + QStringLiteral("/CloudDeck-Client/secrets");
+        const QString file = dir + QStringLiteral("/refresh_token");
+        QVERIFY(QFile::exists(file));
+        const auto others = QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
+                            QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther;
+        QCOMPARE(QFileInfo(file).permissions() & others, QFileDevice::Permissions());
+        QCOMPARE(QFileInfo(dir).permissions() & others, QFileDevice::Permissions());
+        QCOMPARE(s.read(QStringLiteral("refresh_token")), QByteArray("tok-123"));
+        QVERIFY(s.backendName().contains(QStringLiteral("private file")));
+        s.remove(QStringLiteral("refresh_token"));
+        QVERIFY(!QFile::exists(file));
+        QVERIFY(s.read(QStringLiteral("refresh_token")).isEmpty());
+#else
+        QSKIP("Linux only");
+#endif
     }
 };
 

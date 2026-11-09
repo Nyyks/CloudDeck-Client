@@ -4,6 +4,37 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+### Added
+- System shortcuts on desktop (docs/keyboard-capture.md): *Send Win, Alt+Tab and other system
+  shortcuts to the CloudDeck* has three modes.
+  - **Never** (default).
+  - **While the stream window is active**: also with the mouse released and in windowed mode.
+  - **Always while streaming**: on Windows, also while another window on the PC is active.
+    Linux can't take keys from other windows, so there it works like *While the stream window is active*.
+  - Ctrl+Alt+Shift+K switches it off and back on during a stream.
+- Linux .deb packages, installing a `clouddeck-client` command and a menu entry:
+  - **Raspberry Pi OS Trixie (64-bit)**: a native build against Raspberry Pi OS's own libraries,
+    including Raspberry Pi's FFmpeg. This gives the Pi 5 hardware HEVC decoding.
+  - **Generic x86_64** (Debian, Ubuntu, Mint…): the AppImage's contents under `/opt`.
+  - Both install next to stock Moonlight.
+
+### Changed
+- The Raspberry Pi download is the Trixie .deb instead of the arm64 AppImage.
+- Android APK also contains 32-bit ARM and x86 code (about 4 MB bigger).
+- Saved settings that used the old *In fullscreen* system-shortcut mode now read as *While the
+  stream window is active*.
+
+### Fixed
+- Android TV: the APK didn't install ("App not installed"). Most TVs run a 32-bit system,
+  and the APK had only 64-bit native code.
+- Raspberry Pi 5: "No functioning hardware accelerated video decoder was detected". The AppImage's
+  upstream FFmpeg has no decoder for the Pi 5's HEVC block; the .deb uses Raspberry Pi's.
+  The black stream and the green-tinted UI afterwards are expected to go with it (native Mesa,
+  Qt and SDL instead of bundled ones). To be confirmed on a Pi 5.
+- Linux: the sign-in wasn't remembered where no keychain (Secret Service) runs, e.g. on
+  Raspberry Pi OS. The session token now goes to a file only you can read
+  (`~/.config/CloudDeck-Client/secrets/`). Your password is still never stored.
+
 ## [1.1.1] - 2026-11-06
 
 ### Fixed

@@ -44,22 +44,36 @@ ColumnLayout {
 
     CdCard {
         title: qsTr("Keyboard")
-        CdSwitch {
+        // CloudDeck-Client: three modes (docs/keyboard-capture.md)
+        CdChoiceRow {
             id: captureKeys
             Layout.fillWidth: true
             enabled: SystemProperties.hasDesktopEnvironment
-            text: qsTr("Send system shortcuts like Alt+Tab to the CloudDeck")
-            description: qsTr("Some, like Ctrl+Alt+Del on Windows, can't be captured by any app.")
-            checked: StreamingPreferences.captureSysKeysMode !== StreamingPreferences.CSK_OFF || !SystemProperties.hasDesktopEnvironment
-            onToggled: StreamingPreferences.captureSysKeysMode = checked ? StreamingPreferences.CSK_FULLSCREEN : StreamingPreferences.CSK_OFF
-        }
-        CdChoiceRow {
-            visible: captureKeys.checked && captureKeys.enabled
-            text: qsTr("When")
-            options: [{ text: qsTr("In fullscreen"), val: StreamingPreferences.CSK_FULLSCREEN },
-                      { text: qsTr("Always"), val: StreamingPreferences.CSK_ALWAYS }]
-            value: StreamingPreferences.captureSysKeysMode
+            text: qsTr("Send Win, Alt+Tab and other system shortcuts to the CloudDeck")
+            options: [{ text: qsTr("Never"), val: StreamingPreferences.CSK_OFF },
+                      { text: qsTr("While the stream window is active"), val: StreamingPreferences.CSK_FOCUSED },
+                      { text: qsTr("Always while streaming"), val: StreamingPreferences.CSK_ALWAYS }]
+            value: SystemProperties.hasDesktopEnvironment ? StreamingPreferences.captureSysKeysMode : StreamingPreferences.CSK_ALWAYS
             onPicked: function(v) { StreamingPreferences.captureSysKeysMode = v }
+        }
+        CdText {
+            Layout.fillWidth: true
+            color: T.textSecondary
+            text: {
+                var m = captureKeys.value
+                if (m === StreamingPreferences.CSK_OFF)
+                    return qsTr("System shortcuts stay on this computer.")
+                if (m === StreamingPreferences.CSK_ALWAYS && Qt.platform.os === "windows")
+                    return qsTr("Also while another window on this PC is active: Win, Win+key, Alt+Tab, Alt+Esc and Ctrl+Esc go to the CloudDeck until the stream ends. Leave the stream window with the mouse or Ctrl+Alt+Shift+D.")
+                if (m === StreamingPreferences.CSK_ALWAYS)
+                    return qsTr("Linux can't take these keys from other windows, so this works like \"while the stream window is active\".")
+                return qsTr("Whenever the stream window has the keyboard, also with the mouse released or in a window. Click another window to use them here again.")
+            }
+        }
+        CdText {
+            Layout.fillWidth: true
+            color: T.textSecondary
+            text: qsTr("Ctrl+Alt+Shift+K switches this on or off during a stream. Some keys, like Ctrl+Alt+Del or Win+L, can't be taken by any app.")
         }
     }
 

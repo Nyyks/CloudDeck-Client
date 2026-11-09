@@ -92,7 +92,7 @@ JDK 25 and NDK 29.0.14206865 (from `app/build.gradle`).
 ```sh
 cd client-android
 ./gradlew testNonRootDebugUnitTest     # JVM unit tests (shared fixtures)
-./gradlew assembleNonRootDebug         # debug APK, arm64-v8a + x86_64
+./gradlew assembleNonRootDebug         # debug APK: armeabi-v7a, arm64-v8a, x86, x86_64
 ```
 
 The APK is debug-signed. Release signing will use a keystore that lives only in
@@ -108,21 +108,33 @@ GitHub secrets.
 Both suites replay `shared/fixtures/clouddeck/*.json`. Change a case there, and
 both implementations must agree.
 
-## Raspberry Pi / ARM64 Linux AppImage
+## Linux packages (.deb)
 
-Releases get it from `.github/workflows/linux-arm64.yml`, which runs the same script on an
-x86_64 runner. "Run workflow" with `release_tag` attaches a build to an existing release.
-Locally, `tools/build-linux-arm64.sh` (run in WSL or on Linux with Docker) builds
-`out/linux-arm64/CloudDeckClient-<version>-linux-aarch64.AppImage`.
-- It runs the x86_64 AppImage recipe inside an arm64 Ubuntu 22.04 container through QEMU,
-  so it is slow: about an hour, less on later runs because the dependencies stay cached in
-  the `cdc-arm64-build` Docker volume.
-- Changes from the x86_64 recipe:
-  - no VA-API, VDPAU or Vulkan;
-  - FFmpeg gets the V4L2 memory-to-memory decoders;
-  - the app keeps libdrm, so hardware-decoded frames reach EGL;
-  - no LTO.
-- It needs a 64-bit OS (Raspberry Pi OS 64-bit, Ubuntu, …) with glibc 2.35 or newer.
-- Hardware decoding depends on the model: a Pi 4 decodes H.264 in hardware; a Pi 5 has
-  no H.264 decoder and its HEVC decoder needs Raspberry Pi's patched FFmpeg, so on a Pi 5
-  this build decodes in software.
+| Package | Built by | What's in it |
+|---|---|---|
+| `CloudDeckClient-<v>-raspberrypi-trixie-arm64.deb` | `tools/build-deb-rpi.sh` (locally) · `.github/workflows/linux-arm64.yml` (releases) | Native build against Raspberry Pi OS Trixie's own Qt 6, SDL2, Mesa and **Raspberry Pi's FFmpeg** |
+| `CloudDeckClient-<v>-linux-amd64.deb` | `tools/deb/appimage-to-deb.sh <AppImage> <v> <dir>` · `build.yml` (after the AppImage) | The x86_64 AppImage's contents under `/opt/clouddeck-client`, so one package fits Debian, Ubuntu, Mint… |
+
+Both install a `clouddeck-client` command and a menu entry, and use the shared
+`tools/deb/package.sh` for the control files. The binary isn't installed as `/usr/bin/moonlight`,
+because stock Moonlight's package owns that path; both can be installed at once.
+
+**Raspberry Pi .deb:**
+- `tools/build-deb-rpi.sh` runs in WSL or on Linux with Docker and arm64 binfmt (QEMU). It runs
+  `tools/deb/rpi-trixie-build.sh` in an arm64 `debian:trixie` container with Raspberry Pi's
+  archive added, as on a Pi.
+  - Under emulation it takes about an hour.
+  - The archive key comes from Raspberry Pi's keyring package, pinned by SHA-256. The older
+    `raspberrypi.gpg.key` has a SHA-1 binding that Trixie's apt rejects.
+  - The build fails unless `libavcodec-dev` is Raspberry Pi's `+rpt` build.
+  - `dpkg-shlibdeps` works out the library dependencies. The QML modules and Qt plugins are
+    listed by hand, because they load at run time.
+- **Why it's native:** Raspberry Pi's FFmpeg has the V4L2 *request* decoders.
+  - They drive the Pi 5's only video decoder, HEVC.
+  - Upstream FFmpeg only has V4L2 M2M: the Pi 4's H.264 decoder, and nothing on a Pi 5.
+  - The arm64 AppImage (1.0–1.1) bundled upstream FFmpeg, so a Pi 5 decoded in software.
+- "Run workflow" on *Raspberry Pi* with `release_tag` attaches a build to an existing release.
+
+**Generic .deb:** the dependency scan maps every system library the bundle uses to its
+package. Libraries that aren't installed on the build machine are looked up in a table in
+the script, and the build stops on any it doesn't know.

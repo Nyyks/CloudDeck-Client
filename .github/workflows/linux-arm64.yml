@@ -1,9 +1,10 @@
 ---
-# Raspberry Pi / ARM64 Linux AppImage. Runs tools/build-linux-arm64.sh (an arm64 Ubuntu 22.04
-# container under QEMU, same recipe as the x86_64 AppImage) on a standard x86_64 runner, so it
-# is slow (about an hour). Tagged builds attach the AppImage to the GitHub Release; "Run
-# workflow" can attach it to an existing release instead (release_tag).
-name: Linux arm64
+# Raspberry Pi .deb (Raspberry Pi OS Trixie, 64-bit; Pi 4 and Pi 5). Runs tools/build-deb-rpi.sh
+# (an arm64 debian:trixie container with Raspberry Pi's archive, under QEMU) on a standard
+# x86_64 runner, so it is slow (about 1.5 hours). It links against Raspberry Pi OS's own FFmpeg,
+# which has the Pi 5's HEVC hardware decoder (docs/building.md). Tagged builds attach the .deb
+# to the GitHub Release; "Run workflow" can attach it to an existing release instead (release_tag).
+name: Raspberry Pi
 permissions:
   contents: read
 
@@ -13,16 +14,16 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Attach to this existing release, e.g. v1.0.0 (empty: artifact only)'
+        description: 'Attach to this existing release, e.g. v1.2.0 (empty: artifact only)'
         required: false
         default: ''
 
 concurrency:
-  group: arm64-${{ github.ref }}-${{ inputs.release_tag }}
+  group: rpi-${{ github.ref }}-${{ inputs.release_tag }}
   cancel-in-progress: true
 
 jobs:
-  appimage:
+  deb:
     runs-on: ubuntu-24.04
     timeout-minutes: 300
     outputs:
@@ -49,28 +50,28 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@v3
         with: { platforms: arm64 }
-      - name: Build the aarch64 AppImage
-        run: bash tools/build-linux-arm64.sh
+      - name: Build the Raspberry Pi .deb
+        run: bash tools/build-deb-rpi.sh
       - uses: actions/upload-artifact@v6
         with:
-          name: linux-arm64-appimage
-          path: out/linux-arm64/*.AppImage
+          name: raspberrypi-deb
+          path: out/linux-arm64/*.deb
           compression-level: 0
           if-no-files-found: error
 
   release:
-    needs: appimage
-    if: needs.appimage.outputs.tag != ''
+    needs: deb
+    if: needs.deb.outputs.tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v5
-        with: { name: linux-arm64-appimage, path: dist }
+        with: { name: raspberrypi-deb, path: dist }
       - name: Attach to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.appimage.outputs.tag }}
+          TAG: ${{ needs.deb.outputs.tag }}
         run: |
           ls -l dist
           PRE=""; [[ "$TAG" == *-* ]] && PRE="--prerelease"

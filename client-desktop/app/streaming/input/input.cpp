@@ -324,14 +324,31 @@ bool SdlInputHandler::isCaptureActive()
 
 void SdlInputHandler::updateKeyboardGrabState()
 {
-    bool shouldGrab = m_CaptureSystemKeysMode != StreamingPreferences::CSK_OFF && isCaptureActive();
-    if (shouldGrab) {
-        Uint32 windowFlags = SDL_GetWindowFlags(m_Window);
-        if (m_CaptureSystemKeysMode == StreamingPreferences::CSK_FULLSCREEN &&
-            !(windowFlags & SDL_WINDOW_FULLSCREEN)) {
-            // Ungrab if it's fullscreen only and we left fullscreen
-            shouldGrab = false;
-        }
+    // CloudDeck-Client (docs/keyboard-capture.md): "While the stream window is active" and
+    // "Always" grab whenever the stream window has keyboard focus, whether or not the mouse is
+    // captured (SDL only grabs while the window is focused). The legacy fullscreen mode (CLI)
+    // keeps upstream's rule: captured mouse and fullscreen.
+    bool shouldGrab;
+    switch (m_CaptureSystemKeysMode) {
+    case StreamingPreferences::CSK_FOCUSED:
+    case StreamingPreferences::CSK_ALWAYS:
+        shouldGrab = m_Window != nullptr;
+        break;
+    case StreamingPreferences::CSK_FULLSCREEN:
+        shouldGrab = isCaptureActive() && (SDL_GetWindowFlags(m_Window) & SDL_WINDOW_FULLSCREEN);
+        break;
+    default:
+        shouldGrab = false;
+        break;
+    }
+
+    // "Always" reaches beyond the stream window on Windows: a low-level hook forwards Win,
+    // Alt+Tab, Alt+Esc and Ctrl+Esc while another window is active.
+    if (m_CaptureSystemKeysMode == StreamingPreferences::CSK_ALWAYS && m_Window) {
+        if (!m_SystemKeys.running()) m_SystemKeys.start(m_Window); // no-op off Windows
+    }
+    else {
+        m_SystemKeys.stop();
     }
 
     // Don't close the window on Alt+F4 when keyboard grab is enabled

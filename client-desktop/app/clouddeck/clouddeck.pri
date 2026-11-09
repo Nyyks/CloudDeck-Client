@@ -19,6 +19,7 @@ SOURCES += \
     $$PWD/secretstore.cpp \
     $$PWD/shortcuts.cpp \
     $$PWD/spanlayout.cpp \
+    $$PWD/systemkeyforwarder.cpp \
     $$PWD/usbforwarder.cpp \
     $$PWD/usbtunnel.cpp
 
@@ -42,6 +43,7 @@ HEADERS += \
     $$PWD/secretstore.h \
     $$PWD/shortcuts.h \
     $$PWD/spanlayout.h \
+    $$PWD/systemkeyforwarder.h \
     $$PWD/usbforwarder.h \
     $$PWD/usbtunnel.h
 
@@ -54,4 +56,6 @@ linux {
 win32 {
     # Credential Manager (CredWriteW/CredReadW)
     LIBS += advapi32.lib
+    # System shortcuts in "Always" mode (SetWindowsHookEx, SendInput)
+    LIBS += user32.lib
 }

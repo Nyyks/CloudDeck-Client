@@ -18,9 +18,17 @@ bool SecretStore::write(const QString& key, const QByteArray& secret)
 {
     if (backendWrite(key, secret)) {
         m_MemoryOnly.remove(key);
+        fileRemove(key); // left over from a session without a keychain
+        m_UsingFile = false;
         return true;
     }
-    qWarning() << "SecretStore: no persistent keychain available; keeping" << key << "in memory only";
+    if (fileWrite(key, secret)) {
+        qInfo() << "SecretStore: no keychain available; keeping" << key << "in a private file";
+        m_MemoryOnly.remove(key);
+        m_UsingFile = true;
+        return true;
+    }
+    qWarning() << "SecretStore: no persistent storage available; keeping" << key << "in memory only";
     m_MemoryOnly.insert(key, secret);
     return false;
 }
@@ -34,6 +42,10 @@ QByteArray SecretStore::read(const QString& key)
     if (backendRead(key, secret)) {
         return secret;
     }
+    if (fileRead(key, secret)) {
+        m_UsingFile = true;
+        return secret;
+    }
     return QByteArray();
 }
 
@@ -41,7 +53,63 @@ void SecretStore::remove(const QString& key)
 {
     m_MemoryOnly.remove(key);
     backendRemove(key);
+    fileRemove(key);
 }
+
+// ---------------------------------------------------------------------------
+// Private-file fallback (Linux)
+
+#ifdef Q_OS_LINUX
+#include <QDir>
+#include <QFile>
+#include <QSaveFile>
+#include <QStandardPaths>
+#include <sys/stat.h>
+
+static QString secretsDir()
+{
+    // ~/.config/<org>/secrets, next to Moonlight's own config (which holds the pairing key)
+    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) +
+           QStringLiteral("/" CDC_ORG_NAME "/secrets");
+}
+
+static QString secretFile(const QString& key)
+{
+    QString safe = key;
+    for (QChar& c : safe) if (!c.isLetterOrNumber() && c != QLatin1Char('_') && c != QLatin1Char('-')) c = QLatin1Char('_');
+    return secretsDir() + QLatin1Char('/') + safe;
+}
+
+bool SecretStore::fileWrite(const QString& key, const QByteArray& secret)
+{
+    const QString dir = secretsDir();
+    if (!QDir().mkpath(dir)) return false;
+    if (::chmod(QFile::encodeName(dir).constData(), 0700) != 0) return false;
+    const mode_t old = ::umask(0077); // the temp file is created 0600 from the start
+    QSaveFile f(secretFile(key));
+    bool ok = f.open(QIODevice::WriteOnly) && f.write(secret) == secret.size() && f.commit();
+    ::umask(old);
+    if (ok) ok = ::chmod(QFile::encodeName(secretFile(key)).constData(), 0600) == 0;
+    return ok;
+}
+
+bool SecretStore::fileRead(const QString& key, QByteArray& secret)
+{
+    QFile f(secretFile(key));
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    secret = f.readAll();
+    return !secret.isEmpty();
+}
+
+void SecretStore::fileRemove(const QString& key)
+{
+    QFile::remove(secretFile(key));
+}
+#else
+bool SecretStore::fileWrite(const QString&, const QByteArray&) { return false; }
+bool SecretStore::fileRead(const QString&, QByteArray&) { return false; }
+void SecretStore::fileRemove(const QString&) {}
+#endif
 
 // ---------------------------------------------------------------------------
 #if defined(Q_OS_WIN32)
@@ -258,7 +326,10 @@ private:
 };
 }
 
-QString SecretStore::backendName() const { return QStringLiteral("Secret Service (D-Bus)"); }
+QString SecretStore::backendName() const
+{
+    return m_UsingFile ? QStringLiteral("a private file (no keychain found)") : QStringLiteral("Secret Service (D-Bus)");
+}
 
 bool SecretStore::backendWrite(const QString& key, const QByteArray& secret)
 {

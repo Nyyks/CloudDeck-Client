@@ -21,6 +21,7 @@ Unofficial; not affiliated with CloudDeck, Moonlight or LizardByte.
 | **Network test** | Measures latency and speed to your CloudDeck and applies matching quality settings. Also has a low-bandwidth preset. | Windows, Linux |
 | **Auto-reconnect** | Reconnects in place after a network drop, up to 5 attempts, while your app keeps running. Can stop the VM after it has been idle for a while. | Windows, Linux |
 | **Multiple monitors** | One stream across several monitors, as one wide desktop. | Windows, Linux |
+| **System shortcuts** | Win, Alt+Tab and the like go to the CloudDeck: never, while the stream window is active, or always while streaming. On Windows, *always* includes while another window is active. | Windows, Linux |
 | **Side by side with Moonlight** | Own app identity and settings; shares nothing with stock Moonlight. No admin rights needed on Windows. | all |
 
 The VM features need the small server-side update below; streaming itself works without it.
@@ -33,12 +34,13 @@ Download from the [latest release](../../releases/latest):
 | Platform | File | Notes |
 |---|---|---|
 | Windows 10/11 (x64) | `…-windows-x64.msi` or `…-windows-x64-portable.zip` | The MSI installs for your user (`%LOCALAPPDATA%\Programs`), without admin rights. If you have 1.0.0 installed, uninstall it first: it was a per-machine install. |
-| Linux (x64) | `…-linux-x86_64.AppImage` | `chmod +x` it and run it. |
-| Raspberry Pi 4/5, ARM64 Linux | `…-linux-aarch64.AppImage` | Needs a 64-bit OS. |
-| Android 5+ (phones, handhelds, TV) | `…-android.apk` | Allow installs from unknown sources. |
+| Debian, Ubuntu, Mint… (x64) | `…-linux-amd64.deb` | `sudo apt install ./CloudDeckClient-…-linux-amd64.deb`, then start *CloudDeck Client* from the menu or run `clouddeck-client`. |
+| Other Linux (x64) | `…-linux-x86_64.AppImage` | `chmod +x` it and run it. |
+| Raspberry Pi 4/5 (Raspberry Pi OS Trixie, 64-bit) | `…-raspberrypi-trixie-arm64.deb` | `sudo apt install ./CloudDeckClient-…-raspberrypi-trixie-arm64.deb`. Uses Raspberry Pi's hardware video decoding (HEVC on a Pi 5). |
+| Android 5+ (phones, handhelds, Android TV) | `…-android.apk` | Allow installs from unknown sources. On a TV, sideload it with a file manager or `adb install`. |
 
 Sign in with your CloudDeck email and password. The password is used once; a session token
-is kept in the OS keychain. The [user guide](docs/user-guide.md) explains everything else. The client's
+is kept in the OS keychain. On Linux without a keychain, it goes to a file only you can read. The [user guide](docs/user-guide.md) explains everything else. The client's
 About page checks for new versions.
 
 ## Install the server side (on the CloudDeck VM)

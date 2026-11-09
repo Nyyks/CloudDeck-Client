@@ -1391,12 +1391,13 @@ Flickable {
                         textRole: "text"
                         model: ListModel {
                             id: captureSysKeysModeListModel
+                            // CloudDeck-Client: same modes as Controls → Keyboard & mouse
                             ListElement {
-                                text: qsTr("in fullscreen")
-                                val: StreamingPreferences.CSK_FULLSCREEN
+                                text: qsTr("while the stream window is active")
+                                val: StreamingPreferences.CSK_FOCUSED
                             }
                             ListElement {
-                                text: qsTr("always")
+                                text: qsTr("always while streaming")
                                 val: StreamingPreferences.CSK_ALWAYS
                             }
                         }

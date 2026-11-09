@@ -153,10 +153,15 @@ jobs:
           CDC_USB_HELPER="$GITHUB_WORKSPACE/out-helper/clouddeck-usb-helper" scripts/build-appimage.sh
           mkdir -p ../out
           mv build/installer-release/*.AppImage "../out/CloudDeckClient-${CI_VERSION}-linux-x86_64.AppImage"
+      - name: Build generic .deb (the AppImage's contents under /opt)
+        working-directory: .
+        run: bash tools/deb/appimage-to-deb.sh "out/CloudDeckClient-${CI_VERSION}-linux-x86_64.AppImage" "$CI_VERSION" out
       - uses: actions/upload-artifact@v6
         with:
           name: linux-x64-appimage
-          path: out/*.AppImage
+          path: |
+            out/*.AppImage
+            out/*.deb
           compression-level: 0
           if-no-files-found: error
 

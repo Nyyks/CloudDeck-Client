@@ -114,8 +114,9 @@ public:
     enum CaptureSysKeysMode
     {
         CSK_OFF,
-        CSK_FULLSCREEN,
-        CSK_ALWAYS,
+        CSK_FULLSCREEN, // legacy (CLI "fullscreen"); saved settings are migrated to CSK_FOCUSED
+        CSK_ALWAYS,     // CloudDeck-Client: while streaming, also when another window is active (Windows)
+        CSK_FOCUSED,    // CloudDeck-Client: whenever the stream window is active
     };
     Q_ENUM(CaptureSysKeysMode);
 

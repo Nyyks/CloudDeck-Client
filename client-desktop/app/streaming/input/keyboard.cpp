@@ -167,12 +167,14 @@ void SdlInputHandler::performSpecialKeyCombo(KeyCombo combo)
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
                     "Detected keyboard grab toggle combo");
 
-        // Toggle the system key capture mode
+        // Toggle the system key capture mode (CloudDeck-Client: back on in the configured mode)
         if (isSystemKeyCaptureActive()) {
+            m_ToggledOffSysKeysMode = m_CaptureSystemKeysMode;
             m_CaptureSystemKeysMode = StreamingPreferences::CSK_OFF;
         }
         else {
-            m_CaptureSystemKeysMode = StreamingPreferences::CSK_ALWAYS;
+            m_CaptureSystemKeysMode = m_ToggledOffSysKeysMode != StreamingPreferences::CSK_OFF ?
+                                          m_ToggledOffSysKeysMode : StreamingPreferences::CSK_FOCUSED;
         }
 
         updateKeyboardGrabState();

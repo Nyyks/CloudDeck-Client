@@ -37,8 +37,15 @@ What's verified on each platform is in [STATUS.md](STATUS.md).
    - Windows: the MSI or the portable zip.
      - The MSI installs for your user only, into `%LOCALAPPDATA%\Programs\CloudDeck Client`, and needs no admin rights.
      - If you have 1.0.0 installed, uninstall it first; it was installed for all users.
-   - Linux: the AppImage (x86_64, or aarch64 for a Raspberry Pi 4/5 with a 64-bit OS). Run `chmod +x` on it, then start it.
-   - Android: the APK.
+   - Debian, Ubuntu, Mint… (x86_64): the `linux-amd64.deb`. Install it with
+     `sudo apt install ./CloudDeckClient-…-linux-amd64.deb`, then start *CloudDeck Client* from the
+     menu or run `clouddeck-client`.
+   - Other Linux (x86_64): the AppImage. Run `chmod +x` on it, then start it.
+   - Raspberry Pi 4/5 with Raspberry Pi OS Trixie (64-bit): the `raspberrypi-trixie-arm64.deb`,
+     installed the same way. It uses the Pi's hardware video decoder. On a Pi 5 that's HEVC,
+     which the client picks automatically.
+   - Android (phones, tablets, handhelds, Android TV): the APK. On a TV, copy it over with a file
+     manager app (or `adb install`) and allow installs from unknown sources for that app.
 
    It installs next to stock Moonlight and shares nothing with it.
 2. Sign in with your CloudDeck email and password. The password goes to CloudDeck's login once
@@ -47,7 +54,8 @@ What's verified on each platform is in [STATUS.md](STATUS.md).
    - Linux: Secret Service (GNOME Keyring or KWallet)
    - Android: Keystore
 
-   Without a keychain, you sign in on every launch.
+   On Linux without a keychain (Raspberry Pi OS, for example), the token goes to a file only you
+   can read, `~/.config/CloudDeck-Client/secrets/`. *Sign out* deletes it.
 3. Press **Start and connect**. The client:
    1. starts your CloudDeck (about 1–2 minutes);
    2. waits until its address and streaming host answer;
@@ -270,10 +278,22 @@ Controls → Keyboard & mouse → *Change shortcuts…*. Changes apply from the 
 | D | Minimize the stream |
 | V | Type the clipboard text |
 | L | Keep the mouse in the window (desktop mode) |
-| K | Capture system keys (Win, Alt+Tab) |
+| K | System shortcuts to the CloudDeck: off / back on |
 
-To send Win or Alt+Tab to the CloudDeck, set *Send system shortcuts like Alt+Tab to the
-CloudDeck* to *Always* or *In fullscreen* (Controls → Keyboard & mouse).
+### System shortcuts (Win, Alt+Tab…)
+
+Controls → Keyboard & mouse → *Send Win, Alt+Tab and other system shortcuts to the CloudDeck*:
+
+| Mode | Win, Alt+Tab, Alt+F4, Ctrl+Esc… go to |
+|---|---|
+| **Never** (default) | this computer |
+| **While the stream window is active** | the CloudDeck whenever the stream window has the keyboard, also with the mouse released or in a window. Click another window to use them here again. |
+| **Always while streaming** | the CloudDeck until the stream ends. On Windows that includes while another window is active (Win, Win+key, Alt+Tab, Alt+Esc, Ctrl+Esc; Alt+F4 stays local). On Linux it works like the mode above. |
+
+- With capture on, leave the stream window with the mouse, the CloudDeck menu or
+  **Ctrl+Alt+Shift+D**.
+- Ctrl+Alt+Del and Win+L always stay on this computer.
+- Details: [keyboard-capture.md](keyboard-capture.md).
 
 ## Troubleshooting
 

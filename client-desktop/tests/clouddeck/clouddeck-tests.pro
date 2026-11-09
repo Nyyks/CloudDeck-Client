@@ -20,3 +20,10 @@ HEADERS += \
     $$PWD/../../app/clouddeck/controllerprofile.h
 
 DEFINES += FIXTURE_DIR=\\\"$$clean_path($$PWD/../../../shared/fixtures/clouddeck)\\\"
+
+# Linux: the secret store's private-file fallback (Secret Service needs D-Bus)
+linux {
+    QT += dbus
+    SOURCES += $$PWD/../../app/clouddeck/secretstore.cpp
+    HEADERS += $$PWD/../../app/clouddeck/secretstore.h $$PWD/../../app/clouddeck/secretstore_prompt.h
+}

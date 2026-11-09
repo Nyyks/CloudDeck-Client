@@ -9,16 +9,36 @@ Legend:
 
 Nothing counts as done until it's tested against the real VM.
 
-Last updated: 2026-11-06 (v1.1.1: the windowed menu-button fix, tested by the owner). The owner tested the 1.1 changes and they work as expected:
+Last updated: 2026-11-09 (1.2.0 in progress). Since v1.1.1, built but not yet tested on the owner's devices:
+- the Android APK with 32-bit ABIs, for Android TV;
+- the three system-shortcut modes, plus the Windows "always" forwarder;
+- the Linux token file used when no keychain runs;
+- the Raspberry Pi OS Trixie .deb, built against Raspberry Pi's FFmpeg for the Pi 5's HEVC decoder;
+- the generic x86_64 .deb.
+
+Checked here:
+- **Android TV emulator** (API 34, 32-bit x86): the v1.1.1 APK fails with INSTALL_FAILED_NO_MATCHING_ABIS, while the new one installs, shows in the TV launcher, runs and takes D-pad focus.
+- **Pi .deb** in an arm64 Trixie container with Raspberry Pi's archive: installs with apt, links Raspberry Pi's libavcodec (+rpt2) and starts. There was no GPU or V4L2 in the container, so hardware decoding is untested.
+- **Generic .deb:** installs and starts on Ubuntu 24.04 and Debian Trixie.
+- **Token file:** unit test.
+- **Windows Always forwarder:** builds, but is untested because it ignores synthetic keys.
+
+The owner's weekend test of 1.1.1 found these problems:
+- the APK didn't install on an Android TV;
+- Win and Alt+Tab went to the local PC;
+- on the Pi 5 AppImage: no hardware decoder, a black stream, a green UI afterwards, and the
+  sign-in wasn't remembered.
+
+Everything else in 1.1 worked as expected:
 - the per-user MSI;
 - the DNS fallback for Connect;
 - the About page;
 - the Controls settings group;
-- the home-screen resolution picks.
+- the home-screen resolution picks;
+- the windowed menu button.
 
-The owner also confirmed that the Raspberry Pi AppImage works. The update check only works while
-the repository's releases are public. Multi-monitor stays one wide VM output: the owner decided
-against Phase 4b (VM kernel arguments) for now.
+The update check only works while the repository's releases are public. Multi-monitor stays one
+wide VM output: the owner decided against Phase 4b (VM kernel arguments) for now.
 
 Phase 1 verified by the owner on real devices with
 v0.1.0-alpha.1. The Linux AppImage was built but its end-to-end run wasn't
@@ -29,8 +49,8 @@ explicitly confirmed, so Linux stays *partial* where it differs.
 | Release | CI builds (MSI + portable zip, AppImage, APK); tagged releases | done | partial | done | |
 | Release | Side-by-side with stock Moonlight | done | partial | done | ADR-0005 |
 | Release | Icons | done | partial | done | `tools/icon-gen`; the official CloudDeck mark at the owner's request (private use, see THIRD_PARTY_NOTICES). The Android TV banner is still Moonlight's. |
-| Release | Own version number | done | partial | done | 1.1.0 from `client-desktop/app/version.txt` (all clients) |
-| Account | Sign in, session restored from keychain | done | partial | done | Linux: Secret Service path untested on a real desktop |
+| Release | Own version number | done | partial | done | 1.2.0 from `client-desktop/app/version.txt` (all clients) |
+| Account | Sign in, session restored from keychain | done | partial | done | Linux: Secret Service path untested on a real desktop; without one (Raspberry Pi OS) the token goes to a 0600 file in ~/.config/CloudDeck-Client/secrets (1.2.0, untested on the Pi) |
 | Account | MFA challenge | partial | partial | partial | This account has no MFA, so it's untested |
 | VM | Live status, Start / Stop / Restart | done | partial | done | Restart = stop+start (no API) |
 | VM | One-click start and connect | done | partial | done | Re-verified 2026-11-04 after the fix for hosts that are already known (new VM IP); 2026-11-05: a second stream in the same run no longer hangs on the app list; 2026-11-05: the owner sometimes needs a second try on Windows (works after a restart), not reproduced yet |

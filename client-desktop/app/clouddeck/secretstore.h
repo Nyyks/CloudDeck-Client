@@ -1,8 +1,10 @@
 // OS keychain wrapper for small secrets (the CloudDeck refresh token).
 //   Windows: Credential Manager (generic credential, per user, not roaming)
 //   Linux:   freedesktop Secret Service over D-Bus (GNOME Keyring, KWallet >= 5.97)
-//   Other / unavailable: process memory only, so the user signs in again next launch.
-// There is deliberately no plaintext-file fallback.
+//   Linux without a Secret Service (e.g. Raspberry Pi OS, where no keyring daemon runs): a file
+//     only the user can read (~/.config/CloudDeck-Client/secrets/, 0700/0600). That's the same
+//     protection Moonlight gives its pairing key, and it's a session token, not the password.
+//   Other: process memory only, so the user signs in again next launch.
 #pragma once
 
 #include <QByteArray>
@@ -29,5 +31,11 @@ private:
     bool backendRead(const QString& key, QByteArray& secret);
     void backendRemove(const QString& key);
 
+    // Private-file fallback (Linux only; see above).
+    static bool fileWrite(const QString& key, const QByteArray& secret);
+    static bool fileRead(const QString& key, QByteArray& secret);
+    static void fileRemove(const QString& key);
+
     QHash<QString, QByteArray> m_MemoryOnly;
+    bool m_UsingFile = false;
 };

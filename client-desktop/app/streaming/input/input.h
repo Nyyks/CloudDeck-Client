@@ -4,6 +4,7 @@
 #include "backend/computermanager.h"
 
 #include "SDL_compat.h"
+#include "clouddeck/systemkeyforwarder.h"
 
 namespace ControllerProfile { struct Profile; } // CloudDeck-Client
 
@@ -246,6 +247,9 @@ private:
     QString m_OldIgnoreDevicesExcept;
     QStringList m_IgnoreDeviceGuids;
     StreamingPreferences::CaptureSysKeysMode m_CaptureSystemKeysMode;
+    // CloudDeck-Client: Ctrl+Alt+Shift+K turns capture back on in this mode
+    StreamingPreferences::CaptureSysKeysMode m_ToggledOffSysKeysMode = StreamingPreferences::CSK_FOCUSED;
+    SystemKeyForwarder m_SystemKeys; // "Always": also while other windows are active (Windows)
     int m_MouseCursorCapturedVisibilityState;
 
     struct {
