@@ -23,6 +23,13 @@
 #include <windows.h>
 #endif
 
+#ifdef HAVE_LAYERSHELLQT
+// After Qt and SDL: wayland-client.h is plain C, LayerShellQt only needs QWindow.
+#include <LayerShellQt/window.h>
+#include <wayland-client.h>
+#include <cstring>
+#endif
+
 static constexpr int kButtonSize = 40;   // logical px
 static constexpr int kMargin = 10;       // logical px from the top edge
 static constexpr int kMenuWidth = 400;   // logical px
@@ -59,17 +66,28 @@ StreamOverlay::StreamOverlay(Session* session) : m_Session(session)
         if (info.subsystem == SDL_SYSWM_X11) parent = (WId)info.info.x11.window;
 #endif
     }
-    if (parent == 0) {
-        qWarning() << "CloudDeck menu: no native stream window to attach to (e.g. native Wayland); the in-stream menu is unavailable";
+    m_Wayland = parent == 0 && QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+    if (parent == 0 && !m_Wayland) {
+        qWarning() << "CloudDeck menu: no native stream window to attach to; the in-stream menu is unavailable";
         return;
     }
-    m_SdlParent = QWindow::fromWinId(parent);
+    if (parent) m_SdlParent = QWindow::fromWinId(parent);
+    m_LayerShell = m_Wayland && waylandHasLayerShell();
+    if (m_Wayland) {
+        qInfo() << "CloudDeck menu: native Wayland," << (m_LayerShell
+                   ? "overlay via wlr-layer-shell"
+                   : "no wlr-layer-shell: the menu opens as a window (shortcut or Select+L1+R1+B), no menu button");
+    }
 
-    m_Button = createView("StreamMenuButton.qml", false);
+    // Without layer-shell a Wayland client can't place a floating button over another window.
+    if (!m_Wayland || m_LayerShell) m_Button = createView("StreamMenuButton.qml", false);
     m_Menu = createView("StreamMenu.qml", true);
     m_Notice = createView("StreamNotice.qml", false);
     m_Keyboard = createView("StreamKeyboard.qml", false); // doesn't take focus: keys go to the stream
-    m_Osc = new OnScreenController(m_Session, m_SdlParent, m_Session->m_QtWindow ? qmlEngine(m_Session->m_QtWindow) : nullptr);
+    // The on-screen controller stacks masked windows exactly over the stream: X11 and Windows only.
+    if (m_SdlParent) {
+        m_Osc = new OnScreenController(m_Session, m_SdlParent, m_Session->m_QtWindow ? qmlEngine(m_Session->m_QtWindow) : nullptr);
+    }
     if (m_Menu) m_Menu->setOpacity(0.97);
     if (m_Button) m_Button->setOpacity(0.85);
     updateGeometry();
@@ -97,9 +115,30 @@ QQuickView* StreamOverlay::createView(const char* qmlFile, bool focusable)
     Qt::WindowFlags flags = Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint;
     if (!focusable) flags |= Qt::WindowDoesNotAcceptFocus;
     v->setFlags(flags);
-    v->setTransientParent(m_SdlParent); // owned by the stream window: above it, not above other apps
+    if (m_SdlParent) v->setTransientParent(m_SdlParent); // owned by the stream window: above it, not above other apps
     v->setResizeMode(QQuickView::SizeRootObjectToView);
     v->setColor(QColor("#1d222b"));
+#ifdef HAVE_LAYERSHELLQT
+    if (m_LayerShell) {
+        // An overlay layer surface on the stream's output: above the (fullscreen) stream. Must be
+        // set up before the window is first shown. The menu takes the keyboard while it's shown;
+        // the others never do, so keys keep going to the stream.
+        auto* layer = LayerShellQt::Window::get(v);
+        layer->setLayer(LayerShellQt::Window::LayerOverlay);
+        layer->setScope(QStringLiteral("clouddeck-overlay"));
+        layer->setScreenConfiguration(LayerShellQt::Window::ScreenFromQWindow);
+        layer->setKeyboardInteractivity(focusable ? LayerShellQt::Window::KeyboardInteractivityExclusive
+                                                  : LayerShellQt::Window::KeyboardInteractivityNone);
+        if (QScreen* s = streamScreen()) v->setScreen(s);
+        if (qstrcmp(qmlFile, "StreamMenuButton.qml") == 0) {
+            // No shaped windows on Wayland: draw the round button on a transparent surface.
+            QSurfaceFormat fmt = v->format();
+            fmt.setAlphaBufferSize(8);
+            v->setFormat(fmt);
+            v->setColor(Qt::transparent);
+        }
+    }
+#endif
     v->setInitialProperties({{"overlay", QVariant::fromValue(static_cast<QObject*>(this))}});
     v->setSource(QUrl(QStringLiteral("qrc:/gui/") + QLatin1String(qmlFile)));
     if (v->status() != QQuickView::Ready) {
@@ -131,8 +170,103 @@ void StreamOverlay::place(QWindow* w, const QRect& r)
 #endif
 }
 
+QScreen* StreamOverlay::streamScreen() const
+{
+    // The output the stream window is on: SDL's display name or position, matched to Qt's screens.
+    const int idx = SDL_GetWindowDisplayIndex(m_Session->m_Window);
+    if (idx >= 0) {
+        const char* name = SDL_GetDisplayName(idx);
+        SDL_Rect r;
+        const bool haveBounds = SDL_GetDisplayBounds(idx, &r) == 0;
+        for (QScreen* s : QGuiApplication::screens()) {
+            if (name && s->name() == QString::fromUtf8(name)) return s;
+        }
+        for (QScreen* s : QGuiApplication::screens()) {
+            if (haveBounds && s->geometry().topLeft() == QPoint(r.x, r.y)) return s;
+        }
+    }
+    return QGuiApplication::primaryScreen();
+}
+
+bool StreamOverlay::waylandHasLayerShell()
+{
+#ifdef HAVE_LAYERSHELLQT
+    // Ask the compositor directly, on a connection of our own (Qt's stays untouched).
+    wl_display* d = wl_display_connect(nullptr);
+    if (!d) return false;
+    bool found = false;
+    static const wl_registry_listener listener = {
+        [](void* data, wl_registry*, uint32_t, const char* iface, uint32_t) {
+            if (strcmp(iface, "zwlr_layer_shell_v1") == 0) *static_cast<bool*>(data) = true;
+        },
+        [](void*, wl_registry*, uint32_t) {},
+    };
+    wl_registry* reg = wl_display_get_registry(d);
+    wl_registry_add_listener(reg, &listener, &found);
+    wl_display_roundtrip(d);
+    wl_registry_destroy(reg);
+    wl_display_disconnect(d);
+    return found;
+#else
+    return false; // built without layer-shell-qt
+#endif
+}
+
+void StreamOverlay::updateLayerGeometry()
+{
+    // Logical pixels, relative to the stream's output (layer surfaces aren't window-relative).
+    // Only when the output changes, and only on hidden windows: a layer surface must not get a
+    // new size or screen before the compositor has configured it (that's a protocol error that
+    // drops the whole Wayland connection). Visible ones pick it up the next time they're shown.
+    QScreen* s = streamScreen();
+    const QSize out = s ? s->geometry().size() : QSize(1280, 720);
+    if (out == m_LayerOutput) return;
+    bool allHidden = true;
+    for (QQuickView* v : {m_Button, m_Menu, m_Notice, m_Keyboard}) {
+        if (v && v->isVisible()) allHidden = false;
+    }
+    if (!allHidden) return;
+    m_LayerOutput = out;
+    for (QQuickView* v : {m_Button, m_Menu, m_Notice, m_Keyboard}) {
+        if (v && s && v->screen() != s) v->setScreen(s);
+    }
+#ifdef HAVE_LAYERSHELLQT
+    auto layout = [](QQuickView* v, LayerShellQt::Window::Anchors anchors, const QSize& size, int top) {
+        if (!v) return;
+        auto* layer = LayerShellQt::Window::get(v);
+        layer->setAnchors(anchors);
+        layer->setMargins(QMargins(0, top, 0, 0));
+        v->resize(size);
+    };
+    const int menuTop = 2 * kMargin + kButtonSize;
+    layout(m_Button, LayerShellQt::Window::AnchorTop, QSize(kButtonSize, kButtonSize), kMargin);
+    layout(m_Notice, LayerShellQt::Window::AnchorTop, QSize(qMin(380, out.width() - 2 * kMargin), 40), menuTop);
+    layout(m_Menu, LayerShellQt::Window::AnchorTop,
+           QSize(qMin(kMenuWidth, out.width() - 2 * kMargin),
+                 qMax(200, qMin(kMenuMaxHeight, out.height() - kMargin - menuTop))), menuTop);
+    const int kbHeight = qMin(360, out.height() * 45 / 100);
+    layout(m_Keyboard, LayerShellQt::Window::Anchors(LayerShellQt::Window::AnchorBottom | LayerShellQt::Window::AnchorLeft |
+                                                     LayerShellQt::Window::AnchorRight),
+           QSize(out.width(), kbHeight), 0);
+#else
+    Q_UNUSED(out)
+#endif
+}
+
 void StreamOverlay::updateGeometry()
 {
+    if (m_Wayland) {
+        if (m_LayerShell) {
+            updateLayerGeometry();
+        }
+        else {
+            // Plain windows: the compositor places them; just size them.
+            if (m_Menu) m_Menu->resize(kMenuWidth, kMenuMaxHeight);
+            if (m_Notice) m_Notice->resize(380, 40);
+            if (m_Keyboard) m_Keyboard->resize(900, 320);
+        }
+        return;
+    }
     const QRect win = sdlWindowRect();
     const qreal dpr = dprAt(win.center());
     const int button = qRound(kButtonSize * dpr), margin = qRound(kMargin * dpr);
@@ -167,14 +301,27 @@ void StreamOverlay::updateButtonVisibility()
     // mouse it stays visible, dimmed, as a reminder that Ctrl+Alt+Shift+<menu key> or
     // Select+L1+R1+B opens the menu (and frees the cursor). Same in windowed and fullscreen.
     const bool cursorFree = in && (in->m_AbsoluteMouseMode || !in->isCaptureActive());
-    const bool visible = showButton() && !(flags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN));
+    // A layer surface floats above every window on its output, so on Wayland the button only
+    // shows while the stream window has the keyboard (or its menu is open).
+    bool visible = showButton() && !(flags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN)) &&
+                   (!m_LayerShell || (flags & SDL_WINDOW_INPUT_FOCUS) || m_MenuOpen);
+    if (m_LayerShell) {
+        // Keyboard focus bounces while the menu closes; every show creates a new layer surface,
+        // so only follow a change that has held for a moment.
+        const Uint32 now = SDL_GetTicks();
+        if (visible != m_ButtonWanted) {
+            m_ButtonWanted = visible;
+            m_ButtonWantedSince = now;
+        }
+        if (now - m_ButtonWantedSince < 400) visible = m_Button->isVisible();
+    }
     m_Button->setOpacity(cursorFree ? 0.85 : 0.4);
     // Switching between windowed and fullscreen restyles the stream window (and its topmost
     // state); show the button afresh so it sits above the stream in the new mode.
     const Uint32 mode = flags & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
     const bool modeChanged = mode != m_LastWindowMode;
     m_LastWindowMode = mode;
-    if (visible && (modeChanged || !m_Button->isVisible())) {
+    if (visible && ((modeChanged && !m_Wayland) || !m_Button->isVisible())) {
         if (m_Button->isVisible()) m_Button->hide();
         updateGeometry();
         m_Button->show();
@@ -229,6 +376,12 @@ bool StreamOverlay::handleEvent(const SDL_Event& event)
     }
 
     if (m_MenuOpen) {
+        // On X11/Windows a click into the stream deactivates the menu window, which closes it.
+        // A layer-shell menu keeps the keyboard, so close it here.
+        if (m_LayerShell && event.type == SDL_MOUSEBUTTONDOWN && SDL_GetTicks() - m_OpenedAt > 300) {
+            closeMenu();
+            return true;
+        }
         switch (event.type) {
         case SDL_KEYDOWN: case SDL_KEYUP: case SDL_TEXTINPUT: case SDL_TEXTEDITING:
         case SDL_MOUSEBUTTONDOWN: case SDL_MOUSEBUTTONUP: case SDL_MOUSEWHEEL:
@@ -253,8 +406,10 @@ void StreamOverlay::openMenu()
     updateGeometry();
     emit changed();
     m_Menu->show();
-    m_Menu->raise();
-    m_Menu->requestActivate();
+    if (!m_LayerShell) { // a layer surface is above anyway and takes the keyboard itself
+        m_Menu->raise();
+        m_Menu->requestActivate();
+    }
 }
 
 void StreamOverlay::closeMenu()
@@ -262,7 +417,7 @@ void StreamOverlay::closeMenu()
     if (!m_MenuOpen) return;
     m_MenuOpen = false;
     if (m_Menu) m_Menu->hide();
-    SDL_RaiseWindow(m_Session->m_Window);
+    if (!m_LayerShell) SDL_RaiseWindow(m_Session->m_Window); // keyboard returns by itself when the layer unmaps
     if (m_RecaptureOnClose && m_Session->m_InputHandler) m_Session->m_InputHandler->setCaptureActive(true);
     m_RecaptureOnClose = false;
     emit changed();

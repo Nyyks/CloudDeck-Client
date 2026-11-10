@@ -51,6 +51,17 @@ linux {
     # Secret Service (keychain) over D-Bus; no libsecret dependency.
     QT += dbus
     HEADERS += $$PWD/secretstore_prompt.h
+
+    # In-stream menu on native Wayland (wlr-layer-shell overlay surfaces), where layer-shell-qt
+    # is installed (Debian/Raspberry Pi OS: liblayershellqtinterface-dev). The AppImage is built
+    # without Wayland and runs through XWayland, where the X11 path is used.
+    !disable-wayland:exists(/usr/include/LayerShellQt/window.h) {
+        DEFINES += HAVE_LAYERSHELLQT
+        LIBS += -lLayerShellQtInterface
+        CONFIG += link_pkgconfig
+        PKGCONFIG += wayland-client
+        message(CloudDeck: in-stream menu with wlr-layer-shell on Wayland)
+    }
 }
 
 win32 {

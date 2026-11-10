@@ -4,6 +4,15 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+### Fixed
+- Raspberry Pi .deb and other native-Wayland desktops: no in-stream menu button, and the shortcut
+  (Ctrl+Alt+Shift+O) and Select+L1+R1+B did nothing. The overlay only knew how to stack windows
+  on Windows and X11. On wlr-layer-shell desktops (Raspberry Pi OS's labwc, Wayfire, sway, KDE),
+  the button and menu are now overlay surfaces above the stream. On GNOME the shortcut opens the
+  menu as a window. The desktop on-screen controller stays unavailable on native Wayland
+  (ADR-0009, "Native Wayland").
+- CI: the linuxdeploy downloads retry. A network failure there failed the first v1.2.0 run.
+
 ## [1.2.0] - 2026-11-09
 Android TV, system shortcuts and Linux packages, after the owner's weekend test of 1.1.1. The owner
 tested the Windows zip, the Android APK and the Raspberry Pi .deb.

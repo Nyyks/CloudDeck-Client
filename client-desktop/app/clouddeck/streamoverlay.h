@@ -43,6 +43,7 @@ class StreamOverlay : public QObject
     Q_PROPERTY(bool nintendoLayout READ nintendoLayout WRITE setNintendoLayout NOTIFY changed)
     Q_PROPERTY(bool keyboardVisible READ keyboardVisible NOTIFY changed)
     Q_PROPERTY(bool controllerVisible READ controllerVisible NOTIFY changed)
+    Q_PROPERTY(bool canShowController READ canShowController CONSTANT) // not on native Wayland
     Q_PROPERTY(bool controllerPlaystation READ controllerPlaystation WRITE setControllerPlaystation NOTIFY changed)
     // Controller mouse mode (Select+L1+R1+A), for every connected controller
     Q_PROPERTY(bool hasGamepad READ hasGamepad NOTIFY changed)
@@ -125,6 +126,7 @@ public:
     void onStreamRestarted();
     Q_INVOKABLE void sendKey(int vk, bool down, int modifiers);
     bool keyboardVisible() const;
+    bool canShowController() const { return m_Osc != nullptr; }
     Q_INVOKABLE void reconnect();
     Q_INVOKABLE void disconnectStream();
     Q_INVOKABLE void shutDown();
@@ -138,9 +140,20 @@ private:
     void updateGeometry();
     void updateButtonVisibility();
     QQuickView* createView(const char* qmlFile, bool focusable);
+    // Native Wayland (docs/adr/0009-quick-menu.md, amendment): there's no foreign parent window to
+    // stack on. With wlr-layer-shell (labwc, Wayfire, sway, KDE) the views are overlay layer
+    // surfaces on the stream's output; without it (GNOME) the menu opens as a normal window.
+    void updateLayerGeometry();
+    class QScreen* streamScreen() const;
+    static bool waylandHasLayerShell();
 
     Session* m_Session;
-    QWindow* m_SdlParent = nullptr; // foreign wrapper of the SDL window (owner)
+    bool m_Wayland = false;
+    bool m_LayerShell = false;
+    QSize m_LayerOutput;           // output size the layer surfaces were laid out for
+    bool m_ButtonWanted = false;   // Wayland: debounced button visibility
+    Uint32 m_ButtonWantedSince = 0;
+    QWindow* m_SdlParent = nullptr; // foreign wrapper of the SDL window (owner); none on Wayland
     QQuickView* m_Button = nullptr;
     QQuickView* m_Menu = nullptr;
     QQuickView* m_Notice = nullptr;

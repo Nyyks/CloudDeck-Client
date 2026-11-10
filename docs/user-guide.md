@@ -134,6 +134,12 @@ All of Moonlight's streaming settings are part of these pages; there's no second
 - Press **Select+L1+R1+B** on a controller.
 - Press **Back** (Android).
 
+On Linux with native Wayland (the Raspberry Pi .deb), the button and menu appear as overlays on
+desktops that support wlr-layer-shell: Raspberry Pi OS (labwc), Wayfire, sway, KDE. There, the
+button shows while the stream window is active, and a click into the stream closes the menu. On
+GNOME the shortcut opens the menu as a normal window instead. The on-screen controller isn't
+available on native Wayland.
+
 **Closing it:** press Esc, click back into the stream, or press the same key again.
 While it's open, keys and clicks go to the menu, not the CloudDeck.
 

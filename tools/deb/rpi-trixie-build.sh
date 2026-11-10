@@ -29,7 +29,7 @@ apt-get install -y -qq --no-install-recommends \
   qmake6 qt6-base-dev qt6-base-dev-tools qt6-declarative-dev qt6-svg-dev \
   libsdl2-dev libsdl2-ttf-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
   libdrm-dev libegl-dev libgles-dev libgl-dev libopus-dev libssl-dev \
-  libwayland-dev libx11-dev libxkbcommon-dev >/dev/null
+  libwayland-dev libx11-dev libxkbcommon-dev liblayershellqtinterface-dev >/dev/null
 echo "== FFmpeg in use (should be Raspberry Pi's +rpt build):"
 dpkg-query -W -f '${Package} ${Version}\n' libavcodec-dev
 dpkg-query -W -f '${Version}' libavcodec-dev | grep -q rpt || { echo "libavcodec-dev is not Raspberry Pi's build"; exit 1; }

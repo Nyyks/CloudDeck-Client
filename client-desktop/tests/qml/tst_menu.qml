@@ -23,6 +23,7 @@ Item {
         property bool nintendoLayout: false
         property bool keyboardVisible: false
         property bool controllerVisible: false
+        property bool canShowController: true
         property bool controllerPlaystation: false
         property bool hasGamepad: true
         property bool controllerMouse: false

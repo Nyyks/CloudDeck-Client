@@ -103,3 +103,34 @@ At the owner's request, both menus now use the home screen's style.
   layout and both keyboards, a card for the on-screen controller, then
   Disconnect and Shut down side by side.
 Every control takes keyboard or D-pad focus with a visible ring.
+
+## Native Wayland (2026-11-10)
+The desktop menu is made of separate Qt windows stacked on the SDL stream window: transient
+windows positioned in native coordinates (Win32, X11).
+- **The gap:** native Wayland has neither foreign parents nor client-side positioning, so the
+  overlay gave up there. That left the Raspberry Pi .deb (labwc, native Wayland, which is what makes
+  its hardware decoding work) without a button, and with a shortcut that did nothing. Forcing
+  XWayland isn't an option: Moonlight warns it breaks hardware decoding.
+- **wlr-layer-shell** (labwc, Wayfire, sway, KDE):
+  - The button, menu, notices and on-screen keyboard are overlay layer surfaces on the stream's
+    output, through KDE's layer-shell-qt.
+  - They're anchored top-centre (the keyboard to the bottom), so they're output-relative rather
+    than window-relative.
+  - The menu takes the keyboard exclusively while it's shown, and a click into the stream closes it.
+  - The button only shows while the stream window has the keyboard, since it would otherwise float
+    over other apps.
+  - Rules that keep the compositor happy:
+    - surfaces are laid out only while hidden;
+    - the button's show/hide is debounced, because each show creates a new surface;
+    - nothing is raised or activated.
+
+    A surface resized before its first configure is a protocol error that drops the whole Wayland
+    connection.
+  - It's built where `liblayershellqtinterface-dev` is installed (`HAVE_LAYERSHELLQT`, the Pi .deb).
+- **Wayland without layer-shell (GNOME):** the shortcut and Select+L1+R1+B open the menu as a
+  normal window. There's no floating button.
+- **Not on native Wayland:** the desktop on-screen controller, because its masked windows have to
+  sit exactly over the stream. The menu hides its switch there.
+- **Tested** under headless labwc in a Trixie container, streaming from a local Sunshine: the
+  button shows, and the menu opens with the shortcut and closes with Esc three times, with no
+  protocol errors.

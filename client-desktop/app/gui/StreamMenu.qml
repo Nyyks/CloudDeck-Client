@@ -271,6 +271,7 @@ Pane {
                         onToggled: overlay.nintendoLayout = checked
                     }
                     CdSwitch {
+                        visible: overlay.canShowController
                         Layout.fillWidth: true
                         text: qsTr("On-screen controller")
                         description: qsTr("For touchscreens")
