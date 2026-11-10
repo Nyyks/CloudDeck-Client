@@ -4,6 +4,9 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-10
+Bugfix: the in-stream menu on the Raspberry Pi .deb. Verified by the owner on the Pi.
+
 ### Fixed
 - Raspberry Pi .deb and other native-Wayland desktops: no in-stream menu button, and the shortcut
   (Ctrl+Alt+Shift+O) and Select+L1+R1+B did nothing. The overlay only knew how to stack windows
