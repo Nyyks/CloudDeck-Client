@@ -47,6 +47,12 @@
     <string name="cd_err_session_expired">Your CloudDeck session expired. Please sign in again.</string>
     <!-- in-stream menu (docs/adr/0009-quick-menu.md) -->
     <string name="cd_menu_button">CloudDeck menu</string>
+    <string name="cd_card_keyboard">Keyboard</string>
+    <string name="cd_alt_tab">Alt+Tab on the CloudDeck</string>
+    <string name="cd_alt_tab_ctrl_tab">Ctrl+Tab</string>
+    <string name="cd_alt_tab_alt_grave">Alt+`</string>
+    <string name="cd_alt_tab_hint">Android keeps Alt+Tab for itself, so this shortcut is sent as Alt+Tab instead. Keep Ctrl (or Alt) held and tap again to move through the windows; add Shift to go back. With Ctrl+Tab, the CloudDeck no longer gets Ctrl+Tab itself.</string>
+    <string name="cd_alt_tab_toast">Alt+Tab stays with this device: press %1$s to switch windows on the CloudDeck.</string>
     <string name="cd_menu_mic_mute">Mute my microphone</string>
     <string name="cd_menu_stats">Performance stats</string>
     <string name="cd_menu_keyboard">Keyboard (typing)</string>

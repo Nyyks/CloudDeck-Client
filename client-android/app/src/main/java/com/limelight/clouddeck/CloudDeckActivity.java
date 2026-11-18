@@ -341,6 +341,11 @@ public class CloudDeckActivity extends Activity {
         mouseHoldBox = v(R.id.cd_mouse_hold);
         mouseHoldBox.setOnCheckedChangeListener((b, c) -> { if (!binding) moonlightPrefs().edit().putBoolean(PREF_MOUSE_EMULATION, c).apply(); });
         click(R.id.cd_osc_xbox, () -> { OnScreenController.setStyle(this, OnScreenController.STYLE_XBOX); renderToggles(); });
+        click(R.id.cd_alt_tab_ctrl, () -> setAltTabSubstitute(AltTabSubstitute.CTRL_TAB));
+        click(R.id.cd_alt_tab_grave, () -> setAltTabSubstitute(AltTabSubstitute.ALT_GRAVE));
+        click(R.id.cd_alt_tab_off, () -> setAltTabSubstitute(AltTabSubstitute.OFF));
+        View keyboardCard = v(R.id.cd_card_keyboard);
+        if (keyboardCard != null && com.limelight.Game.hasNativeKeyboardCapture()) keyboardCard.setVisibility(View.GONE);
         click(R.id.cd_osc_ps, () -> { OnScreenController.setStyle(this, OnScreenController.STYLE_PLAYSTATION); renderToggles(); });
         click(R.id.cd_controllers, () -> startActivity(new Intent(this, ControllerProfilesActivity.class)));
         click(R.id.cd_signout, this::signOut);
@@ -749,6 +754,16 @@ public class CloudDeckActivity extends Activity {
         View xbox = v(R.id.cd_osc_xbox), psb = v(R.id.cd_osc_ps);
         if (xbox != null) xbox.setSelected(!ps);
         if (psb != null) psb.setSelected(ps);
+        String altTab = AltTabSubstitute.normalize(mp.getString(AltTabSubstitute.PREF, AltTabSubstitute.DEFAULT));
+        View ctrlTab = v(R.id.cd_alt_tab_ctrl), altGrave = v(R.id.cd_alt_tab_grave), altTabOff = v(R.id.cd_alt_tab_off);
+        if (ctrlTab != null) ctrlTab.setSelected(AltTabSubstitute.CTRL_TAB.equals(altTab));
+        if (altGrave != null) altGrave.setSelected(AltTabSubstitute.ALT_GRAVE.equals(altTab));
+        if (altTabOff != null) altTabOff.setSelected(AltTabSubstitute.OFF.equals(altTab));
+    }
+
+    private void setAltTabSubstitute(String mode) {
+        moonlightPrefs().edit().putString(AltTabSubstitute.PREF, mode).apply(); // read when the next stream starts
+        renderToggles();
     }
 
     // ------------------------------------------------------------------ account

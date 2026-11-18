@@ -306,10 +306,13 @@ void SdlInputHandler::notifyFocusLost()
     // Raise all keys that are currently pressed. If we don't do this, certain keys
     // used in shortcuts that cause focus loss (such as Alt+Tab) may get stuck down.
     raiseAllKeys();
+
+    updateEvdevKeyboardGrab(); // CloudDeck-Client: give the keyboards back to the compositor
 }
 
 void SdlInputHandler::notifyFocusGained()
 {
+    updateEvdevKeyboardGrab(); // CloudDeck-Client
 }
 
 bool SdlInputHandler::isCaptureActive()
@@ -361,6 +364,17 @@ void SdlInputHandler::updateKeyboardGrabState()
 #endif
 
     m_KeyboardCaptureActive = shouldGrab;
+    updateEvdevKeyboardGrab();
+}
+
+void SdlInputHandler::updateEvdevKeyboardGrab()
+{
+    // CloudDeck-Client (docs/keyboard-capture.md): on Wayland compositors without
+    // keyboard-shortcuts-inhibit (labwc on Raspberry Pi OS) SDL's grab above does nothing, so the
+    // keyboards' event devices are grabbed instead while the stream window has the keyboard.
+    if (!m_Window || !EvdevKeyboardGrab::needed()) return;
+    const bool focused = (SDL_GetWindowFlags(m_Window) & SDL_WINDOW_INPUT_FOCUS) != 0;
+    m_EvdevKeys.setActive(m_Window, m_KeyboardCaptureActive && focused);
 }
 
 void SdlInputHandler::setSystemKeysMode(StreamingPreferences::CaptureSysKeysMode mode)

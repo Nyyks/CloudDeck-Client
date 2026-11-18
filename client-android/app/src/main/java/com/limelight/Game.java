@@ -245,6 +245,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private boolean displayedFailureDialog = false;
     private boolean connecting = false;
     private boolean connected = false;
+    // CloudDeck-Client: on a Chromebook (docs/keyboard-capture.md)
+    private boolean onChromeOs;
+    private static boolean chromeOsHintShown;
+    // CloudDeck-Client: Ctrl+Tab (or Alt+`) for Alt+Tab where Android keeps Alt+Tab (below 16 QPR1)
+    private com.limelight.clouddeck.AltTabSubstitute altTabSubstitute;
     private boolean autoEnterPip = false;
     private boolean surfaceCreated = false;
     private boolean attemptedConnection = false;
@@ -310,6 +315,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         super.onCreate(savedInstanceState);
 
         UiHelper.setLocale(this);
+        onChromeOs = getPackageManager().hasSystemFeature("org.chromium.arc") ||
+                getPackageManager().hasSystemFeature("org.chromium.arc.device_management");
 
         // We don't want a title bar
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -341,6 +348,14 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // Read the stream preferences
         prefConfig = PreferenceConfiguration.readPreferences(this);
+        if (!hasNativeKeyboardCapture()) { // CloudDeck-Client
+            altTabSubstitute = new com.limelight.clouddeck.AltTabSubstitute(
+                    com.limelight.clouddeck.AltTabSubstitute.normalize(android.preference.PreferenceManager.getDefaultSharedPreferences(this)
+                            .getString(com.limelight.clouddeck.AltTabSubstitute.PREF, com.limelight.clouddeck.AltTabSubstitute.DEFAULT)),
+                    (vk, down, mods) -> {
+                        if (conn != null) conn.sendKeyboardInput(vk, down ? KeyboardPacket.KEY_DOWN : KeyboardPacket.KEY_UP, mods, (byte) 0);
+                    });
+        }
         tombstonePrefs = Game.this.getSharedPreferences("DecoderTombstone", 0);
 
         // Enter landscape unless we're on a square screen
@@ -808,9 +823,14 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
     }
 
+    // Android 16 QPR1 (API 36.1) and later let the stream take Alt+Tab and Meta itself.
+    public static boolean hasNativeKeyboardCapture() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1;
+    }
+
     public void setMetaKeyCaptureState(boolean enabled) {
         // Android has native keyboard capture support starting in API 36.1
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
+        if (hasNativeKeyboardCapture()) {
             WindowManager.LayoutParams windowLayoutParams = getWindow().getAttributes();
             windowLayoutParams.setKeyboardCaptureEnabled(enabled);
             getWindow().setAttributes(windowLayoutParams);
@@ -877,6 +897,18 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+
+        // CloudDeck-Client: Android swallows the Alt release after an Alt+Tab it kept for itself,
+        // and keys that come up while another window has focus never reach us either. Release
+        // the modifiers on the CloudDeck, so none stays held there.
+        if (!hasFocus && conn != null && grabbedInput) {
+            if (altTabSubstitute != null) altTabSubstitute.reset();
+            if (modifierFlags != 0) {
+                for (short vk : new short[]{0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0x5B, 0x5C}) {
+                    conn.sendKeyboardInput(vk, KeyboardPacket.KEY_UP, (byte) 0, (byte) 0);
+                }
+            }
+        }
 
         // We can't guarantee the state of modifiers keys which may have
         // lifted while focus was not on us. Clear the modifier state.
@@ -1121,7 +1153,18 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 // In multi-window mode on N+, we need to drop our layout flags or we'll
                 // be drawing underneath the system UI.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInMultiWindowMode()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInMultiWindowMode() &&
+                        onChromeOs && !isInPictureInPictureMode()) {
+                    // CloudDeck-Client: every ChromeOS app window is "multi-window". Asking to hide
+                    // the bars makes a maximized window fullscreen (ChromeOS ignores it for smaller
+                    // windows), and only a fullscreen window gets Alt+Tab before ChromeOS does.
+                    // No layout flags, so a windowed stream stays clear of the caption bar.
+                    Game.this.getWindow().getDecorView().setSystemUiVisibility(
+                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                            View.SYSTEM_UI_FLAG_FULLSCREEN |
+                            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                }
+                else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInMultiWindowMode()) {
                     Game.this.getWindow().getDecorView().setSystemUiVisibility(
                             View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
                 }
@@ -1156,7 +1199,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // This function will also be called for PiP so we can cover
         // that case here too.
         if (isInMultiWindowMode) {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            if (!onChromeOs || isInPictureInPictureMode()) { // CloudDeck-Client: see hideSystemUi
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            }
             decoderRenderer.notifyVideoBackground();
         }
         else {
@@ -1507,6 +1552,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 return false;
             }
 
+            // CloudDeck-Client: Ctrl+Tab stands in for Alt+Tab (docs/keyboard-capture.md)
+            if (altTabSubstitute != null &&
+                    altTabSubstitute.onKey(event.getKeyCode(), true, event.getRepeatCount(), event.getMetaState())) {
+                return true;
+            }
+
             // We'll send it as a raw key event if we have a key mapping, otherwise we'll send it
             // as UTF-8 text (if it's a printable character).
             short translated = keyboardTranslator.translate(event.getKeyCode(), event.getDeviceId());
@@ -1584,6 +1635,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // Pass through keyboard input if we're not grabbing
             if (!grabbedInput) {
                 return false;
+            }
+
+            // CloudDeck-Client: Ctrl+Tab stands in for Alt+Tab (docs/keyboard-capture.md)
+            if (altTabSubstitute != null &&
+                    altTabSubstitute.onKey(event.getKeyCode(), false, 0, event.getMetaState())) {
+                return true;
             }
 
             short translated = keyboardTranslator.translate(event.getKeyCode(), event.getDeviceId());
@@ -2573,6 +2630,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 UiHelper.notifyStreamConnected(Game.this);
 
                 hideSystemUi(1000);
+
+                if (onChromeOs) requestChromeOsFullscreen(); // CloudDeck-Client
             }
         });
 
@@ -2586,6 +2645,33 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // This may be null if launched from the "Resume Session" PC context menu item
             shortcutHelper.reportGameLaunched(computer, app);
         }
+    }
+
+    // CloudDeck-Client (docs/keyboard-capture.md): ChromeOS hands its non-reserved shortcuts to an
+    // app first only while the app's window is fullscreen. Ask for fullscreen where Android can
+    // (14+, from a freeform window); otherwise the immersive flags do it once the window is
+    // maximized. Alt+Tab itself never reaches the app (Android keeps it), so name the stand-in once.
+    private void requestChromeOsFullscreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+                isInMultiWindowMode() && !isInPictureInPictureMode()) {
+            try {
+                requestFullscreenMode(Activity.FULLSCREEN_MODE_REQUEST_ENTER, null);
+            } catch (RuntimeException e) {
+                LimeLog.info("Fullscreen request refused: " + e);
+            }
+        }
+        final View decor = getWindow().getDecorView();
+        decor.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (chromeOsHintShown || isFinishing() || !connected) return;
+                if (altTabSubstitute == null || !altTabSubstitute.enabled()) return;
+                chromeOsHintShown = true;
+                Toast.makeText(Game.this, getString(R.string.cd_alt_tab_toast, getString(
+                        com.limelight.clouddeck.AltTabSubstitute.ALT_GRAVE.equals(altTabSubstitute.mode())
+                                ? R.string.cd_alt_tab_alt_grave : R.string.cd_alt_tab_ctrl_tab)), Toast.LENGTH_LONG).show();
+            }
+        }, 3000);
     }
 
     @Override

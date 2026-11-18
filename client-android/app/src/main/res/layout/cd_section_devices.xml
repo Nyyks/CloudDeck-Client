@@ -11,6 +11,22 @@
         <TextView style="@style/CdHint" android:text="@string/cd_mic_hint" />
     </LinearLayout>
 
+    <!-- Alt+Tab stand-in (docs/keyboard-capture.md); hidden where Android lets the stream take Alt+Tab -->
+    <LinearLayout android:id="@+id/cd_card_keyboard" style="@style/CdCard">
+        <TextView style="@style/CdCardTitle" android:text="@string/cd_card_keyboard" />
+        <TextView style="@style/CdBody" android:paddingTop="6dp" android:text="@string/cd_alt_tab" />
+        <LinearLayout
+            style="@style/CdSegmentTrack"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="4dp">
+            <Button android:id="@+id/cd_alt_tab_ctrl" style="@style/CdSegment" android:text="@string/cd_alt_tab_ctrl_tab" />
+            <Button android:id="@+id/cd_alt_tab_grave" style="@style/CdSegment" android:text="@string/cd_alt_tab_alt_grave" />
+            <Button android:id="@+id/cd_alt_tab_off" style="@style/CdSegment" android:text="@string/cd_off" />
+        </LinearLayout>
+        <TextView style="@style/CdHint" android:text="@string/cd_alt_tab_hint" />
+    </LinearLayout>
+
     <LinearLayout style="@style/CdCard">
         <TextView style="@style/CdCardTitle" android:text="@string/cd_card_mouse" />
         <TextView style="@style/CdHint" android:paddingTop="2dp" android:text="@string/cd_mouse_hint" />

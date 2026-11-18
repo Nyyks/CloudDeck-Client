@@ -20,7 +20,8 @@ Rectangle {
         BusyIndicator {
             width: 24
             height: 24
-            running: root.visible
+            running: root.visible && visible
+            visible: !root.overlay || root.overlay.noticeBusy
             anchors.verticalCenter: parent.verticalCenter
         }
         Label {

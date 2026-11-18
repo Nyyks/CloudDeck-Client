@@ -5,6 +5,7 @@
 
 #include "SDL_compat.h"
 #include "clouddeck/systemkeyforwarder.h"
+#include "clouddeck/evdevkeyboardgrab.h"
 
 namespace ControllerProfile { struct Profile; } // CloudDeck-Client
 
@@ -168,6 +169,7 @@ public:
     bool isMouseInVideoRegion(int mouseX, int mouseY, int windowWidth = -1, int windowHeight = -1);
 
     void updateKeyboardGrabState();
+    void updateEvdevKeyboardGrab(); // CloudDeck-Client
 
     void updatePointerRegionLock();
 
@@ -256,6 +258,7 @@ private:
     // CloudDeck-Client: Ctrl+Alt+Shift+K turns capture back on in this mode
     StreamingPreferences::CaptureSysKeysMode m_ToggledOffSysKeysMode = StreamingPreferences::CSK_FOCUSED;
     SystemKeyForwarder m_SystemKeys; // "Always": also while other windows are active (Windows)
+    EvdevKeyboardGrab m_EvdevKeys;   // Wayland without keyboard-shortcuts-inhibit (labwc): grab /dev/input
     int m_MouseCursorCapturedVisibilityState;
 
     struct {

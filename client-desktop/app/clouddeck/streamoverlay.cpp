@@ -15,6 +15,7 @@
 #include <QRegion>
 #include <QScreen>
 #include <QSettings>
+#include <QTimer>
 #include <QtDebug>
 
 #include <SDL_syswm.h>
@@ -341,6 +342,14 @@ void StreamOverlay::pump()
     QCoreApplication::processEvents(QEventLoop::AllEvents, m_MenuOpen ? 6 : 2);
     if (notify) emit changed(); // state can also change through hotkeys
     updateButtonVisibility();
+
+    // System keys on labwc & co. need /dev/input (docs/keyboard-capture.md): say so once.
+    SdlInputHandler* in = m_Session->m_InputHandler;
+    if (in && m_NoticeText.isEmpty() && in->m_EvdevKeys.takeAccessDenied()) {
+        const QString text = tr("Win, Alt+Tab: add your user to the \"input\" group");
+        showNotice(text, false);
+        QTimer::singleShot(10000, this, [this, text] { if (m_NoticeText == text) hideNotice(); });
+    }
 }
 
 bool StreamOverlay::handleEvent(const SDL_Event& event)
@@ -553,9 +562,10 @@ void StreamOverlay::shutDown()
     disconnectStream();
 }
 
-void StreamOverlay::showNotice(const QString& text)
+void StreamOverlay::showNotice(const QString& text, bool busy)
 {
     m_NoticeText = text;
+    m_NoticeBusy = busy;
     emit changed();
     if (!m_Notice) return;
     updateGeometry();

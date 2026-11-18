@@ -11,6 +11,7 @@ SOURCES += \
     $$PWD/controllersettings.cpp \
     $$PWD/displaylease.cpp \
     $$PWD/displaysettings.cpp \
+    $$PWD/evdevkeyboardgrab.cpp \
     $$PWD/micstreamer.cpp \
     $$PWD/netrecommend.cpp \
     $$PWD/nettest.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     $$PWD/controllersettings.h \
     $$PWD/displaylease.h \
     $$PWD/displaysettings.h \
+    $$PWD/evdevkeyboardgrab.h \
     $$PWD/micstreamer.h \
     $$PWD/netrecommend.h \
     $$PWD/nettest.h \

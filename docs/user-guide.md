@@ -300,6 +300,18 @@ Controls → Keyboard & mouse → *Send Win, Alt+Tab and other system shortcuts 
 - With capture on, leave the stream window with the mouse, the CloudDeck menu or
   **Ctrl+Alt+Shift+D**.
 - Ctrl+Alt+Del and Win+L always stay on this computer.
+- **Raspberry Pi:** this needs your user in the `input` group. The default Raspberry Pi OS user
+  is in it; if yours isn't, the stream tells you once. Fix:
+  `sudo usermod -aG input $USER`, then sign out and back in. While capture is on, every key goes
+  to the CloudDeck, volume keys included.
+- **Android and Chromebook:** Android keeps Alt+Tab for itself, so press **Ctrl+Tab** instead.
+  - Keep Ctrl held and tap Tab again to move through the windows; add Shift to go back.
+  - To change it: Settings → Devices → Keyboard → *Alt+Tab on the CloudDeck*, with Ctrl+Tab,
+    Alt+` or Off.
+  - With Ctrl+Tab, the CloudDeck doesn't get Ctrl+Tab itself.
+  - Android 16 QPR1 and later pass Alt+Tab itself, so the setting is hidden there.
+  - On a Chromebook the Search key always stays with ChromeOS; for Win, use the menu's
+    *Full keyboard*.
 - Details: [keyboard-capture.md](keyboard-capture.md).
 
 ## Troubleshooting
