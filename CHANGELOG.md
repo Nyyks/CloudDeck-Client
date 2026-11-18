@@ -4,6 +4,30 @@ All notable changes are recorded here, following [Keep a Changelog](https://keep
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-11-18
+System shortcuts on the Raspberry Pi and on Chromebooks. Verified by the owner on a Pi and a
+Chromebook.
+
+### Fixed
+- Raspberry Pi .deb: Win, Alt+Tab and the other system shortcuts stayed with the desktop in every
+  mode. Raspberry Pi OS's labwc doesn't offer the Wayland protocol that SDL's keyboard grab uses,
+  so the grab did nothing. On such desktops the stream now reads the keyboards directly
+  (`/dev/input`) while it has the keyboard. That needs the `input` group, and the default Pi user
+  is in it. The grab lets go on focus loss, when the menu opens and when capture is off, and also
+  if the stream stops taking keys (docs/keyboard-capture.md).
+- Android on Chromebooks: a maximized stream window never went fullscreen, because ChromeOS app
+  windows count as multi-window. ChromeOS only hands its shortcuts to fullscreen apps, so the
+  stream now asks for fullscreen.
+- Android: after an Alt+Tab that Android kept for itself, Alt could stay held on the CloudDeck.
+  Modifiers are now released there when the stream loses focus.
+
+### Added
+- Android: **Ctrl+Tab stands in for Alt+Tab** (docs/keyboard-capture.md). Android before 16 QPR1
+  keeps the first Alt+Tab for itself (on a Chromebook it opens ChromeOS's window switcher), and no
+  app can change that. Keep Ctrl held and tap Tab to move through the CloudDeck's windows. Change
+  it under Settings → Devices → Keyboard: Ctrl+Tab (default), Alt+` or Off. The Search key always
+  stays with ChromeOS.
+
 ## [1.2.1] - 2026-11-10
 Bugfix: the in-stream menu on the Raspberry Pi .deb. Verified by the owner on the Pi.
 
